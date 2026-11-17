@@ -34,7 +34,7 @@ src/
   content/docs/docs/      公開ドキュメント(Starlight)
   content/i18n/ja.json    Starlight UI の日本語上書き
   layouts/PageLayout.astro  ランディング等の共通レイアウト
-  pages/                  /, /download/, /about/, /news/, 404
+  pages/                  /, /what-is-zignos/, /download/, /about/, /news/, 404
   styles/site.css         ランディング系のデザイン
   styles/starlight.css    ドキュメントのブランド配色
 public/                   favicon.png, og.png, wallpaper.png(壁紙配布用)

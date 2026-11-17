@@ -1,0 +1,193 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+---
+
+<PageLayout
+  title="ZIGNOSとは。 — ZIGNOS"
+  description="ZIGNOS は、ゼロからビルドするソースベースの Linux ディストリビューション。思想、仕組み、ベースの規模、向いている人をまとめます。"
+>
+  <div class="wrap">
+    <section class="page-hero">
+      <span class="eyebrow">ABOUT ZIGNOS</span>
+      <h1>ZIGNOSとは。</h1>
+      <p>
+        ゼロからビルドする、ソースベースの Linux ディストリビューション。
+        完成品をそのまま使うのではなく、自分の手で組み上げるための土台です。
+      </p>
+    </section>
+
+    <div class="prose what">
+      <p class="statement">
+        配られる OS を選ぶのではなく、<br />
+        自分の OS を組み上げる。
+      </p>
+
+      <p>
+        ZIGNOS は、Linux From Scratch 13.1-systemd の手順を出発点に、
+        ツールチェーンからベースシステムまでを自分の手で構築する
+        ソースベースのディストリビューションです。既存ディストリビューションの
+        派生ではなく、独自のパッケージマネージャ <strong>zpkg</strong> と
+        init の <strong>OpenRC</strong> を組み合わせています。
+      </p>
+
+      <p>
+        目指しているのは、中身を理解できて、不要なものを入れず、
+        長く自分の管理下に置けるシステムです。エディタも SSH も DHCP も、
+        最初からは入っていません。必要なものを、必要なだけ。
+      </p>
+
+      <h2>なぜ、ゼロから作るのか</h2>
+      <p>
+        ディストリビューションは便利になりました。そのぶん、中で何が動いているのか、
+        どの依存がどこから来ているのかが見えにくくなっています。
+        ZIGNOS はその逆を行きます。ビルドの過程をレシピとして持ち、
+        入れたものをすべて zpkg で記録し、自分で選択できる状態を保ちます。
+      </p>
+
+      <div class="grid two">
+        <article class="card">
+          <span class="icon">◆</span>
+          <h3>ソースベース</h3>
+          <p>
+            レシピはシェルスクリプト。ビルドフラグも依存も自分で決められます。
+            ビルドしたバイナリはキャッシュされ、再ビルドを速くします。
+          </p>
+        </article>
+        <article class="card">
+          <span class="icon">◆</span>
+          <h3>最小ベース</h3>
+          <p>
+            Gentoo の <code>@system</code> に近い構成。ベースは 32 パッケージ、
+            依存込みで 54。そこから自分に必要なものだけを足します。
+          </p>
+        </article>
+        <article class="card">
+          <span class="icon">◆</span>
+          <h3>シンプルな init</h3>
+          <p>
+            init は OpenRC。systemd は使いません。サービスは opt-in で、
+            起動するものを自分で選べます。
+          </p>
+        </article>
+        <article class="card">
+          <span class="icon">◆</span>
+          <h3>ローリングリリース</h3>
+          <p>
+            レシピツリーの HEAD が常に現在のリリース。
+            <code>zpkg upgrade</code> でシステム全体を追従させます。
+          </p>
+        </article>
+      </div>
+
+      <h2>ZIGNOS をかたちづくるもの</h2>
+      <ul>
+        <li>
+          <strong>zpkg</strong> — Go 製のパッケージマネージャ。USE フラグ、スロット、
+          binpkg キャッシュ、トランザクション、インストール journal を持ちます。
+        </li>
+        <li>
+          <strong>レシピツリー</strong> — core と main の 2 カテゴリ、現在 135 レシピ。
+          core はベースシステム、main は任意で入れる CLI ツール群です。
+        </li>
+        <li>
+          <strong>stage3</strong> — カーネルとブートローダーを除いた、chroot 可能な
+          最小ベース。展開して <code>zpkg install linux grub</code> で完成します。
+        </li>
+        <li>
+          <strong>BIOS / UEFI</strong> — 両ファームウェアに対応。GRUB は USE フラグで
+          <code>bios</code> / <code>uefi</code> を選択し、UEFI では efibootmgr も導入できます。
+        </li>
+        <li>
+          <strong>開発元</strong> — <a href="https://studio-nosa.live/" rel="external">Studio NØSa.</a>
+          が開発・運営しています。
+        </li>
+      </ul>
+
+      <h2>数字で見るベース</h2>
+      <div class="stats">
+        <div class="stat"><strong>54</strong><span>ベースパッケージ(依存込み)</span></div>
+        <div class="stat"><strong>32</strong><span>base.list のトップレベル</span></div>
+        <div class="stat"><strong>135</strong><span>レシピ(core 72 + main 63)</span></div>
+        <div class="stat"><strong>47</strong><span>stage3 のパッケージ数</span></div>
+      </div>
+      <p>
+        stage3 は約 966 MiB。カーネル、DHCP、WiFi、SSH、エディタ、man は含まれず、
+        必要なものを <code>zpkg install</code> で追加します。
+      </p>
+
+      <h2>向いている人、向いていない人</h2>
+      <div class="grid two">
+        <article class="card">
+          <h3>向いている人</h3>
+          <p>
+            LFS を一度はやってみたいが、毎回手で組むのは大変だと思っている人。
+            Gentoo や Arch のように、自分でシステムを構成するのが好きな人。
+            不要なものを入れず、CLI 中心で使いたい人。
+          </p>
+        </article>
+        <article class="card">
+          <h3>向いていない人</h3>
+          <p>
+            インストールしてすぐ GUI を使いたい人。自動アップデートや巨大な
+            バイナリリポジトリを求める人。Secure Boot が必須の人。
+            現状は alpha で、GUI 環境は含まれていません。
+          </p>
+        </article>
+      </div>
+
+      <h2>よくある質問</h2>
+      <dl class="faq">
+        <dt>Gentoo との違いは何ですか?</dt>
+        <dd>
+          どちらもソースベースですが、ZIGNOS は Portage ではなく zpkg を使い、
+          LFS 由来の bootstrap から独自に構築しています。最小ベースとレシピの
+          考え方は Gentoo の <code>@system</code> に近いものです。
+        </dd>
+        <dt>デスクトップ環境は入っていますか?</dt>
+        <dd>
+          いいえ。現在のベースは CLI のみで、GUI は自分で追加します。
+          X や Wayland のデスクトップ環境は含まれていません。
+        </dd>
+        <dt>インストールは難しいですか?</dt>
+        <dd>
+          LFS を最初から手で組むより簡単です。stage3 を展開して chroot し、
+          <code>zpkg install linux grub</code> でカーネルとブートローダーを導入します。
+          BIOS / UEFI 向けのインストーラも用意しています。
+        </dd>
+        <dt>対応アーキテクチャは?</dt>
+        <dd>x86_64 のみです。BIOS / UEFI の両方で起動できます。</dd>
+        <dt>Secure Boot には対応していますか?</dt>
+        <dd>
+          未対応です。GRUB とカーネルは署名されていないため、
+          Secure Boot を無効にして使用してください。
+        </dd>
+        <dt>パッケージはどれくらいありますか?</dt>
+        <dd>
+          現在 135 レシピ(core 72 + main 63)。ベースは 32 パッケージ、
+          依存込みで 54 です。
+        </dd>
+      </dl>
+
+      <h2>名前について</h2>
+      <p>
+        ZIGNOS は「Z」と「IGNOS(未知・限界の外)」を組み合わせた名前です。
+        タグラインは <em>Beyond the Limits.</em>。
+        既存の枠にとどまらず、自分の手で限界の外へ進むという意味を込めています。
+      </p>
+
+      <h2>次に読む</h2>
+      <ul>
+        <li><a href="/docs/install/">実機インストール</a> — BIOS / UEFI への導入</li>
+        <li><a href="/docs/stage3/">stage3 ガイド</a> — 展開から chroot、カーネル導入まで</li>
+        <li><a href="/docs/design-pkg/">zpkg 設計</a> — レシピ、DB、USE、トランザクション</li>
+        <li><a href="/docs/roadmap/">ロードマップ</a> — M0–M30 の記録と現在の状況</li>
+        <li><a href="/about/">プロジェクト概要</a> — リポジトリ構成と基本情報</li>
+      </ul>
+
+      <div class="what-cta">
+        <a class="btn primary" href="/docs/">ドキュメントを読む</a>
+        <a class="btn" href="/download/">ダウンロード(準備中)</a>
+      </div>
+    </div>
+  </div>
+</PageLayout>

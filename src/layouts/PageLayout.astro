@@ -14,6 +14,7 @@ const ogImage = new URL('/og.png', site);
 const path = Astro.url.pathname;
 
 const nav = [
+  { href: '/what-is-zignos/', label: 'ZIGNOSとは' },
   { href: '/docs/', label: 'ドキュメント' },
   { href: '/download/', label: 'ダウンロード' },
   { href: '/news/', label: 'ニュース' },
@@ -76,8 +77,10 @@ const isCurrent = (href: string) =>
       <div class="wrap">
         <span>© 2026 ZIGNOS Project · Developed by <a href="https://studio-nosa.live/" rel="external">Studio NØSa.</a></span>
         <span>
+          <a href="/what-is-zignos/">ZIGNOSとは</a> ·
           <a href="/docs/">ドキュメント</a> ·
           <a href="/download/">ダウンロード</a> ·
+          <a href="/about/">プロジェクト</a> ·
           <a href="https://github.com/studio-nosa-tech" rel="external">GitHub</a>
         </span>
       </div>
