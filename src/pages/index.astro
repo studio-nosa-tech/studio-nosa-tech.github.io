@@ -1,0 +1,129 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+import logo from '../assets/logo.png';
+import wallpaper from '../assets/wallpaper.webp';
+---
+
+<PageLayout
+  title="ZIGNOS — Beyond the Limits."
+  description="ゼロからビルドする、ソースベースの Linux ディストリビューション。最小ベース、zpkg、OpenRC、ローリングリリース。"
+>
+  <div class="wrap">
+    <section class="hero">
+      <div>
+        <span class="eyebrow">ZIGNOS PROJECT · ALPHA</span>
+        <h1>ZIGNOS</h1>
+        <p class="tagline">Beyond the Limits.</p>
+        <p class="lead">
+          ゼロからビルドする、ソースベースの Linux ディストリビューション。
+          Gentoo の <code>@system</code> に近い最小ベースに、Go 製パッケージマネージャ
+          <strong>zpkg</strong> と OpenRC を組み合わせています。必要なものは、自分で選んで入れる。
+        </p>
+        <div class="buttons">
+          <a class="btn primary" href="/docs/">ドキュメントを読む</a>
+          <a class="btn muted" href="/download/" aria-disabled="true">stage3 は準備中</a>
+        </div>
+      </div>
+      <div class="hero-art">
+        <img src={logo.src} alt="ZIGNOS ロゴ" width="520" height="336" />
+      </div>
+    </section>
+
+    <section class="section" aria-label="ベースシステムの規模">
+      <div class="stats">
+        <div class="stat"><strong>54</strong><span>ベースパッケージ(依存込み)</span></div>
+        <div class="stat"><strong>32</strong><span>base.list のトップレベル</span></div>
+        <div class="stat"><strong>BIOS / UEFI</strong><span>両ファームウェア対応</span></div>
+        <div class="stat"><strong>OpenRC + zpkg</strong><span>init とパッケージ管理</span></div>
+      </div>
+    </section>
+
+    <figure class="keyvisual">
+      <img
+        src={wallpaper.src}
+        alt="ZIGNOS — Zenith Innovation for Next-generation Operating Systems。Beyond the Limits."
+        width="1672"
+        height="941"
+        loading="lazy"
+      />
+      <figcaption>
+        <span>ZIGNOS — Independent Linux Operating System</span>
+        <a href="/wallpaper.png" download>壁紙をダウンロード (PNG, 1672×941)</a>
+      </figcaption>
+    </figure>
+
+    <section class="section">
+      <h2>設計</h2>
+      <p class="section-lead">「基本はどの端末でも起動、細部は個人で弄る」。</p>
+      <div class="grid">
+        <article class="card">
+          <span class="icon">◆</span>
+          <h3>ソースベース</h3>
+          <p>
+            レシピはシェルスクリプト。ビルドフラグも依存も自分で決められ、
+            binpkg キャッシュで再ビルドを速くできます。
+          </p>
+        </article>
+        <article class="card">
+          <span class="icon">◆</span>
+          <h3>ローリングリリース</h3>
+          <p>
+            レシピツリーの HEAD が常に現在のリリース。<code>zpkg upgrade</code> で
+            システム全体を追従させます。
+          </p>
+        </article>
+        <article class="card">
+          <span class="icon">◆</span>
+          <h3>最小ベース</h3>
+          <p>
+            Gentoo の <code>@system</code> 相当。エディタも SSH も最初からは入りません。
+            必要なものを <code>zpkg install</code> で。
+          </p>
+        </article>
+        <article class="card">
+          <span class="icon">◆</span>
+          <h3>BIOS / UEFI</h3>
+          <p>
+            <code>grub</code> の USE フラグで <code>bios</code> / <code>uefi</code> を選択。
+            initramfs が <code>root=UUID=</code> を解決します。
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="release">
+        <span class="tag">ALPHA</span>
+        <div>
+          <h3>ZIGNOS 2026.11.17-alpha</h3>
+          <p>初の alpha。stage3 tarball は公開準備中です(Coming soon)。</p>
+        </div>
+        <a class="btn" href="/news/2026-11-17-alpha/">リリースノート</a>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>はじめ方</h2>
+      <p class="section-lead">
+        stage3 は展開して chroot し、その中でカーネルとブートローダーを導入します。
+      </p>
+      <div class="grid">
+        <article class="card">
+          <h3>1. 展開</h3>
+          <p><code>tar -xpf zignos-stage3-*.tar.xz -C /mnt/zignos</code></p>
+        </article>
+        <article class="card">
+          <h3>2. chroot</h3>
+          <p><code>zignos-enter.sh /mnt/zignos</code></p>
+        </article>
+        <article class="card">
+          <h3>3. カーネルと GRUB</h3>
+          <p><code>zpkg install linux grub</code></p>
+        </article>
+      </div>
+      <p style="margin-top: 1.2rem">
+        <a href="/docs/stage3/">stage3 の手順を読む →</a>
+      </p>
+    </section>
+  </div>
+</PageLayout>

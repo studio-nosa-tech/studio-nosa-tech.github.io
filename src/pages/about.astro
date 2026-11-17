@@ -1,0 +1,73 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+---
+
+<PageLayout
+  title="プロジェクト — ZIGNOS"
+  description="ZIGNOS Project の概要。ソースベースの Linux ディストリビューションと、それを構成するリポジトリ。"
+>
+  <div class="wrap">
+    <section class="page-hero">
+      <span class="eyebrow">ABOUT</span>
+      <h1>ZIGNOS Project</h1>
+      <p>
+        ZIGNOS は、ゼロからビルドするソースベースの Linux ディストリビューションです。
+        「基本はどの端末でも起動し、細部は個人で弄る」を方針に、最小ベースと
+        自分で選べるパッケージ群を提供します。
+      </p>
+    </section>
+
+    <div class="prose">
+      <h2>基本情報</h2>
+      <div class="stats stats-6">
+        <div class="stat"><strong>7.1.8</strong><span>Linux kernel</span></div>
+        <div class="stat"><strong>glibc 2.44</strong><span>libc</span></div>
+        <div class="stat"><strong>gcc 16.2.0</strong><span>toolchain</span></div>
+        <div class="stat"><strong>OpenRC 0.64.1</strong><span>init system</span></div>
+        <div class="stat"><strong>zpkg 0.9</strong><span>package manager</span></div>
+        <div class="stat"><strong>x86_64</strong><span>architecture</span></div>
+      </div>
+
+      <h2>構成</h2>
+      <p>プロジェクトは 4 つのリポジトリで構成されています(現在は非公開)。</p>
+      <div class="grid">
+        <article class="card">
+          <h3>zignos</h3>
+          <p>プロジェクトトップ。設計ドキュメントとロードマップ。</p>
+        </article>
+        <article class="card">
+          <h3>zpkg</h3>
+          <p>Go 製のソースベースパッケージマネージャ。USE・スロット・binpkg・トランザクション。</p>
+        </article>
+        <article class="card">
+          <h3>zignos-recipes</h3>
+          <p>レシピツリー。core / main / desktop の 3 カテゴリ。</p>
+        </article>
+        <article class="card">
+          <h3>zignos-build</h3>
+          <p>bootstrap・base.list・イメージ / stage3 作成・QEMU テスト。</p>
+        </article>
+      </div>
+
+      <h2>名前について</h2>
+      <p>
+        ZIGNOS は「Z」と「IGNOS(未知・限界の外)」を組み合わせた名前です。
+        タグラインは <em>Beyond the Limits.</em>。
+      </p>
+
+      <h2>リンク</h2>
+      <ul>
+        <li><a href="https://github.com/studio-nosa-tech" rel="external">GitHub — studio-nosa-tech</a></li>
+        <li><a href="/docs/">ドキュメント</a></li>
+        <li><a href="/news/">ニュース</a></li>
+        <li><a href="/wallpaper.png" download>壁紙 (1672×941 PNG)</a></li>
+      </ul>
+
+      <h2>ライセンス</h2>
+      <p>
+        サイトの文章とロゴは ZIGNOS Project に帰属します。ソフトウェアのライセンスは
+        各リポジトリの表記に従います。
+      </p>
+    </div>
+  </div>
+</PageLayout>

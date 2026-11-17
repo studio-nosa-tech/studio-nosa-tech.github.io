@@ -1,0 +1,70 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+---
+
+<PageLayout
+  title="ダウンロード — ZIGNOS"
+  description="ZIGNOS の stage3 tarball とブータブルイメージ。現在は公開準備中です。"
+>
+  <div class="wrap">
+    <section class="page-hero">
+      <span class="eyebrow">DOWNLOAD</span>
+      <h1>ダウンロード</h1>
+      <p>
+        ZIGNOS の配布物は現在 <strong>準備中(Coming soon)</strong> です。
+        公開できる状態になったら、このページと GitHub Releases で案内します。
+      </p>
+    </section>
+
+    <div class="prose">
+      <div class="notice">
+        <strong>Coming soon.</strong>
+        alpha 版は非公開のリポジトリで検証中です。公開リリースのアナウンスは
+        <a href="/news/">ニュース</a> で行います。
+      </div>
+
+      <h2>公開予定の配布物</h2>
+      <div class="grid">
+        <article class="card">
+          <h3>stage3 tarball</h3>
+          <p>
+            カーネル抜きの最小ベース(47 パッケージ / 約 966 MiB)。
+            展開して chroot し、<code>zpkg install linux grub</code> で完成させます。
+          </p>
+        </article>
+        <article class="card">
+          <h3>BIOS イメージ</h3>
+          <p>MBR + ext4 のブータブルイメージ。dd してすぐ起動できます。</p>
+        </article>
+        <article class="card">
+          <h3>UEFI イメージ</h3>
+          <p>GPT + ESP のブータブルイメージ。OVMF を含む UEFI 環境で検証済みです。</p>
+        </article>
+      </div>
+
+      <h2>それまでの試し方</h2>
+      <p>
+        現在は開発者向けにソースからのビルドのみです。手順の概要は
+        <a href="/docs/stage3/">stage3 ガイド</a> と
+        <a href="/docs/install/">インストールガイド</a> にあります。
+      </p>
+      <pre><code># ビルド環境(非公開リポジトリ)で
+sudo ./make-stage3.sh
+
+# 生成した tarball を展開して chroot
+tar -xpf zignos-stage3-*.tar.xz -C /mnt/zignos
+zignos-enter.sh /mnt/zignos
+
+# chroot 内でカーネルとブートローダーを導入
+zpkg install linux grub</code></pre>
+
+      <h2>検証とセキュリティ</h2>
+      <ul>
+        <li>配布物には sha256 チェックサムを添付します。</li>
+        <li>stage3 の root はロック済みです。chroot 後に <code>passwd</code> で設定してください。</li>
+        <li>Secure Boot は無効にしてください(GRUB / カーネルは未署名)。</li>
+        <li>配布イメージの初期パスワードは初回起動時に必ず変更してください。</li>
+      </ul>
+    </div>
+  </div>
+</PageLayout>

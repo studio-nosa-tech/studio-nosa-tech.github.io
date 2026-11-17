@@ -1,0 +1,60 @@
+---
+import PageLayout from '../../layouts/PageLayout.astro';
+---
+
+<PageLayout
+  title="ZIGNOS 2026.11.17-alpha — ZIGNOS"
+  description="ZIGNOS 初の alpha リリース。stage3 tarball の公開準備について。"
+>
+  <div class="wrap">
+    <section class="page-hero">
+      <span class="eyebrow">RELEASE · ALPHA</span>
+      <h1>ZIGNOS 2026.11.17-alpha</h1>
+      <p>2026-11-17</p>
+    </section>
+
+    <div class="prose">
+      <div class="notice">
+        <strong>stage3 のダウンロードは準備中です。</strong>
+        公開できる状態になったら、このページと <a href="/download/">ダウンロード</a> で
+        案内します。
+      </div>
+
+      <h2>初の alpha</h2>
+      <p>
+        ZIGNOS は、ゼロからビルドするソースベースの Linux ディストリビューションです。
+        この alpha では、Gentoo / Exherbo 流の <strong>stage3 tarball</strong> を
+        配布物として用意しました。
+      </p>
+      <ul>
+        <li>カーネルとブートローダーを除いた、chroot 可能な最小ベース</li>
+        <li>展開して chroot し、<code>zpkg install linux grub</code> で完成させる</li>
+        <li>usr-merged(<code>/bin</code>, <code>/sbin</code>, <code>/lib</code> は <code>/usr</code> への symlink)</li>
+        <li>root はロック済み。SSH ホスト鍵や machine-id は含まない</li>
+      </ul>
+
+      <h2>現在のベース</h2>
+      <p>
+        リリース後の開発でベースを Gentoo の <code>@system</code> 相当まで最小化しました。
+        現在の stage3 は <strong>47 パッケージ / 約 966 MiB</strong> です。
+        SSH / DHCP / WiFi / エディタ / man は含まれず、必要なものを
+        <code>zpkg install</code> で追加します。
+      </p>
+
+      <h2>ハイライト</h2>
+      <ul>
+        <li><strong>zpkg</strong>: USE フラグ・スロット・binpkg・トランザクションを持つ Go 製パッケージマネージャ</li>
+        <li><strong>OpenRC</strong>: systemd を使わない init。サービスは opt-in</li>
+        <li><strong>BIOS / UEFI</strong>: 両ファームウェアに対応。GRUB は USE フラグで対象を選択</li>
+        <li><strong>fastfetch</strong>: ZIGNOS のネオンオービットロゴを同梱</li>
+      </ul>
+
+      <h2>次に</h2>
+      <p>
+        stage3 の公開と、実機での BIOS / UEFI 起動検証を進めます。詳細は
+        <a href="/docs/stage3/">stage3 ガイド</a> と
+        <a href="/docs/roadmap/">ロードマップ</a> を参照してください。
+      </p>
+    </div>
+  </div>
+</PageLayout>

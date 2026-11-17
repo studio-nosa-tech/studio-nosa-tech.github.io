@@ -1,0 +1,86 @@
+---
+import logo from '../assets/logo.png';
+import '../styles/site.css';
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+const site = Astro.site ?? Astro.url;
+const canonical = new URL(Astro.url.pathname, site);
+const ogImage = new URL('/og.png', site);
+const path = Astro.url.pathname;
+
+const nav = [
+  { href: '/docs/', label: 'ドキュメント' },
+  { href: '/download/', label: 'ダウンロード' },
+  { href: '/news/', label: 'ニュース' },
+  { href: '/about/', label: 'プロジェクト' },
+];
+
+const isCurrent = (href: string) =>
+  href === '/docs/' ? path.startsWith('/docs') : path.startsWith(href);
+---
+
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.png" type="image/png" />
+    <meta name="theme-color" content="#0b0b10" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="ZIGNOS" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="wrap">
+        <a class="brand" href="/">
+          <img src={logo.src} alt="" width="34" height="22" />
+          <span>ZIGNOS</span>
+        </a>
+        <nav class="nav" aria-label="メイン">
+          {nav.map((item) => (
+            <a
+              href={item.href}
+              aria-current={isCurrent(item.href) ? 'page' : undefined}
+            >
+              {item.label}
+            </a>
+          ))}
+          <a class="github" href="https://github.com/studio-nosa-tech" rel="external">
+            GitHub ↗
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <span>© 2026 ZIGNOS Project / studio-nosa-tech</span>
+        <span>
+          <a href="/docs/">ドキュメント</a> ·
+          <a href="/download/">ダウンロード</a> ·
+          <a href="https://github.com/studio-nosa-tech" rel="external">GitHub</a>
+        </span>
+      </div>
+    </footer>
+  </body>
+</html>
