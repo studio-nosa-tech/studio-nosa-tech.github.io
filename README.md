@@ -1,7 +1,7 @@
 # ZIGNOS Official Site
 
 ZIGNOS Project の公式サイト。Astro + Starlight の静的サイトで、GitHub Pages
-(org ルート)に配信する。
+(org ルート)に配信する。開発・運営は [Studio NØSa.](https://studio-nosa.live/)。
 
 - 公開 URL(予定): <https://studio-nosa-tech.github.io/>
 - リポジトリ名: `studio-nosa-tech/studio-nosa-tech.github.io`(**Public**)

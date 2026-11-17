@@ -4,6 +4,7 @@ description: ZIGNOS のインストール、stage3、zpkg、システム設計�
 ---
 
 ZIGNOS は、ゼロからビルドするソースベースの Linux ディストリビューションです。
+[Studio NØSa.](https://studio-nosa.live/) が開発しています。
 このサイトのドキュメントが最新の公開版です。
 
 ## はじめに
