@@ -3,7 +3,7 @@
 ZIGNOS Project の公式サイト。Astro + Starlight の静的サイトで、GitHub Pages
 (org ルート)に配信する。開発・運営は [Studio NØSa.](https://studio-nosa.live/)。
 
-- 公開 URL(予定): <https://studio-nosa-tech.github.io/>
+- 公開 URL: <https://studio-nosa-tech.github.io/>
 - リポジトリ名: `studio-nosa-tech/studio-nosa-tech.github.io`(**Public**)
 - ドキュメント: `/docs/`(このリポジトリの `src/content/docs` が**正**)
 
@@ -43,6 +43,12 @@ scripts/make-assets.mjs   favicon / OGP の生成
 ```
 
 ## デプロイ(GitHub Pages)
+
+Public リポジトリ `studio-nosa-tech/studio-nosa-tech.github.io`(org ルート Pages)
+として公開済み。`main` に push すると `.github/workflows/deploy.yml` が
+自動でビルド・デプロイする。Pages の Source は **GitHub Actions**。
+
+初回セットアップの手順(再作成時):
 
 1. `studio-nosa-tech` に **Public** リポジトリ
    `studio-nosa-tech.github.io` を作成する(org ルート Pages になる)
