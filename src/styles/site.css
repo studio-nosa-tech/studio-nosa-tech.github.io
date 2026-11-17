@@ -145,6 +145,18 @@ pre {
   letter-spacing: 0.06em;
 }
 
+.catch {
+  margin: 0.9rem 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.hero .catch {
+  margin: -0.6rem 0 1.6rem;
+}
+
 .hero p.lead {
   margin: 0 0 2rem;
   max-width: 34rem;
