@@ -24,7 +24,7 @@ import PageLayout from '../layouts/PageLayout.astro';
       </p>
 
       <p>
-        ZIGNOS は、Linux From Scratch 13.1-systemd の手順を出発点に、
+        ZIGNOS は、ゼロからのビルド手順を出発点に、
         ツールチェーンからベースシステムまでを自分の手で構築する
         ソースベースのディストリビューションです。既存ディストリビューションの
         派生ではなく、独自のパッケージマネージャ <strong>zpkg</strong> と
@@ -58,7 +58,7 @@ import PageLayout from '../layouts/PageLayout.astro';
           <span class="icon">◆</span>
           <h3>最小ベース</h3>
           <p>
-            Gentoo の <code>@system</code> に近い構成。ベースは 32 パッケージ、
+            必要最小限の構成。ベースは 32 パッケージ、
             依存込みで 54。そこから自分に必要なものだけを足します。
           </p>
         </article>
@@ -121,9 +121,9 @@ import PageLayout from '../layouts/PageLayout.astro';
         <article class="card">
           <h3>向いている人</h3>
           <p>
-            LFS を一度はやってみたいが、毎回手で組むのは大変だと思っている人。
-            Gentoo や Arch のように、自分でシステムを構成するのが好きな人。
+            自分の手で環境を構築していくのが好きな人。
             不要なものを入れず、CLI 中心で使いたい人。
+            自分に必要なものだけを選んで、長く管理したい人。
           </p>
         </article>
         <article class="card">
@@ -138,11 +138,11 @@ import PageLayout from '../layouts/PageLayout.astro';
 
       <h2>よくある質問</h2>
       <dl class="faq">
-        <dt>Gentoo との違いは何ですか?</dt>
+        <dt>他のソースベースのディストリビューションとの違いは何ですか?</dt>
         <dd>
-          どちらもソースベースですが、ZIGNOS は Portage ではなく zpkg を使い、
-          LFS 由来の bootstrap から独自に構築しています。最小ベースとレシピの
-          考え方は Gentoo の <code>@system</code> に近いものです。
+          ZIGNOS は独自のパッケージマネージャ zpkg を使い、ゼロからのビルド手順で
+          構築しています。最小ベースとレシピで構成する考え方は共通していますが、
+          特定の既存ディストリビューションの仕組みは使いません。
         </dd>
         <dt>デスクトップ環境は入っていますか?</dt>
         <dd>
@@ -151,7 +151,7 @@ import PageLayout from '../layouts/PageLayout.astro';
         </dd>
         <dt>インストールは難しいですか?</dt>
         <dd>
-          LFS を最初から手で組むより簡単です。stage3 を展開して chroot し、
+          ゼロから手で組むより簡単です。stage3 を展開して chroot し、
           <code>zpkg install linux grub</code> でカーネルとブートローダーを導入します。
           BIOS / UEFI 向けのインストーラも用意しています。
         </dd>
