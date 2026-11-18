@@ -15,7 +15,7 @@ description: SystemRescue を使った BIOS / UEFI 実機インストール、zi
 > - **initramfs** が root を `root=UUID=` で解決して `switch_root` します
 > - UEFI は `/EFI/BOOT/BOOTX64.EFI` のフォールバックパスで起動し、`efibootmgr` が
 >   あればインストーラが NVRAM エントリも登録します(ベースには含まない)
-> - **ベースは最小構成**(Gentoo の @system 相当、依存込み 57 パッケージ)。
+> - **ベースは最小構成**(Gentoo の @system 相当、依存込み 59 パッケージ)。
 >   SSH / DHCP / エディタ / man は入っていないので、必要なものを `zpkg install` します
 > - 未対応: Secure Boot(無効化が必要)、LUKS/TPM
 > - 実機での動作検証はこれからです。問題があれば `dmesg` とカーネル設定

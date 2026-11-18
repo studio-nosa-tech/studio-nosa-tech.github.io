@@ -8,9 +8,9 @@ ZIGNOS の **stage3 tarball** は、Gentoo / Exherbo の stage3 と同じ位置�
 使ってカーネルとブートローダーを導入します。
 
 - 含むもの: `zignos-build/base.list` の**依存クロージャ**から linux と grub を除いた
-  **51 パッケージ**(glibc / gcc / binutils / make / bash / coreutils / tar / gzip / xz /
+  **53 パッケージ**(glibc / gcc / binutils / make / bash / coreutils / tar / gzip / xz /
   bzip2 / pkgconf / busybox / openrc / initscripts / util-linux / shadow / e2fsprogs /
-  kbd / tzdata / eudev / kmod / gperf / dosfstools / zpkg / ca-certificates と、その依存・makedepends。
+  kbd / tzdata / eudev / kmod / gperf / inetutils / procps / dosfstools / zpkg / ca-certificates と、その依存・makedepends。
   meson / ninja / python3 / go など、ソースビルドに必要なものも含む)
 - 含まないもの: カーネル、initramfs、カーネルモジュール、GRUB、ブート設定、
   ユーザーデータ、キャッシュ、SSH ホスト鍵、machine-id、root パスワード(ロック済み)。
@@ -19,7 +19,7 @@ ZIGNOS の **stage3 tarball** は、Gentoo / Exherbo の stage3 と同じ位置�
 - 同梱: レシピツリー `/usr/share/zignos/recipes`、`/etc/zignos-stage3`(ビルド情報)、
   空の `/boot`、fstab の雛形
 
-> 2026-11-18 の実測: **974 MiB(.tar.xz)/ 51 パッケージ**(M28 のベース最小化後)。
+> 2026-11-18 の実測: **976 MiB(.tar.xz)/ 53 パッケージ**(M28 のベース最小化後)。
 > 旧構成(2026-11-17)は 2.1 GiB / 86 パッケージだった。
 > chroot 後に `zpkg install linux grub` でカーネルとブートローダーを導入する
 > (linux の依存である bison/bc/elfutils/initramfs もこのときソースからビルドされる。kmod は eudev のため stage3 に含まれる)。
@@ -29,7 +29,7 @@ ZIGNOS の **stage3 tarball** は、Gentoo / Exherbo の stage3 と同じ位置�
 stage3 のダウンロードは**準備中(Coming soon)**です。公開時は
 [ダウンロードページ](/download/)とニュースで案内します。
 
-現在の stage3 は 51 パッケージ / 約 974 MiB で、sha256 チェックサムを添付します。
+現在の stage3 は 53 パッケージ / 約 976 MiB で、sha256 チェックサムを添付します。
 
 ## ビルド
 
@@ -207,7 +207,7 @@ chroot を抜けて(`exit`)、`umount -R /mnt/zignos` してから再起動し�
 
 | 形態 | 中身 | 用途 |
 |---|---|---|
-| **stage3**(本ドキュメント) | base.list の依存クロージャ − linux/grub(51)。カーネルなし | 自分でディスクへ展開し、chroot して zpkg で完成させる(Gentoo 流) |
+| **stage3**(本ドキュメント) | base.list の依存クロージャ − linux/grub(53)。カーネルなし | 自分でディスクへ展開し、chroot して zpkg で完成させる(Gentoo 流) |
 | **seed**(`make-seed.sh`) | 実行中のフルシステム | 開発者が既存システムを複製・拡張する |
 | **イメージ**(`make-image.sh`) | 起動可能な完成ディスク像(BIOS/UEFI) | dd してすぐ起動する |
 | **installer**(`zignos-install`) | 実行中システムを別ディスクへコピー | USB から起動して内部ディスクへ導入する |

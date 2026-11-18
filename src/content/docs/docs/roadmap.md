@@ -12,13 +12,13 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 
 ## 現在のシステム(2026-11-18)
 
-- **base.list 34 トップレベル = 依存込み 57 パッケージ**(唯一の定義)/ 12G ブータブルイメージ(BIOS/UEFI 版)。レシピツリーは 157 個(core 75 + main 82)
+- **base.list 36 トップレベル = 依存込み 59 パッケージ**(唯一の定義)/ 12G ブータブルイメージ(BIOS/UEFI 版)。レシピツリーは 157 個(core 75 + main 82)
 - 起動: BIOS/MBR または UEFI/GPT → GRUB 2.14 → kernel 7.1.8 + initramfs(busybox) → OpenRC 0.64.1 → eudev 3.3.0 → serial/VGA ログイン(shadow)
 - カーネル: x86_64_defconfig + `x86_64-generic.config`(起動系は組み込み、GPU/WiFi/追加 NIC はモジュール)。root は initramfs が `root=UUID=` で解決
 - ネットワーク: **ベースには含まない**(Gentoo 流の opt-in)。`zpkg install dhcpcd openssh` の後 `rc-update add dhcpcd boot` / `rc-update add sshd default`
 - 無線: wpa_supplicant 2.12 + iw(libnl、D-Bus 制御 IF)を main/ から任意インストール。WiFi ドライバはカーネルモジュール、firmware は `main/linux-firmware`
 - サービス: ベースが有効化するのは udev(eudev)/ console(ttyS0)/ console-vga(tty1) のみ。mdev はフォールバックとして同梱するが無効。dhcpcd/dbus/sshd/chronyd/wpa_supplicant/crond/nftables は入れてから自分で有効化
-- 運用: ベースは toolchain + coreutils + zpkg + tzdata + eudev。main/ には 82 パッケージ(エディタ / SSH / man / git / curl / wget / doas、M30 のネットワーク診断・ビルド・圧縮・監視)があり、任意インストール
+- 運用: ベースは toolchain + coreutils + zpkg + tzdata + eudev + inetutils/procps。main/ には 82 パッケージ(エディタ / SSH / man / git / curl / wget / doas、M30 のネットワーク診断・ビルド・圧縮・監視)があり、任意インストール
 - zpkg: DB schema 2・world/upgrade・USE フラグ(package.use/IUSE)・フック(ldconfig 自動)・トランザクション・slots・binpkg リポジトリ
 - bootstrap: stage0/1(cross toolchain、メンテナ専用)→ stage2 フェーズ1(bootstrap core)→ **フェーズ2(base.list 全量)**。/usr は完全に zpkg 管理
 - リリースモデル: **ローリングリリース**(ブートストラップ設計)。更新は `zpkg upgrade` と `build-system.sh`
@@ -59,8 +59,9 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 | M30 | CLI ツール 26 個追加(ネットワーク/ビルド/圧縮/監視) | 完了(2026-11-18 実走行) | - |
 | M31 | 実用システムツール 20 個追加(tzdata/GnuPG/cron/logrotate/nftables/…) | 完了(2026-11-18 実走行) | - |
 | M32 | mdev → eudev 3.3.0 + udev サービス(initscripts r14) | 完了(2026-11-18 BIOS 起動) | - |
+| M33 | base に inetutils/procps(hostname/ifconfig/sysctl) | 完了(2026-11-18 BIOS 起動) | - |
 
-次の候補: **UEFI での eudev 起動確認と実機検証** / GUI 要素の調査 / ストレージ系(LUKS/LVM/XFS/Btrfs) / binpkg リポジトリの署名・配布(コミュニティ形成時)/ zpkg の `provides`/`conflicts` 解決。
+次の候補: **UEFI での起動確認と実機検証** / GUI 要素の調査 / ストレージ系(LUKS/LVM/XFS/Btrfs) / binpkg リポジトリの署名・配布(コミュニティ形成時)/ zpkg の `provides`/`conflicts` 解決。
 
 ## M25: stage3 tarball(2026-11-17 完走)
 
@@ -175,6 +176,23 @@ Portage(emerge)風のフェーズ行を入れた。
   owned ファイルが prune されることも確認。両プラットフォーム構成で BIOS/UEFI
   イメージとも **BOOT CHECK PASSED**(7.1.8)
 
+
+## M33: base に起動ユーティリティを追加(2026-11-18 完走)
+
+M32 の stage3 起動試験で、OpenRC の hostname / loopback / sysctl サービスが
+`hostname` / `ifconfig` / `sysctl` 不在で失敗していた。最小ベースの穴を埋める。
+
+- [x] **`inetutils 2.8-r1` を base へ** — `hostname`(hostname サービス)と
+  `ifconfig`(loopback サービス)。ping/ping6/ftp/telnet/tftp/traceroute は無効化し、
+  ping は従来どおり `main/iputils` が提供する(ファイル競合を回避)
+- [x] **`procps 4.0.7` を base へ** — `sysctl`(sysctl サービス)、ps/top/free など
+- [x] **ビルド環境の修正** — inetutils の configure は `/proc/net/dev` の有無で
+  `PATH_PROCNET_DEV` を定義するため、chroot ビルド時に `/proc` がマウントされている
+  必要がある。M32 のビルド時に未マウントで失敗 → `/mnt/proc` をマウントして再ビルド
+- [x] **stage3 再生成** — **53 パッケージ / 976 MiB**。inetutils と procps を収録
+- [x] **BIOS イメージ起動試験** — **BOOT CHECK PASSED**。プロンプトが
+  `root@zignos` になり、hostname/loopback/sysctl のエラーが解消
+- 残: UEFI イメージでの確認、実機での起動
 
 ## M32: mdev → eudev(2026-11-18 完走)
 
