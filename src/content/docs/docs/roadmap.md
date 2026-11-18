@@ -12,13 +12,13 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 
 ## 現在のシステム(2026-11-18)
 
-- **base.list 33 トップレベル = 依存込み 55 パッケージ**(唯一の定義)/ 12G ブータブルイメージ(BIOS/UEFI 版)。レシピツリーは 155 個(core 73 + main 82)
-- 起動: BIOS/MBR または UEFI/GPT → GRUB 2.14 → kernel 7.1.8 + initramfs(busybox) → OpenRC 0.64.1 → serial/VGA ログイン(shadow)
+- **base.list 34 トップレベル = 依存込み 57 パッケージ**(唯一の定義)/ 12G ブータブルイメージ(BIOS/UEFI 版)。レシピツリーは 157 個(core 75 + main 82)
+- 起動: BIOS/MBR または UEFI/GPT → GRUB 2.14 → kernel 7.1.8 + initramfs(busybox) → OpenRC 0.64.1 → eudev 3.3.0 → serial/VGA ログイン(shadow)
 - カーネル: x86_64_defconfig + `x86_64-generic.config`(起動系は組み込み、GPU/WiFi/追加 NIC はモジュール)。root は initramfs が `root=UUID=` で解決
 - ネットワーク: **ベースには含まない**(Gentoo 流の opt-in)。`zpkg install dhcpcd openssh` の後 `rc-update add dhcpcd boot` / `rc-update add sshd default`
 - 無線: wpa_supplicant 2.12 + iw(libnl、D-Bus 制御 IF)を main/ から任意インストール。WiFi ドライバはカーネルモジュール、firmware は `main/linux-firmware`
-- サービス: ベースが有効化するのは mdev(hotplug+modprobe)/ console(ttyS0)/ console-vga(tty1) のみ。dhcpcd/dbus/sshd/chronyd/wpa_supplicant/crond/nftables は入れてから自分で有効化
-- 運用: ベースは toolchain + coreutils + zpkg + tzdata。main/ には 82 パッケージ(エディタ / SSH / man / git / curl / wget / doas、M30 のネットワーク診断・ビルド・圧縮・監視)があり、任意インストール
+- サービス: ベースが有効化するのは udev(eudev)/ console(ttyS0)/ console-vga(tty1) のみ。mdev はフォールバックとして同梱するが無効。dhcpcd/dbus/sshd/chronyd/wpa_supplicant/crond/nftables は入れてから自分で有効化
+- 運用: ベースは toolchain + coreutils + zpkg + tzdata + eudev。main/ には 82 パッケージ(エディタ / SSH / man / git / curl / wget / doas、M30 のネットワーク診断・ビルド・圧縮・監視)があり、任意インストール
 - zpkg: DB schema 2・world/upgrade・USE フラグ(package.use/IUSE)・フック(ldconfig 自動)・トランザクション・slots・binpkg リポジトリ
 - bootstrap: stage0/1(cross toolchain、メンテナ専用)→ stage2 フェーズ1(bootstrap core)→ **フェーズ2(base.list 全量)**。/usr は完全に zpkg 管理
 - リリースモデル: **ローリングリリース**(ブートストラップ設計)。更新は `zpkg upgrade` と `build-system.sh`
@@ -58,8 +58,9 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 | M29 | grub の bios/uefi USE フラグ + efibootmgr 条件付き依存 | 完了(2026-11-18 実走行) | - |
 | M30 | CLI ツール 26 個追加(ネットワーク/ビルド/圧縮/監視) | 完了(2026-11-18 実走行) | - |
 | M31 | 実用システムツール 20 個追加(tzdata/GnuPG/cron/logrotate/nftables/…) | 完了(2026-11-18 実走行) | - |
+| M32 | mdev → eudev 3.3.0 + udev サービス(initscripts r14) | 完了(2026-11-18 BIOS 起動) | - |
 
-次の候補: **実機での BIOS/UEFI 起動と WiFi 検証** / ストレージ系(LUKS/LVM/XFS/Btrfs) / GUI 要素の調査 / binpkg リポジトリの署名・配布(コミュニティ形成時)/ zpkg の `provides`/`conflicts` 解決。
+次の候補: **UEFI での eudev 起動確認と実機検証** / GUI 要素の調査 / ストレージ系(LUKS/LVM/XFS/Btrfs) / binpkg リポジトリの署名・配布(コミュニティ形成時)/ zpkg の `provides`/`conflicts` 解決。
 
 ## M25: stage3 tarball(2026-11-17 完走)
 
@@ -174,6 +175,26 @@ Portage(emerge)風のフェーズ行を入れた。
   owned ファイルが prune されることも確認。両プラットフォーム構成で BIOS/UEFI
   イメージとも **BOOT CHECK PASSED**(7.1.8)
 
+
+## M32: mdev → eudev(2026-11-18 完走)
+
+GUI や周辺機器の自動認識に備えて、busybox mdev から **eudev 3.3.0** に移行した。
+
+- [x] **`core/eudev 3.3.0`** — systemd-udev 系のスタンドアロン版。`--with-net-ifnames-default=no` で
+  カーネルが付けた `eth0` / `wlan0` を維持(ドキュメント・dhcpcd と整合)。SELinux / SMACK /
+  TPM2 / man ページは無効、blkid と libkmod を有効化。`hwdb.bin` はビルド時に生成
+- [x] **`core/gperf 3.3`** — eudev のキーワード/hwdb 生成に必要(makedepends)
+- [x] **initscripts r14** — `/etc/init.d/udev` を追加し、sysinit の mdev リンクを udev に置換。
+  mdev スクリプトは緊急用に同梱するが無効。udev は devfs の後、`udevd --daemon` →
+  `udevadm trigger` → `udevadm settle` で coldplug する。dhcpcd/dbus/chronyd/
+  wpa_supplicant/nftables の `after` も udev に更新
+- [x] **base.list に eudev** — トップレベル 34 / 依存込み 57(kmod/libblkid は既存)。
+  既存の devtmpfs / proc / sysfs / netlink 設定で動作し、カーネル変更は不要
+- [x] **stage3 再生成** — **51 パッケージ / 974 MiB**(eudev・kmod・gperf を追加)。
+  `/etc/udev/hwdb.bin`、`/usr/lib/udev/rules.d`、`/etc/runlevels/sysinit/udev` を収録
+- [x] **BIOS イメージ起動試験** — **BOOT CHECK PASSED**。devfs → udev 起動 → boot/default
+  の順で進み、root ログインと `uname` を確認(TCG の IO-APIC パニックは既知の再試行対象)
+- 残: UEFI イメージでの確認、実機での uevent/ファームウェアロード検証
 
 ## M31: 実用システムツール 20 個追加(2026-11-18 完走)
 

@@ -11,11 +11,11 @@ description: SystemRescue を使った BIOS / UEFI 実機インストール、zi
 > - **BIOS/MBR と UEFI/GPT の両方**に対応しました(イメージは `UEFI=1` で UEFI 版を生成)
 > - カーネルは **x86_64_defconfig ベースの汎用設定**(ACPI/SATA/NVMe/USB/VT/VGA/
 >   UEFI GOP framebuffer + 主要 NIC)で、多くの PC で起動できます。GPU/WiFi/追加 NIC は
->   モジュールとして同梱され、mdev(kmod)が自動ロードします
+>   モジュールとして同梱され、eudev が uevent 経由で kmod から自動ロードします
 > - **initramfs** が root を `root=UUID=` で解決して `switch_root` します
 > - UEFI は `/EFI/BOOT/BOOTX64.EFI` のフォールバックパスで起動し、`efibootmgr` が
 >   あればインストーラが NVRAM エントリも登録します(ベースには含まない)
-> - **ベースは最小構成**(Gentoo の @system 相当、依存込み 55 パッケージ)。
+> - **ベースは最小構成**(Gentoo の @system 相当、依存込み 57 パッケージ)。
 >   SSH / DHCP / エディタ / man は入っていないので、必要なものを `zpkg install` します
 > - 未対応: Secure Boot(無効化が必要)、LUKS/TPM
 > - 実機での動作検証はこれからです。問題があれば `dmesg` とカーネル設定
@@ -188,7 +188,7 @@ ZIGNOS_USER=yourname ZIGNOS_PASSWORD='...' zignos-install --yes /dev/nvme0n1
 
 ```sh
 uname -r                              # 7.1.8
-rc-status                             # mdev / console / console-vga が started
+rc-status                             # udev / console / console-vga が started
 lsmod                                 # モジュールがロードされている
 ```
 
@@ -305,11 +305,10 @@ wpa_cli
 ```
 
 - WiFi ドライバは**モジュール**として同梱されています(`iwlwifi`/`ath10k`/`ath11k`/
-  `rtw88`/`rtw89`/`mt76`/`brcmfmac` など)。**起動時に存在するデバイス**は
-  mdev(`mdev -s`)+ kmod が `MODALIAS` で自動ロードします。起動後に挿した USB 機器は
-  自動ロードされないため、`lspci -k` / `lsusb` でチップを調べて `modprobe <driver>` を
-  実行してください(モダンカーネルは `/proc/sys/kernel/hotplug` を廃止しており、
-  hotplug の自動処理には udev が必要です)
+  `rtw88`/`rtw89`/`mt76`/`brcmfmac` など)。**起動時に存在するデバイス**も、
+  起動後に挿した USB 機器も、eudev + kmod が uevent 経由で自動ロードします。
+  それでも読み込まれない場合は `lspci -k` / `lsusb` でチップを調べて
+  `modprobe <driver>` を実行してください
 - `iw dev` でインターフェースが見えない場合は `dmesg | grep -i firmware` と
   `lspci -k` を確認してください
 
@@ -375,7 +374,7 @@ ZIGNOS のカーネルは **`x86_64_defconfig`(カーネル同梱の汎用設定
   ext4/vfat、virtio、e1000e/r8169/igb など。initramfs は busybox だけで動きます
 - **追加ハードウェアはモジュール(=m)**: Intel/AMD/NVIDIA GPU、WiFi
   (iwlwifi/ath/rtw/mt76/brcmfmac)、追加 NIC、XFS/Btrfs/NTFS3 など。
-  mdev が `/etc/mdev.conf` 経由で kmod の `modprobe` を呼び、デバイスの
+  eudev が uevent 経由で kmod の `modprobe` を呼び、デバイスの
   `MODALIAS` に合うドライバを自動ロードします
 - **UEFI の画面**: ファームウェアの GOP framebuffer を使う `simpledrm` + `fbcon` が
   入っているため、GPU ドライバが動く前でも VGA/HDMI にログインプロンプトが出ます
@@ -437,7 +436,7 @@ rc-status --all
 - **暗号化なし**: LUKS、署名付きモジュール、TPM は未対応
 - **インストーラの構成は単純**: スワップや `/home` 分離は未対応(UEFI は ESP + root の 2 つ)
 - **WiFi は firmware 導入後**: `main/linux-firmware`(約 2.0 GiB)を入れて
-  `modprobe` する。自動ロードは mdev + kmod が行う
+  `modprobe` する。自動ロードは eudev + kmod が行う
 - **公開イメージなし**: 現状は自分でビルドする開発者向け。配布時は署名付きイメージを想定
 - **タイムゾーンの既定は UTC**: `tzdata` は入っているので `/etc/localtime` を差し替えれば任意の地域に設定できる
 - **モジュール署名なし**: `CONFIG_MODULE_SIG` は無効(改ざん検知は未対応)
