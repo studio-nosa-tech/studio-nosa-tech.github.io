@@ -564,6 +564,28 @@ stage3 の root はロックされています。chroot に入って `passwd` �
 stage3 は最小ベースです。`zpkg install vim nano dhcpcd openssh` などで追加します。
 chroot 内でネットワークを使うには `/etc/resolv.conf` と NIC の設定が必要です。
 
+### 新しいパッケージのレシピが見つからない(`recipe not found`)
+
+`zpkg` にはレシピツリーを同期するコマンドはありません。stage3 に同梱された
+`/usr/share/zignos/recipes` が、その stage3 を作った時点のスナップショットです。
+新しい stage3 のレシピに更新するには、レシピツリーだけを展開して上書きします。
+
+```sh
+tar -xJf zignos-stage3-<new>.tar.xz -C /tmp/zignos-new \
+  ./usr/share/zignos/recipes
+cp -a /tmp/zignos-new/usr/share/zignos/recipes/. /usr/share/zignos/recipes/
+
+# 確認
+zpkg search networkmanager
+```
+
+上書きせず、一時的に新しいツリーを使うこともできます。
+
+```sh
+ZPKG_REPOS=/tmp/zignos-new/usr/share/zignos/recipes/core:/tmp/zignos-new/usr/share/zignos/recipes/main \
+  zpkg install networkmanager
+```
+
 ### `zpkg install linux` が遅い / 失敗する
 
 初回はカーネルソースのダウンロードとビルドが走ります。ネットワークと空き容量
