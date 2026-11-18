@@ -549,14 +549,18 @@ zpkg install linux
 
 古い linux パッケージは `/boot/vmlinuz` と `/boot/initramfs.img` という
 **バージョンなし名**でカーネルを入れるため、`grub-mkconfig` の `10_linux` が
-カーネルを見つけられません。バージョン付きの symlink を作ってから再生成します。
+カーネルを見つけられません。バージョン付きのコピーを作ってから再生成します。
 
 ```sh
 KVER=$(ls /usr/lib/modules | tail -1)
-ln -sfn vmlinuz /boot/vmlinuz-$KVER
-ln -sfn initramfs.img /boot/initramfs-$KVER.img
+cp -f /boot/vmlinuz /boot/vmlinuz-$KVER
+cp -f /boot/initramfs.img /boot/initramfs-$KVER.img
 grub-mkconfig -o /boot/grub/grub.cfg
 ```
+
+> `/boot` が FAT32 の場合は symlink を作れません(`ln: Operation not permitted`)。
+> 上の `cp` は FAT32 でも動作します。最新の linux レシピは、これらの
+> バージョン付きコピーをパッケージに含めます。
 
 生成結果を確認します。
 
@@ -565,8 +569,7 @@ grep -E 'menuentry|linux /boot|initrd /boot' /boot/grub/grub.cfg
 ```
 
 `menuentry "ZIGNOS ..."` と `/boot/vmlinuz-7.1.8`、`/boot/initramfs-7.1.8.img`
-が出ていれば、再起動後に GRUB から ZIGNOS を選べます。最新の linux レシピでは
-これらの symlink がパッケージに含まれます。
+が出ていれば、再起動後に GRUB から ZIGNOS を選べます。
 
 ## 既知の制約
 
