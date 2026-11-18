@@ -1,6 +1,6 @@
 ---
 title: ロードマップ
-description: M0–M35 のマイルストーン記録と現在の状況。
+description: M0–M36 のマイルストーン記録と現在の状況。
 ---
 
 マイルストーンごとに完了条件を明記する。進捗はこのファイルのチェックボックスで管理する。
@@ -8,7 +8,7 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 /about/ の「ステータス」も参照。
 
 > 各マイルストーン節の数値・構成は**その時点の記録**。パッケージ数やベース構成は
-> 以後のマイルストーンで変わっている(現在は M35 の節と下の「現在のシステム」が正)。
+> 以後のマイルストーンで変わっている(現在は M36 の節と下の「現在のシステム」が正)。
 
 ## 現在のシステム(2026-11-19)
 
@@ -20,7 +20,7 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 - 無線: wpa_supplicant 2.12 + iw(libnl、D-Bus 制御 IF)を main/ から任意インストール。WiFi ドライバはカーネルモジュール、firmware は `main/linux-firmware`
 - サービス: ベースが有効化するのは udev(eudev)/ console(ttyS0)/ console-vga(tty1) のみ。mdev はフォールバックとして同梱するが無効。dhcpcd/dbus/sshd/chronyd/wpa_supplicant/crond/nftables は入れてから自分で有効化
 - 運用: ベースは toolchain + coreutils + zpkg + tzdata + eudev + inetutils/procps。main/ には 86 パッケージ(エディタ / SSH / man / git / curl / wget / doas、M30 のネットワーク診断・ビルド・圧縮・監視、M34 の NetworkManager/nmtui)があり、任意インストール
-- zpkg: DB schema 2・world/upgrade・USE フラグ(package.use/IUSE)・フック(ldconfig 自動)・トランザクション・slots・binpkg リポジトリ・レシピ同期(`zpkg sync`)
+- zpkg: DB schema 2・world/upgrade・USE フラグ(package.use/IUSE)・フック(ldconfig 自動)・トランザクション・slots・binpkg リポジトリ・レシピ同期(`zpkg sync`)・依存アトム解決(バージョン制約 / provides / conflicts / 逆依存 / USE 制約)
 - bootstrap: stage0/1(cross toolchain、メンテナ専用)→ stage2 フェーズ1(bootstrap core)→ **フェーズ2(base.list 全量)**。/usr は完全に zpkg 管理
 - リリースモデル: **ローリングリリース**(ブートストラップ設計)。更新は `zpkg upgrade` と `build-system.sh`
 
@@ -61,8 +61,11 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 | M31 | 実用システムツール 20 個追加(tzdata/GnuPG/cron/logrotate/nftables/…) | 完了(2026-11-18 実走行) | - |
 | M32 | mdev → eudev 3.3.0 + udev サービス(initscripts r14) | 完了(2026-11-18 BIOS 起動) | - |
 | M33 | base に inetutils/procps(hostname/ifconfig/sysctl) | 完了(2026-11-18 BIOS 起動) | - |
+| M34 | NetworkManager 1.58.1 + nmtui を main に追加 | 完了(2026-11-19 実走行) | - |
+| M35 | zpkg sync(レシピツリーの同期) | 完了(2026-11-19 実走行) | - |
+| M36 | zpkg 依存解決(アトム / バックトラック / 逆依存) | 完了(2026-11-19 実走行) | - |
 
-次の候補: **UEFI での起動確認と実機検証** / GUI 要素の調査 / ストレージ系(LUKS/LVM/XFS/Btrfs) / binpkg リポジトリの署名・配布(コミュニティ形成時)/ zpkg の `provides`/`conflicts` 解決。
+次の候補: **UEFI での起動確認と実機検証** / GUI 要素の調査 / ストレージ系(LUKS/LVM/XFS/Btrfs) / binpkg リポジトリの署名・配布(コミュニティ形成時)/ SAT solver(複数バージョン・スロットを含む完全解)。
 
 ## M25: stage3 tarball(2026-11-17 完走)
 
@@ -177,6 +180,34 @@ Portage(emerge)風のフェーズ行を入れた。
   owned ファイルが prune されることも確認。両プラットフォーム構成で BIOS/UEFI
   イメージとも **BOOT CHECK PASSED**(7.1.8)
 
+
+## M36: zpkg の依存解決 — アトム・バックトラック(2026-11-19 検証)
+
+依存を名前だけで DFS していた方式を、パッケージアトムと決定的バックトラックに
+置き換えた。パッケージ数が増えても制約・仮想パッケージ・競合を扱える。
+
+- [x] **アトムパーサ `internal/depspec`** — バージョン制約(`>=`, `<=`, `>`, `<`, `=`,
+  `!=`)、条件付き依存(`flag?pkg` / `!flag?pkg`)、USE 制約(`foo[ssl]` / `foo[-ssl]` /
+  `foo[ssl?]`)、provides の `virtual/foo[-ver]` をパース。単体テスト付き
+- [x] **リゾルバ `internal/resolve`** — 直接レシピ + provides 候補を「インストール済み
+  → 直接名 → 名前順」で試す決定的バックトラック。バージョン / USE 制約と conflicts
+  (選択済み + インストール済み)を検査し、失敗時は別候補へ戻る。結果は依存が先の
+  トポロジカル順、循環はエラー
+- [x] **provides の実用化** — `virtual/foo` を install すると provider を選び、world には
+  provider を記録。`meta.json` に `provides` / `conflicts` を保存
+- [x] **conflicts の実用化** — インストール前と解決時の両方で競合を検出
+- [x] **逆依存** — `zpkg depends -r <pkg>` がインストール済み DB の `depends` /
+  `builddepends` を provides 込みで照合。`zpkg remove` は逆依存があると停止し
+  `-f` で強制できる
+- [x] **optional dependencies / USE 連携** — 条件付き依存をリゾルバ内で評価し、
+  依存先の USE 制約も候補選択に反映
+- [x] **search** — provides も検索対象に
+- [x] **テスト** — 単体(パース / バージョン順序 / provides / バックトラック / USE 制約 /
+  条件 / インストール済み conflict)と CLI 統合(逆依存と remove ガード / virtual target
+  の install と world 記録)。`go test ./...` / `go vet ./...` 通過
+- [x] **実レシピ確認** — chroot で `zpkg depends networkmanager`、`zpkg depends -r glib`
+  (networkmanager / sshfs)、`zpkg remove glib` の拒否を確認
+- [ ] **SAT solver** — 将来課題。候補選択は `internal/resolve` に分離済み
 
 ## M35: zpkg sync — レシピツリーの同期(2026-11-19 検証)
 
@@ -754,7 +785,7 @@ v0 のコマンド: `zpkg build|install|remove|list|search|depends`
 同一 Go コードベースで段階拡張。USE フラグ・world・upgrade・トランザクションは
 v0.9 として実装済み(M9–M12):
 
-- slots(同名複数バージョン共存)— メタデータの slot は準備済み
-- 本格的依存解決ソルバー(制約付き依存・provides/conflicts の解決)
+- slots(同名複数バージョン共存)— M20 で実装済み。複数バージョンを同時に解く機能は未対応
+- SAT solver — 現在は決定的バックトラック(M36)。複数バージョン・スロットを含む完全解は将来課題
 - 署名付きリポジトリ・binpkg の配布(index + 公開)
-- world rebuild(`upgrade --newuse`: USE 変更時の自動再ビルド)
+- world rebuild — `upgrade --newuse` として M17 で実装済み

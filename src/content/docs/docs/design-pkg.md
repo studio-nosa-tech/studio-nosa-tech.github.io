@@ -4,7 +4,7 @@ description: zpkg の設計。レシピ形式、DB schema 2、USE フラグ、�
 ---
 
 ステータス: v0.9 設計(実装と合わせて更新する。DB schema 2・world/upgrade・USE
-フラグ・フック・トランザクションは実装済み — 後述の各節参照)
+フラグ・フック・トランザクション・依存アトム解決は実装済み — 後述の各節参照)
 
 > 実際の設定ファイル(`use.conf` / `package.use` / `make.conf` / `binrepo.conf` /
 > `sync.conf`)と環境変数は [zpkg 設定](/docs/zpkg-config/) にまとめています。
@@ -19,14 +19,15 @@ description: zpkg の設計。レシピ形式、DB schema 2、USE フラグ、�
 
 - バイナリリポジトリの配布(index + 署名)— binpkg キャッシュとローカルリポジトリ対応はある
 
-- 制約付き依存(`>=foo-1.2`、`!bar`)と本格的な依存解決ソルバー(provides/conflicts は記録のみ)
+- 本格的な SAT ソルバー。現在は決定的なバックトラック解決(下記「依存解決」)で、
+  複数バージョン・スロットを同時に考慮する完全解は未実装
 
 ## 全体像
 
 ```
 レシピリポジトリ(ZPKG_REPOS, 先頭一致で検索)
    ↓ recipe.Load
-依存解決(internal/dep, トポロジカルソート)
+依存解決(internal/depspec + internal/resolve, バックトラック + トポロジカルソート)
    ↓
 fetch → checksum 検証 → extract(internal/source)
    ↓
@@ -47,13 +48,13 @@ recipes/core/<pkg>/
 ├── version       # 1 行。必須
 ├── sources       # 1 行 1 URL。省略可(ソースなしパッケージ)
 ├── checksums     # 1 行 1 個の sha256。sources と同じ順・同数
-├── depends       # 1 行 1 パッケージ名(flag?pkg 可)。省略可
-├── makedepends   # ビルド時のみの依存(flag?pkg 可)。省略可
+├── depends       # 実行時依存(1 行 1 アトム)。省略可
+├── makedepends   # ビルド時のみの依存(1 行 1 アトム)。省略可
 ├── revision      # -rN。内容を変えたら必ず上げる
 ├── slot          # 共存スロット(既定 0)
 ├── iuse          # このレシピが理解する USE フラグ
-├── provides      # virtual 名(記録のみ)
-├── conflicts     # 同時インストール禁止(記録のみ)
+├── provides      # virtual 名(解決に使用。virtual/foo[-ver])
+├── conflicts     # 同時インストール禁止(解決に使用)
 ├── build         # shell スクリプト。必須(恒久的に shell)
 ├── post_install  # 任意のフック(bash)
 └── post_remove   # 任意のフック(bash)
@@ -134,18 +135,42 @@ linux-firmware に実在する空白入りファイル名がきっかけ(M22)。
 |---|---|---|
 | `revision` | レシピ改訂番号(`-rN`) | 0 |
 | `slot` | 共存スロット(将来の複数バージョン用) | `0` |
-| `provides` | 提供する virtual 名(1行1個) | なし |
-| `conflicts` | 同時に入れてはいけないパッケージ | なし |
-| `makedepends` | ビルド時のみ必要な依存(1行1個、`flag?pkg` 可) | なし |
+| `provides` | 提供する virtual 名(1行1個、`virtual/foo[-ver]`) | なし |
+| `conflicts` | 同時に入れてはいけないパッケージ(アトム可) | なし |
+| `makedepends` | ビルド時のみ必要な依存(1行1個、アトム可) | なし |
 | `iuse` | レシピが理解する USE フラグ(1行1個) | なし |
 | `post_install` / `post_remove` | インストール/削除直後のフック(bash) | なし |
 
 `depends` は実行時依存。ビルド順序には `depends` + `makedepends` の両方を使う。
 
-## 依存解決(v0.9)
+## 依存解決(v0.9+ バックトラック)
 
-- `depends`(+`makedepends`)の宣言に従い DFS でトポロジカルソート(依存が先、循環はエラー)
-- ソルバーなし。バージョン制約なし(名前のみ)。`provides`/`conflicts` は記録のみでまだ解決には使わない
+`depends` / `makedepends` / `provides` / `conflicts` にはパッケージアトムを書ける。
+
+| 例 | 意味 |
+|---|---|
+| `foo` | 任意バージョンの `foo` |
+| `>=foo-1.2` / `<foo-2.0` / `=foo-1.2-r3` | バージョン制約(`>`, `<=`, `!=` も可) |
+| `ssl?openssl` | `ssl` が有効なときだけ `openssl` |
+| `!ssl?gnutls` | `ssl` が無効なときだけ `gnutls` |
+| `foo[ssl]` / `foo[-ssl]` | 依存先の `ssl` が有効 / 無効であること |
+| `foo[ssl?]` | 依存先が `ssl` を知っている場合だけ有効であること |
+| `ssl?foo[ssl,-zlib]` | 条件と USE 制約の組み合わせ |
+
+- バージョン制約は演算子付きで書く。`foo-1.2` はパッケージ名として扱う(名前に
+  `-` と数字を含むパッケージがあるため)
+- `provides` は `virtual/mailer` または `virtual/mailer-1.2`。バージョン省略時は
+  提供側パッケージのバージョンを使う
+- 解決は `internal/depspec`(アトムのパース)と `internal/resolve`(決定的バックトラック):
+  - 直接レシピと `provides` の候補を「インストール済み → 直接名 → 名前順」で試す
+  - バージョン / USE 制約を満たさない候補と、conflict する候補を除外する
+  - 行き詰まったら別の provider / 候補へ戻る。選択結果は依存が先のトポロジカル順
+  - `virtual/foo` を install すると provider を選び、world には provider を記録する
+- `conflicts` は選択済みパッケージとインストール済みパッケージの両方に対して検査する
+- 逆依存: `zpkg depends -r <pkg>` がインストール済み DB の `depends` / `builddepends` を
+  provides も含めて照合する。`zpkg remove` は逆依存があると停止し、`-f` で強制できる
+- 制限: レシピは名前ごとに 1 バージョン(複数バージョン/スロットは解決対象外)。
+  **SAT solver は未実装**で、候補選択は将来差し替えられるよう `internal/resolve` に分離している
 - 既にインストール済みのパッケージは build/install の対象からスキップ(`-f` で強制)
 - **`-f` は binpkg キャッシュを無視しない**: 同一 version+revision+実効 USE の
   binpkg があればそれを使う。レシピの内容を変えたときは revision を上げること
@@ -221,7 +246,7 @@ linux-firmware に実在する空白入りファイル名がきっかけ(M22)。
 | `build [-f] <pkg>...` | fetch → 検証 → destroot まで(インストールしない) |
 | `install [-f] [-p] [--asdeps] <pkg>...` | build/install。`-p` は pretend、`--asdeps` は world に追加しない |
 | `upgrade [-p] [--newuse] [pkg...]` | world(または指定 pkg)をレシピの版へ。`version.Compare(installed, recipe)` で判定。`--newuse` は実効 USE フラグが変わったパッケージも再ビルド |
-| `remove <pkg>...` | 削除 + world から除去 |
+| `remove [-f] <pkg>...` | 削除 + world から除去。逆依存があると停止(`-f` で強制) |
 | `info <pkg>...` | インストール済みメタデータと利用可能レシピ |
 | `owner <path>...` | パスの所有パッケージ |
 | `world` | 明示インストール一覧 |
@@ -229,7 +254,9 @@ linux-firmware に実在する空白入りファイル名がきっかけ(M22)。
 | `use --package <pkg> [flag|-flag]...` | パッケージ単位 USE の表示・編集(`package.use`) |
 | `recover` | 中断されたトランザクションの修復(install はロールバック、remove は完了) |
 | `mkindex [dir]` | binpkg リポジトリ用の `index.json` を生成(既定はローカルキャッシュ) |
-| `depends/list/search` | 依存順の表示 / 導入済み一覧 / レシピ検索 |
+| `sync [--from <src>] [--dest <dir>] [-n]` | レシピツリーを stage3/レシピ tarball・ディレクトリ・URL から原子的に置換 |
+| `depends [-r] <pkg>...` | 依存順の表示。`-r` はインストール済みの逆依存を表示 |
+| `list` / `search <term>` | 導入済み一覧 / レシピ検索(provides も検索対象) |
 
 binpkg のキャッシュ名は `<name>-<version>[-rN][-<opts8>].pkg.tar.gz`。revision や実効オプションが変わると別ファイルになる。
 
