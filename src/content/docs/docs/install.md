@@ -529,6 +529,19 @@ chroot 内でネットワークを使うには `/etc/resolv.conf` と NIC の設
 初回はカーネルソースのダウンロードとビルドが走ります。ネットワークと空き容量
 (数 GiB)を確認してください。binpkg リポジトリを設定していればそちらを使います。
 
+### `certs/extract-cert.c: openssl/bio.h: No such file or directory`
+
+古い stage3 では linux のビルド依存に openssl が含まれていませんでした。
+カーネル 7.1.8 は `certs/extract-cert` のビルドに OpenSSL のヘッダーを要求します。
+
+```sh
+zpkg install openssl
+zpkg install linux
+```
+
+最新の stage3 / レシピでは linux の `makedepends` に openssl を追加済みです
+(openssl のビルドに perl も自動で入ります)。
+
 ## 既知の制約
 
 - **Secure Boot 非対応**(GRUB/カーネルは未署名。無効化が必要)
