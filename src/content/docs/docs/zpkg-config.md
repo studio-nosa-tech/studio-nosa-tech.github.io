@@ -15,6 +15,7 @@ description: ZIGNOS のパッケージマネージャ zpkg の設定ファイル
 ├── binrepo.conf   # binpkg リポジトリ
 ├── sync.conf      # zpkg sync の既定ソース
 ├── security.conf  # 署名検証ポリシー
+├── sandbox.conf   # ビルドサンドボックス
 └── trusted.d/     # 信頼する公開鍵(*.pub)
 ```
 
@@ -28,6 +29,7 @@ description: ZIGNOS のパッケージマネージャ zpkg の設定ファイル
 | `binrepo.conf` | binpkg リポジトリ | `BINREPO=<URL またはパス>` |
 | `sync.conf` | レシピ同期の既定ソース | `RECIPEURL=<URL またはパス>` |
 | `security.conf` | 署名検証ポリシー | `TRUSTED_KEYS=...` / `ALLOW_UNSIGNED=0|1` / `ALLOW_EXPIRED=0|1` |
+| `sandbox.conf` | ビルドサンドボックス | `SANDBOX=auto|require|off` / `BUILD_NET=0|1` / `BWRAP=...` |
 | `trusted.d/` | 信頼する公開鍵 | `<keyid>.pub`(PKIX PEM) |
 
 ## USE フラグ
@@ -178,6 +180,26 @@ ALLOW_EXPIRED=0
 鍵の生成・リポジトリの署名・レシピツリーの署名の詳細は
 [パッケージ署名と検証](/docs/signing/) を参照してください。
 
+## ビルドサンドボックス(`sandbox.conf`)
+
+```sh
+# /etc/zpkg/sandbox.conf
+SANDBOX=auto
+BUILD_NET=1
+#BWRAP=/usr/bin/bwrap
+```
+
+- `SANDBOX=auto`(既定)は bubblewrap があればビルドを隔離し、無い/使えない場合は
+  警告して直接ビルドします。`require` は失敗、`off` は無効です
+- `BUILD_NET=1` はビルド時のネットワークを許可します。`0` にすると
+  network namespace で分離します
+- レシピの `build_network`(`1` / `0`)がグローバル設定を上書きします
+- 環境変数 `ZPKG_SANDBOX` / `ZPKG_BUILD_NET` / `ZPKG_BWRAP` が優先されます
+- `zpkg build --no-sandbox` / `zpkg install --no-sandbox` で一時的に無効化できます
+
+サンドボックスの内容と chroot の注意は
+[ビルド環境の隔離](/docs/build-sandbox/) を参照してください。
+
 ## パスと環境変数
 
 | 変数 | 既定 | 内容 |
@@ -193,6 +215,9 @@ ALLOW_EXPIRED=0
 | `ZPKG_TRUSTED_KEYS` | `$ZPKG_ROOT/etc/zpkg/trusted.d` | 信頼する `*.pub` のディレクトリ |
 | `ZPKG_ALLOW_UNSIGNED` | なし | `1` で署名のない index/レシピツリーを許可(開発用) |
 | `ZPKG_ALLOW_EXPIRED` | なし | `1` で署名の期限切れだけ許可(復旧用) |
+| `ZPKG_SANDBOX` | `auto` | `auto` / `require` / `off` |
+| `ZPKG_BUILD_NET` | `1` | `0` でビルドをネットワーク分離 |
+| `ZPKG_BWRAP` | `bwrap` | bubblewrap の実行ファイル |
 | `ZPKG_USE` | なし | グローバル USE を丸ごと上書き |
 | `ZPKG_CFLAGS` | なし | `CFLAGS` を上書き(空文字も有効) |
 | `ZPKG_MAKEOPTS` | なし | `MAKEOPTS` を上書き(空文字も有効) |

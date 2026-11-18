@@ -1,6 +1,6 @@
 ---
 title: ロードマップ
-description: M0–M37 のマイルストーン記録と現在の状況。
+description: M0–M38 のマイルストーン記録と現在の状況。
 ---
 
 マイルストーンごとに完了条件を明記する。進捗はこのファイルのチェックボックスで管理する。
@@ -8,11 +8,11 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 /about/ の「ステータス」も参照。
 
 > 各マイルストーン節の数値・構成は**その時点の記録**。パッケージ数やベース構成は
-> 以後のマイルストーンで変わっている(現在は M37 の節と下の「現在のシステム」が正)。
+> 以後のマイルストーンで変わっている(現在は M38 の節と下の「現在のシステム」が正)。
 
 ## 現在のシステム(2026-11-19)
 
-- **base.list 36 トップレベル = 依存込み 59 パッケージ**(唯一の定義)/ 12G ブータブルイメージ(BIOS/UEFI 版)。レシピツリーは 161 個(core 75 + main 86)
+- **base.list 37 トップレベル = 依存込み 60 パッケージ**(唯一の定義)/ 12G ブータブルイメージ(BIOS/UEFI 版)。レシピツリーは 162 個(core 76 + main 86)
 - 起動: BIOS/MBR または UEFI/GPT → GRUB 2.14 → kernel 7.1.8 + initramfs(busybox) → OpenRC 0.64.1 → eudev 3.3.0 → serial/VGA ログイン(shadow)
 - カーネル: x86_64_defconfig + `x86_64-generic.config`(起動系は組み込み、GPU/WiFi/追加 NIC はモジュール)。root は initramfs が `root=UUID=` で解決
 - ネットワーク: **ベースには含まない**(Gentoo 流の opt-in)。`zpkg install dhcpcd openssh` の後 `rc-update add dhcpcd boot` / `rc-update add sshd default`
@@ -20,7 +20,7 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 - 無線: wpa_supplicant 2.12 + iw(libnl、D-Bus 制御 IF)を main/ から任意インストール。WiFi ドライバはカーネルモジュール、firmware は `main/linux-firmware`
 - サービス: ベースが有効化するのは udev(eudev)/ console(ttyS0)/ console-vga(tty1) のみ。mdev はフォールバックとして同梱するが無効。dhcpcd/dbus/sshd/chronyd/wpa_supplicant/crond/nftables は入れてから自分で有効化
 - 運用: ベースは toolchain + coreutils + zpkg + tzdata + eudev + inetutils/procps。main/ には 86 パッケージ(エディタ / SSH / man / git / curl / wget / doas、M30 のネットワーク診断・ビルド・圧縮・監視、M34 の NetworkManager/nmtui)があり、任意インストール
-- zpkg: DB schema 2・world/upgrade・USE フラグ(package.use/IUSE)・フック(ldconfig 自動)・トランザクション・slots・binpkg リポジトリ・レシピ同期(`zpkg sync`)・依存アトム解決(バージョン制約 / provides / conflicts / 逆依存 / USE 制約)・Ed25519 署名(index / レシピ manifest / ロールバック・期限)
+- zpkg: DB schema 2・world/upgrade・USE フラグ(package.use/IUSE)・フック(ldconfig 自動)・トランザクション・slots・binpkg リポジトリ・レシピ同期(`zpkg sync`)・依存アトム解決(バージョン制約 / provides / conflicts / 逆依存 / USE 制約)・Ed25519 署名(index / レシピ manifest / ロールバック・期限)・bubblewrap ビルド隔離(ro root / namespace / capability / network)
 - bootstrap: stage0/1(cross toolchain、メンテナ専用)→ stage2 フェーズ1(bootstrap core)→ **フェーズ2(base.list 全量)**。/usr は完全に zpkg 管理
 - リリースモデル: **ローリングリリース**(ブートストラップ設計)。更新は `zpkg upgrade` と `build-system.sh`
 
@@ -65,8 +65,9 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 | M35 | zpkg sync(レシピツリーの同期) | 完了(2026-11-19 実走行) | - |
 | M36 | zpkg 依存解決(アトム / バックトラック / 逆依存) | 完了(2026-11-19 実走行) | - |
 | M37 | パッケージ署名と検証(Ed25519 / index / recipes) | 完了(2026-11-19 実走行) | - |
+| M38 | ビルド環境の隔離(bubblewrap / ro root / network) | 完了(2026-11-19 実走行) | - |
 
-次の候補: **UEFI での起動確認と実機検証** / GUI 要素の調査 / ストレージ系(LUKS/LVM/XFS/Btrfs) / 公式署名鍵の運用と binpkg リポジトリの公開 / SAT solver(複数バージョン・スロットを含む完全解)。
+次の候補: **UEFI での起動確認と実機検証** / GUI 要素の調査 / ストレージ系(LUKS/LVM/XFS/Btrfs) / 公式署名鍵の運用と binpkg リポジトリの公開 / 最小依存ビルドルート / resource limit / SAT solver(複数バージョン・スロットを含む完全解)。
 
 ## M25: stage3 tarball(2026-11-17 完走)
 
@@ -181,6 +182,54 @@ Portage(emerge)風のフェーズ行を入れた。
   owned ファイルが prune されることも確認。両プラットフォーム構成で BIOS/UEFI
   イメージとも **BOOT CHECK PASSED**(7.1.8)
 
+
+## M38: ビルド環境の隔離(2026-11-19 検証)
+
+レシピの build スクリプトを bubblewrap のサンドボックス内で実行するように
+した。root は読み取り専用、書き込みはパッケージの work ディレクトリだけ、
+プロセスとネットワークは namespace で分離する。
+
+- [x] **bubblewrap 0.13.1** — `core/bubblewrap` を追加し、base.list に同梱。
+  meson で SELinux/man/tests/completion を無効化。libcap に依存
+- [x] **カーネル namespace** — `x86_64-generic.config` に
+  `CONFIG_NAMESPACES` / `UTS_NS` / `IPC_NS` / `PID_NS` / `NET_NS` / `USER_NS` を
+  追加し、linux build の必須シンボル検査にも追加
+- [x] **`internal/sandbox`** — bwrap 引数の構築、環境 allowlist、auto/require/off。
+  root は `--ro-bind / /`、work のみ `--bind`、`/tmp` 等は tmpfs、
+  `/etc/ssh` / `/etc/zpkg` / WiFi 設定等をマスク、`/etc/shadow` 等は `/dev/null`。
+  PID/IPC/UTS namespace、hostname `zignos-build`
+- [x] **capability 制限** — `CAP_CHOWN` / `CAP_FOWNER` / `CAP_DAC_OVERRIDE` /
+  `CAP_FSETID` / `CAP_SYS_CHROOT` のみ。`CAP_SYS_ADMIN` なし
+- [x] **環境変数** — `os.Environ()` を継承せず allowlist。`HOME` / `GOCACHE` /
+  `GOPATH` は work 配下。proxy 系のみ引き継ぐ
+- [x] **ネットワーク** — 既定は許可(`BUILD_NET=1`)。`ZPKG_BUILD_NET=0` で
+  `--unshare-net`。レシピの `build_network`(`1`/`0`)がグローバルを上書き。
+  `age` / `fzf` / `restic` は `1`
+- [x] **auto/require/off** — `auto` は bwrap 不在/利用不可時に警告して直接ビルド、
+  `require` は失敗、`off` は無効。`--no-sandbox` も追加。bwrap の起動前検査
+  (`sandbox.Check`)で chroot など pivot_root 不能な環境を検出
+- [x] **chroot 対応** — `zignos-enter.sh` が private mount namespace を作り、
+  root を bind mount してから chroot するようにした。stage3 のディレクトリ
+  chroot でもサンドボックスが動く。素の `chroot` は auto で直接ビルドに
+  フォールバック
+- [x] **レシピ修正** — `core/shadow` の `touch /usr/bin/passwd` を destroot 内に
+  変更(読み取り専用 `/usr` で失敗する唯一のレシピ)
+- [x] **ビルド環境の記録** — インストール済み `name@slot-version` の sha256 と
+  件数を `meta.json` / binpkg sidecar に記録し、`zpkg info` に
+  `build: bwrap, network on, env N packages` を表示
+- [x] **bootstrap** — stage2 は bwrap 導入前のため `ZPKG_SANDBOX=off`。
+  base 構築後は base の bubblewrap を使う
+- [x] **テスト** — sandbox 引数/環境/モード、recipe の `build_network` の
+  ユニットテスト。VM の ZIGNOS chroot で攻撃スクリプト
+  (`/usr` 書き込み拒否、`/etc/shadow` マスク、`/proc` / `/dev` / chroot / work 利用可)、
+  ネットワーク拒否とレシピ上書き、`shadow` / `iputils`(setuid) / `doas`(chown) /
+  `eudev`(destroot バイナリ実行) / `openssl` / `linux`(カーネル + initramfs)の
+  実ビルドを確認。`go test ./...` / `go vet ./...` 通過
+- [x] **zpkg r10 / stage3 r10** — 54 パッケージ / 977 MiB。bubblewrap 同梱
+- [ ] **最小依存ビルドルート** — サンドボックス内はインストール済みシステム全体
+  (読み取り専用)。makedepends だけの root は次段階
+- [ ] **resource limit / hook の隔離** — CPU/メモリ/ディスク制限、
+  `post_install` / `post_remove` のサンドボックス化は将来
 
 ## M37: パッケージ署名と検証(2026-11-19 検証)
 
@@ -831,3 +880,7 @@ v0.9 として実装済み(M9–M12):
 - SAT solver — 現在は決定的バックトラック(M36)。複数バージョン・スロットを含む完全解は将来課題
 - 署名付きリポジトリの公開・鍵配布(仕組みは M37 で実装済み)
 - world rebuild — `upgrade --newuse` として M17 で実装済み
+- 最小依存ビルドルート — M38 はファイルシステム/プロセス/ネットワーク隔離まで。
+  makedepends だけが見える overlay/manifest ベースの root は将来課題
+- resource limit / hook の隔離 — CPU/メモリ/ディスク制限と
+  `post_install` / `post_remove` のサンドボックス化

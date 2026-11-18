@@ -84,10 +84,11 @@ import PageLayout from '../layouts/PageLayout.astro';
       <ul>
         <li>
           <strong>zpkg</strong> — Go 製のパッケージマネージャ。USE フラグ、スロット、
-          binpkg キャッシュ、トランザクション、インストール journal を持ちます。
+          binpkg キャッシュ、トランザクション、インストール journal、Ed25519 署名、
+          bubblewrap によるビルド隔離を持ちます。
         </li>
         <li>
-          <strong>レシピツリー</strong> — core と main の 2 カテゴリ、現在 161 レシピ。
+          <strong>レシピツリー</strong> — core と main の 2 カテゴリ、現在 162 レシピ。
           core はベースシステム、main は任意で入れる CLI ツール群です。
         </li>
         <li>
@@ -106,13 +107,13 @@ import PageLayout from '../layouts/PageLayout.astro';
 
       <h2>数字で見るベース</h2>
       <div class="stats">
-        <div class="stat"><strong>59</strong><span>ベースパッケージ(依存込み)</span></div>
-        <div class="stat"><strong>36</strong><span>base.list のトップレベル</span></div>
-        <div class="stat"><strong>161</strong><span>レシピ(core 75 + main 86)</span></div>
-        <div class="stat"><strong>53</strong><span>stage3 のパッケージ数</span></div>
+        <div class="stat"><strong>60</strong><span>ベースパッケージ(依存込み)</span></div>
+        <div class="stat"><strong>37</strong><span>base.list のトップレベル</span></div>
+        <div class="stat"><strong>162</strong><span>レシピ(core 76 + main 86)</span></div>
+        <div class="stat"><strong>54</strong><span>stage3 のパッケージ数</span></div>
       </div>
       <p>
-        stage3 は約 976 MiB。カーネル、DHCP、WiFi、SSH、エディタ、man は含まれず、
+        stage3 は約 977 MiB。カーネル、DHCP、WiFi、SSH、エディタ、man は含まれず、
         必要なものを <code>zpkg install</code> で追加します。
       </p>
 
@@ -164,8 +165,8 @@ import PageLayout from '../layouts/PageLayout.astro';
         </dd>
         <dt>パッケージはどれくらいありますか?</dt>
         <dd>
-          現在 161 レシピ(core 75 + main 86)。ベースは 36 パッケージ、
-          依存込みで 59 です。
+          現在 162 レシピ(core 76 + main 86)。ベースは 37 パッケージ、
+          依存込みで 60 です。
         </dd>
       </dl>
 

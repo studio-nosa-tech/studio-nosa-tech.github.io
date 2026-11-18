@@ -55,6 +55,7 @@ recipes/core/<pkg>/
 ├── iuse          # このレシピが理解する USE フラグ
 ├── provides      # virtual 名(解決に使用。virtual/foo[-ver])
 ├── conflicts     # 同時インストール禁止(解決に使用)
+├── build_network # 1/0 でビルド時ネットワークを上書き(省略時はグローバル)
 ├── build         # shell スクリプト。必須(恒久的に shell)
 ├── post_install  # 任意のフック(bash)
 └── post_remove   # 任意のフック(bash)
@@ -138,6 +139,7 @@ linux-firmware に実在する空白入りファイル名がきっかけ(M22)。
 | `provides` | 提供する virtual 名(1行1個、`virtual/foo[-ver]`) | なし |
 | `conflicts` | 同時に入れてはいけないパッケージ(アトム可) | なし |
 | `makedepends` | ビルド時のみ必要な依存(1行1個、アトム可) | なし |
+| `build_network` | ビルド時ネットワークの許可/拒否(`1` / `0`) | グローバル設定 |
 | `iuse` | レシピが理解する USE フラグ(1行1個) | なし |
 | `post_install` / `post_remove` | インストール/削除直後のフック(bash) | なし |
 
@@ -175,6 +177,39 @@ linux-firmware に実在する空白入りファイル名がきっかけ(M22)。
 - **`-f` は binpkg キャッシュを無視しない**: 同一 version+revision+実効 USE の
   binpkg があればそれを使う。レシピの内容を変えたときは revision を上げること
   (binpkg キーが変わり、ソースから再ビルドされる)
+
+## ビルド環境の隔離(M38)
+
+`build` スクリプトは `bash` で直接実行せず、**bubblewrap** のサンドボックス内で
+実行する(`internal/sandbox`)。
+
+- root 全体を `--ro-bind / /` で読み取り専用にし、書き込み可能なのは
+  `$ZPKG_CACHE/build/<pkg>` だけ
+- `/tmp` / `/run` / `/var/tmp` / `/var/lib` / `/var/log` / `/var/spool` /
+  `/root` / `/home` / `/mnt` / `/media` / `/srv` は空の tmpfs
+- `/etc/ssh` / `/etc/ssl/private` / `/etc/zpkg` / NetworkManager の接続設定 /
+  wpa_supplicant は tmpfs でマスク。`/etc/shadow` / `/etc/gshadow` /
+  `/etc/sudoers` / `/etc/doas.conf` / `/etc/machine-id` は `/dev/null`
+- `--unshare-pid` / `--unshare-ipc` / `--unshare-uts`、hostname は `zignos-build`
+- capability は `CAP_CHOWN` / `CAP_FOWNER` / `CAP_DAC_OVERRIDE` / `CAP_FSETID` /
+  `CAP_SYS_CHROOT` のみ。`CAP_SYS_ADMIN` を付けないので ro root は remount できない
+- 環境変数は allowlist(`PATH` / `HOME` / `TMPDIR` / `LANG` / `LC_ALL` /
+  `GOCACHE` / `GOPATH` / `ZPKG_*` など)。proxy 系だけ引き継ぐ
+- `ZPKG_ROOT=/` かつ Linux のときだけ適用。`SANDBOX=auto`(既定)は bwrap が
+  無い/使えない場合に警告して直接ビルド、`require` は失敗、`off` は無効
+- `--no-sandbox` は一時的な escape hatch
+- ネットワークは既定で許可(`BUILD_NET=1`)。`ZPKG_BUILD_NET=0` で
+  `--unshare-net` を付け、レシピの `build_network` がグローバルを上書きする
+- ビルド環境の fingerprint(インストール済み `name@slot-version` の sha256 と件数)を
+  `meta.json` / binpkg sidecar に記録し、`zpkg info` で表示する
+- `post_install` / `post_remove`、ソース展開、resource limit は対象外。
+  サンドボックス内に見えるのはインストール済みシステム全体で、最小依存ルートは
+  次段階
+
+bubblewrap の `pivot_root` は chroot 先が mount point であることを要求する。
+`zignos-enter.sh` は private mount namespace 内で root を bind mount してから
+chroot するため、stage3 のディレクトリ chroot でもサンドボックスが動く。
+素の `chroot` では `auto` が警告して直接ビルドへフォールバックする。
 
 ## USE フラグ(v0.9)
 
@@ -310,8 +345,8 @@ binrepo/
 
 | コマンド | 内容 |
 |---|---|
-| `build [-f] <pkg>...` | fetch → 検証 → destroot まで(インストールしない) |
-| `install [-f] [-p] [--asdeps] <pkg>...` | build/install。`-p` は pretend、`--asdeps` は world に追加しない |
+| `build [-f] [--no-sandbox] <pkg>...` | fetch → 検証 → destroot まで(インストールしない)。build は既定で bubblewrap 内 |
+| `install [-f] [-p] [--asdeps] [--no-sandbox] <pkg>...` | build/install。`-p` は pretend、`--asdeps` は world に追加しない |
 | `upgrade [-p] [--newuse] [pkg...]` | world(または指定 pkg)をレシピの版へ。`version.Compare(installed, recipe)` で判定。`--newuse` は実効 USE フラグが変わったパッケージも再ビルド |
 | `remove [-f] <pkg>...` | 削除 + world から除去。逆依存があると停止(`-f` で強制) |
 | `info <pkg>...` | インストール済みメタデータと利用可能レシピ |

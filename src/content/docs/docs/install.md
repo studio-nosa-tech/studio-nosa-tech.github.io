@@ -111,7 +111,7 @@ sha256sum /var/tmp/zignos-stage3.tar.xz > /var/tmp/zignos-stage3.tar.xz.sha256
 sha256sum --check zignos-stage3.tar.xz.sha256
 ```
 
-> 2026-11-19 時点の stage3 は **53 パッケージ / 約 977 MiB** です。
+> 2026-11-19 時点の stage3 は **54 パッケージ / 約 977 MiB** です。
 > root はロック済み、SSH ホスト鍵・machine-id・ユーザーは含みません。
 
 ---
@@ -153,6 +153,11 @@ chroot /mnt/zignos /bin/bash -l
 `zignos-enter.sh` を使う場合は、UEFI のときだけ `/sys` の rbind を
 手動で追加してください(ヘルパーは sysfs を新規マウントするため efivarfs が
 見えないことがあります)。
+
+> ビルドを bubblewrap で隔離する場合、素の `chroot` では `pivot_root` が使えず
+> `auto` が警告して直接ビルドにフォールバックします。`zignos-enter.sh` は private
+> mount namespace 内で root を bind mount してから chroot するため、stage3 の
+> ディレクトリ chroot でもサンドボックスが動きます。
 
 chroot に入ったら、まず root のパスワードを設定します(stage3 ではロック済み)。
 
