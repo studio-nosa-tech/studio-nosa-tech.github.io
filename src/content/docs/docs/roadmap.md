@@ -12,13 +12,13 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 
 ## 現在のシステム(2026-11-18)
 
-- **base.list 32 トップレベル = 依存込み 54 パッケージ**(唯一の定義)/ 12G ブータブルイメージ(BIOS/UEFI 版)。レシピツリーは 135 個(core 72 + main 63)
+- **base.list 33 トップレベル = 依存込み 55 パッケージ**(唯一の定義)/ 12G ブータブルイメージ(BIOS/UEFI 版)。レシピツリーは 155 個(core 73 + main 82)
 - 起動: BIOS/MBR または UEFI/GPT → GRUB 2.14 → kernel 7.1.8 + initramfs(busybox) → OpenRC 0.64.1 → serial/VGA ログイン(shadow)
 - カーネル: x86_64_defconfig + `x86_64-generic.config`(起動系は組み込み、GPU/WiFi/追加 NIC はモジュール)。root は initramfs が `root=UUID=` で解決
 - ネットワーク: **ベースには含まない**(Gentoo 流の opt-in)。`zpkg install dhcpcd openssh` の後 `rc-update add dhcpcd boot` / `rc-update add sshd default`
 - 無線: wpa_supplicant 2.12 + iw(libnl、D-Bus 制御 IF)を main/ から任意インストール。WiFi ドライバはカーネルモジュール、firmware は `main/linux-firmware`
-- サービス: ベースが有効化するのは mdev(hotplug+modprobe)/ console(ttyS0)/ console-vga(tty1) のみ。dhcpcd/dbus/sshd/chronyd/wpa_supplicant は入れてから自分で有効化
-- 運用: ベースは toolchain + coreutils + zpkg。main/ には CLI ツール 63 個(エディタ / SSH / man / git / curl / wget / doas、M30 のネットワーク診断・ビルド・圧縮・監視)があり、任意インストール
+- サービス: ベースが有効化するのは mdev(hotplug+modprobe)/ console(ttyS0)/ console-vga(tty1) のみ。dhcpcd/dbus/sshd/chronyd/wpa_supplicant/crond/nftables は入れてから自分で有効化
+- 運用: ベースは toolchain + coreutils + zpkg + tzdata。main/ には 82 パッケージ(エディタ / SSH / man / git / curl / wget / doas、M30 のネットワーク診断・ビルド・圧縮・監視)があり、任意インストール
 - zpkg: DB schema 2・world/upgrade・USE フラグ(package.use/IUSE)・フック(ldconfig 自動)・トランザクション・slots・binpkg リポジトリ
 - bootstrap: stage0/1(cross toolchain、メンテナ専用)→ stage2 フェーズ1(bootstrap core)→ **フェーズ2(base.list 全量)**。/usr は完全に zpkg 管理
 - リリースモデル: **ローリングリリース**(ブートストラップ設計)。更新は `zpkg upgrade` と `build-system.sh`
@@ -57,8 +57,9 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 | M28 | 最小ベース(base.list 32/依存込み 54)+ efibootmgr | 完了(2026-11-18 実走行) | - |
 | M29 | grub の bios/uefi USE フラグ + efibootmgr 条件付き依存 | 完了(2026-11-18 実走行) | - |
 | M30 | CLI ツール 26 個追加(ネットワーク/ビルド/圧縮/監視) | 完了(2026-11-18 実走行) | - |
+| M31 | 実用システムツール 20 個追加(tzdata/GnuPG/cron/logrotate/nftables/…) | 完了(2026-11-18 実走行) | - |
 
-次の候補: **実機での BIOS/UEFI 起動と WiFi 検証** / GUI 要素の調査 / binpkg リポジトリの署名・配布(コミュニティ形成時)/ zpkg の `provides`/`conflicts` 解決 / CLI ツールの継続拡充。
+次の候補: **実機での BIOS/UEFI 起動と WiFi 検証** / ストレージ系(LUKS/LVM/XFS/Btrfs) / GUI 要素の調査 / binpkg リポジトリの署名・配布(コミュニティ形成時)/ zpkg の `provides`/`conflicts` 解決。
 
 ## M25: stage3 tarball(2026-11-17 完走)
 
@@ -173,6 +174,34 @@ Portage(emerge)風のフェーズ行を入れた。
   owned ファイルが prune されることも確認。両プラットフォーム構成で BIOS/UEFI
   イメージとも **BOOT CHECK PASSED**(7.1.8)
 
+
+## M31: 実用システムツール 20 個追加(2026-11-18 完走)
+
+ベースの穴(timezone / 署名 / firewall / ログ / cron)を埋め、実機運用に必要な
+保守・診断ツールを追加した。tzdata は base.list に入れて全システムでタイムゾーンを
+設定できるようにし、残り 19 個は main/ に置いた。
+
+- [x] **時刻** — `tzdata 2026f`(tzcode + tzdata。`/etc/localtime` は UTC、`/usr/share/zoneinfo` を提供)。
+  glibc が持つ tzselect/zdump/zic との競合を除き、データだけを所有する
+- [x] **GnuPG** — `gnupg 2.5.24` + `libgpg-error 1.61` / `libgcrypt 1.12.4` /
+  `libassuan 3.0.2` / `libksba 1.9.0` / `npth 1.8` / `pinentry 1.3.3`(curses/tty)。
+  SQLite を有効にして keyboxd/TOFU を利用。スマートカード・TPM・dirmngr は無効
+  (TLS ライブラリを入れていないため keyserver 取得は不可。署名/検証/暗号化は可)
+- [x] **cron / ログ** — `cronie 1.7.2`(PAM/SELinux/audit/anacron 無効、crontab 4755)、
+  `logrotate 3.22.0` + `popt 1.19`(週次・dateext・compress の既定設定)
+- [x] **firewall** — `nftables 1.1.7` + `libnftnl 1.3.2`(readline CLI、JSON/xtables 無効)。
+  `/etc/nftables.conf` と OpenRC サービスを同梱
+- [x] **保守・診断** — `cpio 2.15`、`lm-sensors 3.6.2`、`screen 5.0.2`、
+  `gdb 18.1`(Python/NLS 無効、gdbserver 同梱)、`sshfs 3.7.7` + `fuse3 3.18.3` + `glib 2.88.4`
+- [x] **initscripts r12** — `crond` / `nftables` サービスを追加(どちらも opt-in)
+- [x] **ビルド修正** — GCC 16 の C23 既定で壊れる cronie/cpio は `-std=gnu17`、
+  nftables は libedit ではなく readline を選択、cpio の rmt と gdb の bfd/locale は
+  tar/binutils と重複するため除外、fuse3 は `/dev/fuse` を作らず fusermount3 を 4755 に
+- [x] **実走行(2026-11-18)** — chroot で全 19 パッケージをビルド・インストール。
+  gpg の鍵生成/署名/検証、logrotate のローテーション、nft の ruleset 読み込み、
+  cpio/screen/sensors/sshfs の起動を確認
+- [x] **stage3 再生成** — base 33 / 依存込み 55、**stage3 48 パッケージ / 967 MiB**。
+  `/usr/share/zoneinfo/Asia/Tokyo`、`/etc/localtime`、crond/nftables サービスを収録
 
 ## M30: CLI ツール 26 個追加(2026-11-18 完走)
 

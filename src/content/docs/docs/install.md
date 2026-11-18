@@ -15,7 +15,7 @@ description: SystemRescue を使った BIOS / UEFI 実機インストール、zi
 > - **initramfs** が root を `root=UUID=` で解決して `switch_root` します
 > - UEFI は `/EFI/BOOT/BOOTX64.EFI` のフォールバックパスで起動し、`efibootmgr` が
 >   あればインストーラが NVRAM エントリも登録します(ベースには含まない)
-> - **ベースは最小構成**(Gentoo の @system 相当、依存込み 54 パッケージ)。
+> - **ベースは最小構成**(Gentoo の @system 相当、依存込み 55 パッケージ)。
 >   SSH / DHCP / エディタ / man は入っていないので、必要なものを `zpkg install` します
 > - 未対応: Secure Boot(無効化が必要)、LUKS/TPM
 > - 実機での動作検証はこれからです。問題があれば `dmesg` とカーネル設定
@@ -341,7 +341,8 @@ efibootmgr -o 0003,0001,0002
 
 - RTC は UTC で扱います。NTP 同期は `zpkg install chrony` のうえで
   `rc-update add chronyd default`(ベースには含まれません)
-- タイムゾーンは現在 UTC 固定です(`tzdata` は未パッケージ。今後追加予定)
+- `tzdata` はベースに含まれます(既定は UTC)。日本時間にするには
+  `ln -sf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime`
 - キーボード: `loadkeys jp106`(kbd の keymaps を使用)。恒久設定は
   `/etc/conf.d/keymaps` と keymaps サービス
 
@@ -438,5 +439,5 @@ rc-status --all
 - **WiFi は firmware 導入後**: `main/linux-firmware`(約 2.0 GiB)を入れて
   `modprobe` する。自動ロードは mdev + kmod が行う
 - **公開イメージなし**: 現状は自分でビルドする開発者向け。配布時は署名付きイメージを想定
-- **tzdata なし**: タイムゾーンは UTC 固定
+- **タイムゾーンの既定は UTC**: `tzdata` は入っているので `/etc/localtime` を差し替えれば任意の地域に設定できる
 - **モジュール署名なし**: `CONFIG_MODULE_SIG` は無効(改ざん検知は未対応)
