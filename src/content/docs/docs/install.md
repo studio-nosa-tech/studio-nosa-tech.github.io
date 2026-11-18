@@ -566,25 +566,36 @@ chroot 内でネットワークを使うには `/etc/resolv.conf` と NIC の設
 
 ### 新しいパッケージのレシピが見つからない(`recipe not found`)
 
-`zpkg` にはレシピツリーを同期するコマンドはありません。stage3 に同梱された
-`/usr/share/zignos/recipes` が、その stage3 を作った時点のスナップショットです。
-新しい stage3 のレシピに更新するには、レシピツリーだけを展開して上書きします。
+stage3 に同梱された `/usr/share/zignos/recipes` は、その stage3 を作った時点の
+スナップショットです。`zpkg sync` で新しいレシピツリーに置き換えられます。
 
 ```sh
-tar -xJf zignos-stage3-<new>.tar.xz -C /tmp/zignos-new \
-  ./usr/share/zignos/recipes
-cp -a /tmp/zignos-new/usr/share/zignos/recipes/. /usr/share/zignos/recipes/
+# 新しい stage3 tarball から(レシピ部分だけを展開)
+zpkg sync --from zignos-stage3-<new>.tar.xz
+
+# レシピだけの tarball / ディレクトリ / URL も可
+zpkg sync --from zignos-recipes-20261119.tar.xz
+zpkg sync --from ./zignos-recipes
+zpkg sync --from https://example.invalid/zignos-recipes.tar.xz
+
+# 検証だけ
+zpkg sync --from ./zignos-recipes -n
 
 # 確認
 zpkg search networkmanager
 ```
 
-上書きせず、一時的に新しいツリーを使うこともできます。
+`sync` は新しいツリーを一時領域で検証してから原子的に置き換えるため、
+失敗しても旧ツリーは残ります。`--from` を省略した場合は
+`ZPKG_RECIPE_URL` または `/etc/zpkg/sync.conf` の `RECIPEURL=` を使います。
 
-```sh
-ZPKG_REPOS=/tmp/zignos-new/usr/share/zignos/recipes/core:/tmp/zignos-new/usr/share/zignos/recipes/main \
-  zpkg install networkmanager
-```
+> 古い stage3 の zpkg に `sync` が無い場合は、新しい stage3 tarball から
+> `usr/bin/zpkg` だけを取り出して実行できます。
+>
+> ```sh
+> tar -xJf zignos-stage3-<new>.tar.xz -C /tmp/zpkg-new ./usr/bin/zpkg
+> /tmp/zpkg-new/usr/bin/zpkg sync --from zignos-stage3-<new>.tar.xz
+> ```
 
 ### `zpkg install linux` が遅い / 失敗する
 

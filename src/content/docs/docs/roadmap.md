@@ -1,6 +1,6 @@
 ---
 title: ロードマップ
-description: M0–M34 のマイルストーン記録と現在の状況。
+description: M0–M35 のマイルストーン記録と現在の状況。
 ---
 
 マイルストーンごとに完了条件を明記する。進捗はこのファイルのチェックボックスで管理する。
@@ -8,7 +8,7 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 /about/ の「ステータス」も参照。
 
 > 各マイルストーン節の数値・構成は**その時点の記録**。パッケージ数やベース構成は
-> 以後のマイルストーンで変わっている(現在は M34 の節と下の「現在のシステム」が正)。
+> 以後のマイルストーンで変わっている(現在は M35 の節と下の「現在のシステム」が正)。
 
 ## 現在のシステム(2026-11-19)
 
@@ -20,7 +20,7 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 - 無線: wpa_supplicant 2.12 + iw(libnl、D-Bus 制御 IF)を main/ から任意インストール。WiFi ドライバはカーネルモジュール、firmware は `main/linux-firmware`
 - サービス: ベースが有効化するのは udev(eudev)/ console(ttyS0)/ console-vga(tty1) のみ。mdev はフォールバックとして同梱するが無効。dhcpcd/dbus/sshd/chronyd/wpa_supplicant/crond/nftables は入れてから自分で有効化
 - 運用: ベースは toolchain + coreutils + zpkg + tzdata + eudev + inetutils/procps。main/ には 86 パッケージ(エディタ / SSH / man / git / curl / wget / doas、M30 のネットワーク診断・ビルド・圧縮・監視、M34 の NetworkManager/nmtui)があり、任意インストール
-- zpkg: DB schema 2・world/upgrade・USE フラグ(package.use/IUSE)・フック(ldconfig 自動)・トランザクション・slots・binpkg リポジトリ
+- zpkg: DB schema 2・world/upgrade・USE フラグ(package.use/IUSE)・フック(ldconfig 自動)・トランザクション・slots・binpkg リポジトリ・レシピ同期(`zpkg sync`)
 - bootstrap: stage0/1(cross toolchain、メンテナ専用)→ stage2 フェーズ1(bootstrap core)→ **フェーズ2(base.list 全量)**。/usr は完全に zpkg 管理
 - リリースモデル: **ローリングリリース**(ブートストラップ設計)。更新は `zpkg upgrade` と `build-system.sh`
 
@@ -177,6 +177,28 @@ Portage(emerge)風のフェーズ行を入れた。
   owned ファイルが prune されることも確認。両プラットフォーム構成で BIOS/UEFI
   イメージとも **BOOT CHECK PASSED**(7.1.8)
 
+
+## M35: zpkg sync — レシピツリーの同期(2026-11-19 検証)
+
+stage3 同梱のレシピツリーはスナップショットで、新しいパッケージのレシピが
+見つからない(`recipe not found`)ことがあった。レシピ自体を更新する
+`zpkg sync` を追加した。
+
+- [x] **`zpkg sync [--from <src>] [--dest <dir>] [-n]`** — stage3 tarball、
+  レシピ tarball、展開済みディレクトリ、HTTP(S) URL を入力にできる。stage3
+  tarball では `usr/share/zignos/recipes` だけを選択展開し、rootfs 全体は
+  展開しない
+- [x] **原子的置換** — 新ツリーをターゲットと同じファイルシステムの一時領域で
+  検証(`core` / `main` とレシピ数)してから rename で差し替える。失敗時は
+  旧ツリーを維持
+- [x] **既定ソース** — `--from` 省略時は `ZPKG_RECIPE_URL`、次に
+  `/etc/zpkg/sync.conf` の `RECIPEURL=` を使う
+- [x] **テスト** — ディレクトリ / stage3 形式 tarball / URL / dry-run /
+  不完全ツリーで旧ツリーが残ること、実行ビット保持を確認
+- [x] **実走行** — 新しい zpkg を chroot にインストールし、レシピ tarball から
+  `zpkg sync` → `zpkg search networkmanager` が 1.58.1-r3 を返すことを確認
+- [x] **zpkg レシピ r7** — 新しい zpkg バイナリを stage3 に同梱
+- 残: 署名付きレシピ tarball / 配布 URL の運用
 
 ## M34: NetworkManager 1.58.1 を main に追加(2026-11-19 検証)
 
