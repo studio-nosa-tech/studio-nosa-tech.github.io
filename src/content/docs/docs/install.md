@@ -542,6 +542,29 @@ zpkg install linux
 最新の stage3 / レシピでは linux の `makedepends` に openssl を追加済みです
 (openssl のビルドに perl も自動で入ります)。
 
+### GRUB のメニューに ZIGNOS が出ない(UEFI ファームウェア設定だけ)
+
+古い linux パッケージは `/boot/vmlinuz` と `/boot/initramfs.img` という
+**バージョンなし名**でカーネルを入れるため、`grub-mkconfig` の `10_linux` が
+カーネルを見つけられません。バージョン付きの symlink を作ってから再生成します。
+
+```sh
+KVER=$(ls /usr/lib/modules | tail -1)
+ln -sfn vmlinuz /boot/vmlinuz-$KVER
+ln -sfn initramfs.img /boot/initramfs-$KVER.img
+grub-mkconfig -o /boot/grub/grub.cfg
+```
+
+生成結果を確認します。
+
+```sh
+grep -E 'menuentry|linux /boot|initrd /boot' /boot/grub/grub.cfg
+```
+
+`menuentry "ZIGNOS ..."` と `/boot/vmlinuz-7.1.8`、`/boot/initramfs-7.1.8.img`
+が出ていれば、再起動後に GRUB から ZIGNOS を選べます。最新の linux レシピでは
+これらの symlink がパッケージに含まれます。
+
 ## 既知の制約
 
 - **Secure Boot 非対応**(GRUB/カーネルは未署名。無効化が必要)
