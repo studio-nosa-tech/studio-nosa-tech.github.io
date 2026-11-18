@@ -538,3 +538,25 @@ chroot 内でネットワークを使うには `/etc/resolv.conf` と NIC の設
 - **stage3 の公開は準備中**。現在は `make-stage3.sh` で生成
 - **x86_64 のみ**。BIOS/UEFI の両方に対応
 - root の初期パスワードは配布イメージの案内を参照し、**最初に変更**する
+
+---
+
+## インストール完了! — Fastfetch を投稿しよう
+
+インストールが完了したら、X(旧Twitter)で **[@amanoremi](https://x.com/amanoremi)** を
+メンションして、`fastfetch` の画面を投稿してください。**きっと反応してくれるはずです!**
+
+`fastfetch` は stage3 には含まれていないので、まずインストールします。
+
+```sh
+zpkg install fastfetch
+fastfetch
+```
+
+ZIGNOS のロゴと一緒に、OS・カーネル・CPU・メモリ・ディスクなどの情報が表示されます。
+自慢の構成、工夫した点、動かしてみた感想なども添えてください。`#ZIGNOS` を付けると
+見つけてもらいやすくなります。
+
+![QEMU 上の ZIGNOS で fastfetch を実行した画面](images/fastfetch-qemu.png)
+
+*開発環境の QEMU で実行した fastfetch*
