@@ -1,6 +1,6 @@
 ---
 title: zpkg 設定
-description: ZIGNOS のパッケージマネージャ zpkg の設定ファイル(USE、make.conf、binpkg リポジトリ、レシピ同期)と環境変数の一覧。
+description: ZIGNOS のパッケージマネージャ zpkg の設定ファイル(USE、make.conf、binpkg リポジトリ、レシピ同期、署名)と環境変数の一覧。
 ---
 
 `zpkg` の設定は、**ターゲットルート**の `/etc/zpkg/` に置きます。
@@ -13,7 +13,9 @@ description: ZIGNOS のパッケージマネージャ zpkg の設定ファイル
 ├── package.use    # パッケージ単位の USE フラグ
 ├── make.conf      # CFLAGS / MAKEOPTS
 ├── binrepo.conf   # binpkg リポジトリ
-└── sync.conf      # zpkg sync の既定ソース
+├── sync.conf      # zpkg sync の既定ソース
+├── security.conf  # 署名検証ポリシー
+└── trusted.d/     # 信頼する公開鍵(*.pub)
 ```
 
 ## 設定ファイル一覧
@@ -25,6 +27,8 @@ description: ZIGNOS のパッケージマネージャ zpkg の設定ファイル
 | `make.conf` | ビルドフラグ | `CFLAGS=...` / `MAKEOPTS=...` |
 | `binrepo.conf` | binpkg リポジトリ | `BINREPO=<URL またはパス>` |
 | `sync.conf` | レシピ同期の既定ソース | `RECIPEURL=<URL またはパス>` |
+| `security.conf` | 署名検証ポリシー | `TRUSTED_KEYS=...` / `ALLOW_UNSIGNED=0|1` / `ALLOW_EXPIRED=0|1` |
+| `trusted.d/` | 信頼する公開鍵 | `<keyid>.pub`(PKIX PEM) |
 
 ## USE フラグ
 
@@ -102,14 +106,23 @@ BINREPO=https://example.com/zignos/binpkgs
 ```
 
 `zpkg install` は、ローカルの binpkg キャッシュに無い場合にこのリポジトリを
-探します。リポジトリには `index.json` が必要です。
+探します。リポジトリには署名付きの `index.json` が必要です。
 
 ```sh
-zpkg mkindex /path/to/binpkgs
+zpkg mkindex --key ~/zignos-signing.key /path/to/binpkgs
+```
+
+`--key` を付けると `index.json.sig` と `keys/<keyid>.pub` も生成されます。
+クライアント側では公開鍵を信頼します。
+
+```sh
+zpkg key import /path/to/binrepo/keys/<keyid>.pub
 ```
 
 一致条件は **名前・アーキテクチャ・version+revision・実効 USE/ビルドフラグの
 ハッシュ**です。`ZPKG_BINREPO` 環境変数はこのファイルより優先されます。
+署名・期限・generation・sha256 の検証に失敗した場合はエラーになり、
+ソースビルドへはフォールバックしません。
 
 一時的に binpkg を使わない場合:
 
@@ -137,6 +150,34 @@ zpkg sync --from ./zignos-recipes -n   # 検証だけ
 レシピツリーを置き換えるだけで、インストール済みパッケージは更新しません。
 必要なら続けて `zpkg upgrade` を実行します。
 
+`sync` はツリーの `recipes.manifest` を trusted key で検証します。署名が
+ないツリーは既定で拒否されます。開発用の未署名ツリーだけ `--allow-unsigned`
+(または `ZPKG_ALLOW_UNSIGNED=1`)を使えます。署名が存在して壊れている場合は
+`--allow-unsigned` でも拒否されます。
+
+## 署名と信頼済み鍵(`security.conf`)
+
+```sh
+# /etc/zpkg/security.conf
+TRUSTED_KEYS=/etc/zpkg/trusted.d
+ALLOW_UNSIGNED=0
+ALLOW_EXPIRED=0
+```
+
+- `TRUSTED_KEYS` は `*.pub` を置くディレクトリです。`zpkg key import <pubkey>`
+  で追加し、`zpkg key list` で確認できます
+- `ALLOW_UNSIGNED=1` は**署名が存在しない**リポジトリ/レシピツリーだけを許可します。
+  壊れた署名を受け入れる抜け道ではありません
+- `ALLOW_EXPIRED=1` は期限切れだけを許可します。署名とロールバック検証は残ります
+- 最後に受理した generation と SHA-256 は
+  `$ZPKG_DB/.security.json` に保存され、古い署名済み index / manifest への
+  差し替えを拒否します
+- 環境変数 `ZPKG_TRUSTED_KEYS` / `ZPKG_ALLOW_UNSIGNED` /
+  `ZPKG_ALLOW_EXPIRED` がこのファイルより優先されます
+
+鍵の生成・リポジトリの署名・レシピツリーの署名の詳細は
+[パッケージ署名と検証](/docs/signing/) を参照してください。
+
 ## パスと環境変数
 
 | 変数 | 既定 | 内容 |
@@ -149,6 +190,9 @@ zpkg sync --from ./zignos-recipes -n   # 検証だけ
 | `ZPKG_NO_BINPKG` | なし | `1` でローカル/リポジトリの binpkg を無視 |
 | `ZPKG_BINREPO` | なし | binpkg リポジトリ(`binrepo.conf` より優先) |
 | `ZPKG_RECIPE_URL` | なし | `zpkg sync` の既定ソース(`sync.conf` より優先) |
+| `ZPKG_TRUSTED_KEYS` | `$ZPKG_ROOT/etc/zpkg/trusted.d` | 信頼する `*.pub` のディレクトリ |
+| `ZPKG_ALLOW_UNSIGNED` | なし | `1` で署名のない index/レシピツリーを許可(開発用) |
+| `ZPKG_ALLOW_EXPIRED` | なし | `1` で署名の期限切れだけ許可(復旧用) |
 | `ZPKG_USE` | なし | グローバル USE を丸ごと上書き |
 | `ZPKG_CFLAGS` | なし | `CFLAGS` を上書き(空文字も有効) |
 | `ZPKG_MAKEOPTS` | なし | `MAKEOPTS` を上書き(空文字も有効) |

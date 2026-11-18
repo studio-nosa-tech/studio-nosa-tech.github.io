@@ -111,7 +111,7 @@ sha256sum /var/tmp/zignos-stage3.tar.xz > /var/tmp/zignos-stage3.tar.xz.sha256
 sha256sum --check zignos-stage3.tar.xz.sha256
 ```
 
-> 2026-11-18 時点の stage3 は **53 パッケージ / 約 976 MiB** です。
+> 2026-11-19 時点の stage3 は **53 パッケージ / 約 977 MiB** です。
 > root はロック済み、SSH ホスト鍵・machine-id・ユーザーは含みません。
 
 ---
@@ -588,6 +588,23 @@ zpkg search networkmanager
 `sync` は新しいツリーを一時領域で検証してから原子的に置き換えるため、
 失敗しても旧ツリーは残ります。`--from` を省略した場合は
 `ZPKG_RECIPE_URL` または `/etc/zpkg/sync.conf` の `RECIPEURL=` を使います。
+
+新しい zpkg はレシピツリーの `recipes.manifest` を trusted key で検証します。
+署名がないツリーは既定で拒否されるため、**現行の未署名配布物**では明示的に
+`--allow-unsigned` を付けてください(公式署名鍵の運用開始後は不要です)。
+
+```sh
+zpkg sync --from zignos-recipes-20261119.tar.xz --allow-unsigned
+```
+
+署名済みツリーを検証する場合は、先に公開鍵を登録します。
+
+```sh
+zpkg key import zignos-signing.pub
+zpkg sync --from zignos-recipes-20261119.tar.xz
+```
+
+詳細は [パッケージ署名と検証](/docs/signing/) を参照してください。
 
 > 古い stage3 の zpkg に `sync` が無い場合は、新しい stage3 tarball から
 > `usr/bin/zpkg` だけを取り出して実行できます。

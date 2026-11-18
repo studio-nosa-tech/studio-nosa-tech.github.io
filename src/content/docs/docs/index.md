@@ -18,6 +18,7 @@ ZIGNOS は、ゼロからビルドするソースベースの Linux ディスト
 
 - [zpkg 設計](/docs/design-pkg/) — レシピ、DB schema 2、依存解決、USE、トランザクション
 - [zpkg 設定](/docs/zpkg-config/) — USE、make.conf、binpkg、レシピ同期、環境変数
+- [署名と検証](/docs/signing/) — Ed25519、信頼済み鍵、ロールバック・期限対策
 - [システム設計](/docs/design-system/) — init、サービス、特権昇格、カーネル方針
 
 ## プロジェクト

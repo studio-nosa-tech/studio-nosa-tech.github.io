@@ -1,6 +1,6 @@
 ---
 title: ロードマップ
-description: M0–M36 のマイルストーン記録と現在の状況。
+description: M0–M37 のマイルストーン記録と現在の状況。
 ---
 
 マイルストーンごとに完了条件を明記する。進捗はこのファイルのチェックボックスで管理する。
@@ -8,7 +8,7 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 /about/ の「ステータス」も参照。
 
 > 各マイルストーン節の数値・構成は**その時点の記録**。パッケージ数やベース構成は
-> 以後のマイルストーンで変わっている(現在は M36 の節と下の「現在のシステム」が正)。
+> 以後のマイルストーンで変わっている(現在は M37 の節と下の「現在のシステム」が正)。
 
 ## 現在のシステム(2026-11-19)
 
@@ -20,7 +20,7 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 - 無線: wpa_supplicant 2.12 + iw(libnl、D-Bus 制御 IF)を main/ から任意インストール。WiFi ドライバはカーネルモジュール、firmware は `main/linux-firmware`
 - サービス: ベースが有効化するのは udev(eudev)/ console(ttyS0)/ console-vga(tty1) のみ。mdev はフォールバックとして同梱するが無効。dhcpcd/dbus/sshd/chronyd/wpa_supplicant/crond/nftables は入れてから自分で有効化
 - 運用: ベースは toolchain + coreutils + zpkg + tzdata + eudev + inetutils/procps。main/ には 86 パッケージ(エディタ / SSH / man / git / curl / wget / doas、M30 のネットワーク診断・ビルド・圧縮・監視、M34 の NetworkManager/nmtui)があり、任意インストール
-- zpkg: DB schema 2・world/upgrade・USE フラグ(package.use/IUSE)・フック(ldconfig 自動)・トランザクション・slots・binpkg リポジトリ・レシピ同期(`zpkg sync`)・依存アトム解決(バージョン制約 / provides / conflicts / 逆依存 / USE 制約)
+- zpkg: DB schema 2・world/upgrade・USE フラグ(package.use/IUSE)・フック(ldconfig 自動)・トランザクション・slots・binpkg リポジトリ・レシピ同期(`zpkg sync`)・依存アトム解決(バージョン制約 / provides / conflicts / 逆依存 / USE 制約)・Ed25519 署名(index / レシピ manifest / ロールバック・期限)
 - bootstrap: stage0/1(cross toolchain、メンテナ専用)→ stage2 フェーズ1(bootstrap core)→ **フェーズ2(base.list 全量)**。/usr は完全に zpkg 管理
 - リリースモデル: **ローリングリリース**(ブートストラップ設計)。更新は `zpkg upgrade` と `build-system.sh`
 
@@ -64,8 +64,9 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 | M34 | NetworkManager 1.58.1 + nmtui を main に追加 | 完了(2026-11-19 実走行) | - |
 | M35 | zpkg sync(レシピツリーの同期) | 完了(2026-11-19 実走行) | - |
 | M36 | zpkg 依存解決(アトム / バックトラック / 逆依存) | 完了(2026-11-19 実走行) | - |
+| M37 | パッケージ署名と検証(Ed25519 / index / recipes) | 完了(2026-11-19 実走行) | - |
 
-次の候補: **UEFI での起動確認と実機検証** / GUI 要素の調査 / ストレージ系(LUKS/LVM/XFS/Btrfs) / binpkg リポジトリの署名・配布(コミュニティ形成時)/ SAT solver(複数バージョン・スロットを含む完全解)。
+次の候補: **UEFI での起動確認と実機検証** / GUI 要素の調査 / ストレージ系(LUKS/LVM/XFS/Btrfs) / 公式署名鍵の運用と binpkg リポジトリの公開 / SAT solver(複数バージョン・スロットを含む完全解)。
 
 ## M25: stage3 tarball(2026-11-17 完走)
 
@@ -181,6 +182,45 @@ Portage(emerge)風のフェーズ行を入れた。
   イメージとも **BOOT CHECK PASSED**(7.1.8)
 
 
+## M37: パッケージ署名と検証(2026-11-19 検証)
+
+binpkg リポジトリの index とレシピツリーに Ed25519 署名を付け、trusted key /
+ロールバック / 期限で検証する仕組みを追加した。外部の GPG や暗号ライブラリには
+依存しない。
+
+- [x] **鍵管理** — `zpkg key generate/import/list/remove`。PKCS#8 PEM の秘密鍵
+  (0600 要求)と PKIX PEM の公開鍵。key ID は公開鍵の SHA-256(64 hex)。
+  信頼済み鍵は `/etc/zpkg/trusted.d/*.pub`。TOFU はしない
+- [x] **detached signature** — `<file>.sig` に schema / algorithm / keyid /
+  signature を持つ JSON envelope。署名対象はファイルの実バイト列
+- [x] **binrepo index** — `index.json` を schema 2 にし、`generation` / `expires` /
+  `keyid` / 各エントリの `manifest_sha256` を追加。`mkindex --key` で署名し、
+  `keys/<keyid>.pub` も出力。`packages/` 配置にも対応
+- [x] **検証** — 署名、期限、generation、package sha256、manifest sha256 を検証。
+  改ざん・期限切れ・ロールバック・不一致はハードエラー(ソースビルドへ
+  黙ってフォールバックしない)。index/signature は毎回 fresh 取得
+- [x] **レシピツリー** — `sign-recipes` が全 regular file の path / sha256 / size /
+  mode を `recipes.manifest` に列挙して署名。`sync` はステージングツリーの
+  署名・全ファイル・余計なファイルを検証してから置換
+- [x] **ロールバック・期限** — `$ZPKG_DB/.security.json` に最後に受理した
+  generation / SHA-256 / keyid を保存。世代の巻き戻しと同一世代のすり替えを拒否。
+  `expires` の既定は +90 日。`ZPKG_ALLOW_UNSIGNED` は署名が無い場合だけ、
+  `ZPKG_ALLOW_EXPIRED` は期限だけを許可する
+- [x] **出所の追跡** — `meta.json` に `origin` / `origin_repo` / `origin_keyid` /
+  `origin_generation` / `origin_index_sha256` / `origin_pkg_sha256` を記録し、
+  `zpkg info` で表示。source build はレシピツリーの署名者も記録
+- [x] **テスト** — 鍵生成・署名・改ざん・別鍵、ロールバック、期限、レシピの
+  追加/削除/改ざん、`--allow-unsigned` の境界(壊れた署名は不可)、fresh fetch、
+  binrepo の署名付き install をユニット/統合テストで確認。`go test ./...` /
+  `go vet ./...` 通過
+- [x] **実走行** — VM 上で一時鍵を使った binrepo install、index 改ざん・世代
+  巻き戻し・期限切れ・package sha 不一致の拒否、署名付きレシピツリーの sync と
+  改ざん拒否を確認
+- [x] **zpkg r9 / stage3 再生成** — 53 パッケージ / 977 MiB。公式鍵はまだ生成せず、
+  現行配布物は未署名のため `zpkg sync --allow-unsigned` が必要であることを docs に明記
+- [ ] **公式署名鍵の運用** — 秘密鍵の生成・保管、公開鍵の配布、binpkg リポジトリの公開
+- [ ] **GPG/OpenPGP 対応** — envelope の `algorithm` を拡張して将来追加
+
 ## M36: zpkg の依存解決 — アトム・バックトラック(2026-11-19 検証)
 
 依存を名前だけで DFS していた方式を、パッケージアトムと決定的バックトラックに
@@ -231,7 +271,7 @@ stage3 同梱のレシピツリーはスナップショットで、新しいパ�
 - [x] **実走行** — 新しい zpkg を chroot にインストールし、レシピ tarball から
   `zpkg sync` → `zpkg search networkmanager` が 1.58.1-r3 を返すことを確認
 - [x] **zpkg レシピ r7** — 新しい zpkg バイナリを stage3 に同梱
-- 残: 署名付きレシピ tarball / 配布 URL の運用
+- 残: 配布 URL の運用(署名付きレシピ tarball は M37 で対応)
 
 ## M34: NetworkManager 1.58.1 を main に追加(2026-11-19 検証)
 
@@ -789,5 +829,5 @@ v0.9 として実装済み(M9–M12):
 
 - slots(同名複数バージョン共存)— M20 で実装済み。複数バージョンを同時に解く機能は未対応
 - SAT solver — 現在は決定的バックトラック(M36)。複数バージョン・スロットを含む完全解は将来課題
-- 署名付きリポジトリ・binpkg の配布(index + 公開)
+- 署名付きリポジトリの公開・鍵配布(仕組みは M37 で実装済み)
 - world rebuild — `upgrade --newuse` として M17 で実装済み

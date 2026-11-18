@@ -13,7 +13,7 @@ ZIGNOS の **stage3 tarball** は、カーネルとブートローダーを除�
 ## 中身
 
 - `base.list` の**依存クロージャ**から linux と grub を除いた
-  **53 パッケージ**(2026-11-18 時点 / 約 976 MiB):
+  **53 パッケージ**(2026-11-19 時点 / 約 977 MiB):
   glibc / gcc / binutils / make / bash / coreutils / tar / gzip / xz / bzip2 /
   pkgconf / busybox / openrc / initscripts / eudev / kmod / gperf / util-linux /
   shadow / e2fsprogs / kbd / tzdata / inetutils / procps / dosfstools / zpkg /
@@ -25,9 +25,12 @@ ZIGNOS の **stage3 tarball** は、カーネルとブートローダーを除�
   `zpkg install` で追加する)
 - 同梱: レシピツリー `/usr/share/zignos/recipes`、`/etc/zignos-stage3`(ビルド情報)、
   空の `/boot`、fstab の雛形
+- 署名済みツリーでは `recipes.manifest` / `recipes.manifest.sig` も同梱される。
+  現行の r9 は公式署名鍵が未運用のため未署名で、`zpkg sync` には
+  `--allow-unsigned` が必要(詳細は [パッケージ署名と検証](/docs/signing/))
 
 > 旧構成(2026-11-17)は 2.1 GiB / 86 パッケージだった。現在は最小ベース化と
-> eudev / tzdata / inetutils / procps の追加を経て 53 パッケージ / 976 MiB。
+> eudev / tzdata / inetutils / procps の追加を経て 53 パッケージ / 977 MiB。
 
 ## 配布
 

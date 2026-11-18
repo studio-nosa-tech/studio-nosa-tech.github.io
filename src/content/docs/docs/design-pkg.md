@@ -17,7 +17,7 @@ description: zpkg の設計。レシピ形式、DB schema 2、USE フラグ、�
 
 ## まだ無いもの(v0.9 時点)
 
-- バイナリリポジトリの配布(index + 署名)— binpkg キャッシュとローカルリポジトリ対応はある
+- 公開バイナリリポジトリの配布・運用(署名の仕組みと `keys/` 出力は実装済み)
 
 - 本格的な SAT ソルバー。現在は決定的なバックトラック解決(下記「依存解決」)で、
   複数バージョン・スロットを同時に考慮する完全解は未実装
@@ -215,29 +215,96 @@ linux-firmware に実在する空白入りファイル名がきっかけ(M22)。
   元に戻る。ディレクトリは削除しない(他パッケージと共有し得るため)
 - 実装: `internal/install.pruneObsolete`。既存の Replaced リストを再利用している
 
-## binpkg リポジトリ(対応済み・配布は範囲外)
+## binpkg リポジトリ(署名対応)
 
-リポジトリは「`index.json` + binpkg 一式」を置いたディレクトリ(URL またはローカルパス)。
-ホスティングは範囲外で、静的ファイルサーバがあればよい。
+リポジトリは「`index.json` + その署名 + binpkg 一式」を置いたディレクトリ(URL または
+ローカルパス)。ホスティングは範囲外で、静的ファイルサーバがあればよい。
 
 ```
-<binpkg-dir>/
-├── index.json                                  # zpkg mkindex が生成
-├── doas-6.8.2.pkg.tar.gz                       # binpkg 本体
-├── doas-6.8.2.manifest                         # ファイル一覧サイドカー
-└── doas-6.8.2.meta.json                        # name/version/revision/usehash/arch/deps
+binrepo/
+├── index.json                                  # zpkg mkindex が生成(schema 2)
+├── index.json.sig                              # index.json への Ed25519 署名
+├── keys/<keyid>.pub                            # リポジトリ公開鍵
+└── packages/
+    ├── doas-6.8.2.pkg.tar.gz                   # binpkg 本体
+    ├── doas-6.8.2.manifest                     # ファイル一覧サイドカー
+    └── doas-6.8.2.meta.json                    # name/version/revision/usehash/arch/deps
 ```
 
-- **生成**: `zpkg mkindex [dir]`(既定はローカルの binpkg キャッシュ)。PackBinpkg が
-  `.meta.json` サイドカーも書くので、レシピツリーなしで索引を作れる
+パッケージは従来どおりリポジトリ直下にも置ける(`packages/` は任意)。
+
+- **生成**: `zpkg mkindex [--key <private>] [--generation N] [--expires ...] [dir]`
+  (既定はローカルの binpkg キャッシュ)。PackBinpkg が `.meta.json` サイドカーも
+  書くので、レシピツリーなしで索引を作れる。`--key` を付けると `index.json.sig` と
+  `keys/<keyid>.pub` も書く
 - **消費**: `ZPKG_BINREPO`(env)または `/etc/zpkg/binrepo.conf` の `BINREPO=` を設定すると、
   install はローカル binpkg キャッシュがミスした後にリポジトリを試す
 - **一致条件**: name・arch・version+revision・**実効 USE フラグのハッシュ**が全部一致。
-  違えば黙ってソースビルドにフォールバック(誤ったビルドを入れない)。tarball の
-  sha256 は索引と突き合わせて検証
+  一致するパッケージがない場合だけソースビルドへフォールバックする
+- **検証**: index の署名、期限、generation、各エントリの `sha256` と
+  `manifest_sha256` を検証する。改ざん・期限切れ・ロールバック・sha256 不一致は
+  **ハードエラー**で、ソースビルドへ黙って逃げない
+- **取得**: index / signature は毎回取り直す(キャッシュされた古い index を使わない)。
+  package / manifest はキャッシュの sha256 が一致すれば再利用し、不一致なら再取得して
+  再検証する
 - `ZPKG_NO_BINPKG=1` はローカル binpkg とリポジトリの両方を無効化する
-- 署名は将来課題(index に signature フィールドを追加する形を想定)。配布と運用は
-  コミュニティが形成された段階で整備する
+
+## 署名と信頼チェーン(M37)
+
+### 鍵と署名
+
+- 署名は **Ed25519**(Go 標準ライブラリ)。秘密鍵は PKCS#8 PEM、公開鍵は PKIX PEM
+- key ID = 公開鍵 32 バイトの SHA-256(64 hex)
+- 信頼する鍵は `$ZPKG_ROOT/etc/zpkg/trusted.d/*.pub`。`zpkg key import` で明示的に
+  追加し、TOFU はしない。`security.conf` の `TRUSTED_KEYS=` / `ZPKG_TRUSTED_KEYS` で
+  ディレクトリを変更できる
+- 秘密鍵は 0600 を要求(Unix)。`mkindex` / `sign-recipes` は秘密鍵がリポジトリや
+  レシピツリーの中にある場合を拒否する(stage3 への混入防止)
+- detached signature は `<file>.sig`:
+
+```json
+{
+  "schema": 1,
+  "algorithm": "ed25519",
+  "keyid": "<64hex>",
+  "signature": "<base64 64 bytes>"
+}
+```
+
+### 何に署名するか
+
+- **binrepo**: `index.json` の実バイト列。index(schema 2)が `generation` /
+  `expires` / `keyid` を持ち、各 package の `sha256` と `manifest_sha256` を拘束する。
+  binpkg 本体と manifest は index 経由で間接的に署名される
+- **レシピツリー**: `recipes.manifest`。`.git` と署名自身を除く全 regular file の
+  path / sha256 / size / mode を列挙し、その manifest の実バイト列に署名する。
+  ディレクトリ / レシピ tarball / stage3 同梱ツリーのどれでも同じ検証ができる
+- **レシピのソース tarball**: 各レシピの `checksums`(sha256)が manifest に
+  含まれるため、レシピツリーの署名がソース取得まで連鎖する
+- **インストール済みパッケージ**: `meta.json` の `origin` / `origin_repo` /
+  `origin_keyid` / `origin_generation` / `origin_index_sha256` /
+  `origin_pkg_sha256` に記録し、`zpkg info` で表示する
+
+### ロールバックと期限
+
+- `generation` は単調増加。`mkindex` / `sign-recipes` は省略時に既存ファイルの +1 を
+  使う。`--generation N` で明示できる
+- `expires` は RFC3339 または `90d` / `720h`。既定 +90 日
+- クライアントは最後に受理した generation / SHA-256 / keyid を
+  `$ZPKG_DB/.security.json` に保存する
+  - 新しい generation が保存値より小さい → ロールバックとして拒否
+  - 同じ generation で SHA-256 が違う → 同一世代のすり替えとして拒否
+  - 期限切れ → 拒否
+- `--allow-unsigned` / `ZPKG_ALLOW_UNSIGNED=1` は署名が**存在しない**場合だけ許可する。
+  署名が存在して検証に失敗する場合は常に拒否
+- `ZPKG_ALLOW_EXPIRED=1` は期限だけ解除する。署名とロールバック検証は残る
+
+### 限界
+
+- 秘密鍵の漏洩、root 権限の奪取、Secure Boot(GRUB/kernel の署名)は別問題
+- 鍵失効リスト(CRL)は未対応。`zpkg key remove` と新しい鍵へのローテーションで運用する
+- 初回の信頼は公開鍵 fingerprint の out-of-band 確認に依存する
+- GPG/OpenPGP は未対応。署名 envelope の `algorithm` を拡張して将来追加する
 
 ## コマンド(v0.9)
 
@@ -253,8 +320,12 @@ linux-firmware に実在する空白入りファイル名がきっかけ(M22)。
 | `use [flag|-flag]...` | グローバル USE の表示・編集(`-flag` で無効化) |
 | `use --package <pkg> [flag|-flag]...` | パッケージ単位 USE の表示・編集(`package.use`) |
 | `recover` | 中断されたトランザクションの修復(install はロールバック、remove は完了) |
-| `mkindex [dir]` | binpkg リポジトリ用の `index.json` を生成(既定はローカルキャッシュ) |
-| `sync [--from <src>] [--dest <dir>] [-n]` | レシピツリーを stage3/レシピ tarball・ディレクトリ・URL から原子的に置換 |
+| `mkindex [--key <private>] [--generation N] [--expires ...] [dir]` | binpkg リポジトリ用の `index.json` を生成。`--key` で署名し `keys/<keyid>.pub` も出力 |
+| `sync [--from <src>] [--dest <dir>] [-n] [--allow-unsigned]` | レシピツリーを stage3/レシピ tarball・ディレクトリ・URL から原子的に置換。`recipes.manifest` を検証 |
+| `key generate --private <path> [--public <path>]` | Ed25519 鍵ペアを生成(秘密鍵 0600) |
+| `key import <pubkey>...` / `key list` / `key remove <keyid>` | trusted.d の鍵管理 |
+| `sign --key <private> <file>...` / `verify <file>...` | detached 署名の生成・検証 |
+| `sign-recipes --key <private> [--generation N] [--expires ...] [dir]` | レシピツリーの manifest と署名を生成 |
 | `depends [-r] <pkg>...` | 依存順の表示。`-r` はインストール済みの逆依存を表示 |
 | `list` / `search <term>` | 導入済み一覧 / レシピ検索(provides も検索対象) |
 
