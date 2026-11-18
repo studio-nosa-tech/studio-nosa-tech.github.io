@@ -12,14 +12,14 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 
 ## 現在のシステム(2026-11-19)
 
-- **base.list 36 トップレベル = 依存込み 59 パッケージ**(唯一の定義)/ 12G ブータブルイメージ(BIOS/UEFI 版)。レシピツリーは 159 個(core 75 + main 84)
+- **base.list 36 トップレベル = 依存込み 59 パッケージ**(唯一の定義)/ 12G ブータブルイメージ(BIOS/UEFI 版)。レシピツリーは 161 個(core 75 + main 86)
 - 起動: BIOS/MBR または UEFI/GPT → GRUB 2.14 → kernel 7.1.8 + initramfs(busybox) → OpenRC 0.64.1 → eudev 3.3.0 → serial/VGA ログイン(shadow)
 - カーネル: x86_64_defconfig + `x86_64-generic.config`(起動系は組み込み、GPU/WiFi/追加 NIC はモジュール)。root は initramfs が `root=UUID=` で解決
 - ネットワーク: **ベースには含まない**(Gentoo 流の opt-in)。`zpkg install dhcpcd openssh` の後 `rc-update add dhcpcd boot` / `rc-update add sshd default`
 - NetworkManager 1.58.1 は main から任意導入。`zpkg install networkmanager` → `rc-update add networkmanager default`。WiFi は別途 `zpkg install wpa_supplicant`
 - 無線: wpa_supplicant 2.12 + iw(libnl、D-Bus 制御 IF)を main/ から任意インストール。WiFi ドライバはカーネルモジュール、firmware は `main/linux-firmware`
 - サービス: ベースが有効化するのは udev(eudev)/ console(ttyS0)/ console-vga(tty1) のみ。mdev はフォールバックとして同梱するが無効。dhcpcd/dbus/sshd/chronyd/wpa_supplicant/crond/nftables は入れてから自分で有効化
-- 運用: ベースは toolchain + coreutils + zpkg + tzdata + eudev + inetutils/procps。main/ には 84 パッケージ(エディタ / SSH / man / git / curl / wget / doas、M30 のネットワーク診断・ビルド・圧縮・監視、M34 の NetworkManager)があり、任意インストール
+- 運用: ベースは toolchain + coreutils + zpkg + tzdata + eudev + inetutils/procps。main/ には 86 パッケージ(エディタ / SSH / man / git / curl / wget / doas、M30 のネットワーク診断・ビルド・圧縮・監視、M34 の NetworkManager/nmtui)があり、任意インストール
 - zpkg: DB schema 2・world/upgrade・USE フラグ(package.use/IUSE)・フック(ldconfig 自動)・トランザクション・slots・binpkg リポジトリ
 - bootstrap: stage0/1(cross toolchain、メンテナ専用)→ stage2 フェーズ1(bootstrap core)→ **フェーズ2(base.list 全量)**。/usr は完全に zpkg 管理
 - リリースモデル: **ローリングリリース**(ブートストラップ設計)。更新は `zpkg upgrade` と `build-system.sh`
@@ -186,18 +186,21 @@ OpenRC で systemd を使わないため、systemd 連携をすべて無効化�
 - [x] **`main/networkmanager 1.58.1`** — `session_tracking=no`、`systemd_journal=false`、
   systemd unit/generator のインストールなし。polkit / SELinux / audit / ModemManager /
   PPP / oFono / OpenVSwitch / teamd / firewalld / concheck / CLAT を無効化。
-  crypto は null、`nmcli` を同梱(`nmtui` は libnewt/slang が必要なため無効)
+  crypto は null、`nmcli` / `nmtui` を同梱
 - [x] **OpenRC サービス** — `/etc/init.d/networkmanager` を同梱。
   `need localmount dbus`、`after udev`、`supervise-daemon` + `--no-daemon`。
   有効化は `rc-update add networkmanager default`
 - [x] **`main/libndp 1.9`** — IPv6 Neighbor Discovery ライブラリ(NetworkManager の必須依存)
-- [x] **依存** — glib / dbus / eudev / libndp / util-linux / readline。WiFi を使う場合は
-  別途 `wpa_supplicant`(main)もインストールする
+- [x] **`main/newt 0.52.25` / `main/slang 2.3.3`** — nmtui の TUI ライブラリ。
+  newt は Python/Tcl バインディングと GPM を無効化、slang は X11 を無効化
+- [x] **依存** — glib / dbus / eudev / libndp / util-linux / readline / newt。
+  WiFi を使う場合は別途 `wpa_supplicant`(main)もインストールする
 - [x] **検証(2026-11-19)** — dev root で libndp / dbus / NetworkManager をビルド・
   インストール。chroot で dbus-daemon と NetworkManager を起動し、
-  `nmcli general status` / `nmcli device status` が応答することを確認
-- [x] **レシピ数** — core 75 + main 84 = 159
-- 残: 実機/イメージでの Ethernet/WiFi 接続試験、nmtui を使う場合の newt/slang 追加
+  `nmcli general status` / `nmcli device status` が応答することを確認。
+  `nmtui` のリンク(newt/slang)と起動も確認
+- [x] **レシピ数** — core 75 + main 86 = 161
+- 残: 実機/イメージでの Ethernet/WiFi 接続試験
 
 ## M33: base に起動ユーティリティを追加(2026-11-18 完走)
 

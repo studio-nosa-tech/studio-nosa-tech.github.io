@@ -376,7 +376,12 @@ install -d -m700 -o yourname -g yourname /home/yourname/.ssh
 
 ### ネットワーク(任意)
 
-stage3 には DHCP クライアントが入っていません。有線で使うなら:
+stage3 には DHCP クライアントも NetworkManager も入っていません。
+次の **A か B のどちらか**を選びます。
+
+#### A. dhcpcd + wpa_supplicant(最小構成)
+
+有線:
 
 ```sh
 zpkg install dhcpcd
@@ -392,6 +397,35 @@ rc-update add wpa_supplicant default
 ```
 
 `linux-firmware` は約 2 GiB あります。必要なファームウェアだけを入れる運用も可能です。
+
+#### B. NetworkManager(nmcli / nmtui)
+
+有線・WiFi をまとめて管理したい場合の選択肢です。NetworkManager は main
+パッケージなので stage3 には含まれません。
+
+```sh
+zpkg install networkmanager wpa_supplicant
+rc-update add networkmanager default
+```
+
+`nmtui` と `nmcli` が入ります。まず TUI で接続する場合:
+
+```sh
+nmtui
+```
+
+CUI で操作する場合:
+
+```sh
+nmcli general status
+nmcli device status
+nmcli device wifi list
+nmcli device wifi connect "<SSID>" password "<PASSWORD>"
+```
+
+NetworkManager は内部 DHCP と wpa_supplicant 連携を使うため、**dhcpcd と
+wpa_supplicant のサービスは有効化しないでください**(A と B の併用は避ける)。
+WiFi を使う場合は `linux-firmware` も必要です。
 
 ### chroot を抜けて再起動
 
@@ -485,6 +519,9 @@ chroot /mnt/zignos /bin/bash
 ## ネットワークと WiFi の補足
 
 - 有線: `dhcpcd` を入れて `rc-update add dhcpcd boot`
+- NetworkManager を使う場合は `zpkg install networkmanager wpa_supplicant` →
+  `rc-update add networkmanager default`。`nmcli` / `nmtui` で設定する
+  (dhcpcd / wpa_supplicant のサービスは有効化しない)
 - WiFi: `wpa_supplicant` + `iw` + `linux-firmware`。`/etc/conf.d/wpa_supplicant` の
   `WPA_IFACE`(既定 `wlan0`)を環境に合わせる
 - WiFi ドライバはカーネルモジュールです。起動時もホットプラグも **eudev + kmod** が
