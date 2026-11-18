@@ -36,8 +36,8 @@ export default defineConfig({
         {
           label: 'インストール',
           items: [
-            { label: '実機インストール', slug: 'docs/install' },
-            { label: 'stage3', slug: 'docs/stage3' },
+            { label: 'インストール(stage3)', slug: 'docs/install' },
+            { label: 'stage3 リファレンス', slug: 'docs/stage3' },
           ],
         },
         {

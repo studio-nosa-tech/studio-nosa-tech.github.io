@@ -1,442 +1,540 @@
 ---
 title: 実機インストール
-description: SystemRescue を使った BIOS / UEFI 実機インストール、zignos-install、WiFi、カーネル設定。
+description: stage3 tarball を既定とした ZIGNOS の実機インストール。ディスク準備、chroot、カーネル、UEFI GRUB と efibootmgr まで。
 ---
 
-このドキュメントは、ZIGNOS を**実機**(ノート PC・デスクトップ・サーバ)へ
-インストールする手順をまとめたものです。QEMU での起動確認は
-`zignos-build/qemu-test.sh`(開発者向け)を参照してください。
+ZIGNOS の実機インストールは、**stage3 tarball をディスクへ展開し、chroot の中で
+カーネルと GRUB を入れる方法を既定**とします。ベースは意図的に最小構成なので、
+このガイドでは「何が入っていないか」と「何を自分で入れるか」も含めて説明します。
 
-> **現状の対応範囲(2026-11-18)**
-> - **BIOS/MBR と UEFI/GPT の両方**に対応しました(イメージは `UEFI=1` で UEFI 版を生成)
-> - カーネルは **x86_64_defconfig ベースの汎用設定**(ACPI/SATA/NVMe/USB/VT/VGA/
->   UEFI GOP framebuffer + 主要 NIC)で、多くの PC で起動できます。GPU/WiFi/追加 NIC は
->   モジュールとして同梱され、eudev が uevent 経由で kmod から自動ロードします
-> - **initramfs** が root を `root=UUID=` で解決して `switch_root` します
-> - UEFI は `/EFI/BOOT/BOOTX64.EFI` のフォールバックパスで起動し、`efibootmgr` が
->   あればインストーラが NVRAM エントリも登録します(ベースには含まない)
-> - **ベースは最小構成**(Gentoo の @system 相当、依存込み 59 パッケージ)。
->   SSH / DHCP / エディタ / man は入っていないので、必要なものを `zpkg install` します
-> - 未対応: Secure Boot(無効化が必要)、LUKS/TPM
-> - 実機での動作検証はこれからです。問題があれば `dmesg` とカーネル設定
->   (`core/linux/x86_64-generic.config`)を確認してください
+- **既定: stage3 tarball**(このガイドの 2〜9 章)
+- 代替: ZIGNOS イメージから `zignos-install` でコピー(10 章 A)
+- 代替: イメージを直接 `dd`(10 章 B)
+- レスキュー: SystemRescue から chroot(10 章 C)
 
-## 推奨 Live ISO: SystemRescue
+> **注意**: `<DISK>` は `/dev/nvme0n1` や `/dev/sda` などの**ディスク全体**、
+> `<PART>` は `nvme0n1p1` / `sda1` などのパーティションです。コマンドを実行すると
+> 対象ディスクの全データが消えます。必ず `lsblk` で確認してください。
 
-実機作業のためのレスキュー環境として **SystemRescue** を推奨します
-(旧名 SystemRescueCD。Arch Linux ベース)。
+## 対応ファームウェア
+
+| ファームウェア | ディスク | GRUB | 備考 |
+|---|---|---|---|
+| **UEFI**(既定) | GPT + ESP(FAT32)+ ext4 root | `x86_64-efi` + efibootmgr | Secure Boot は無効化 |
+| BIOS/CSM | MBR + ext4 root | `i386-pc` | 2 TiB 超のディスクは不可 |
+
+---
+
+## 1. SystemRescue を用意する
+
+実機作業は **SystemRescue** から行います。BIOS/UEFI の両方で起動でき、
+`sfdisk` / `mkfs` / `tar` / `chroot` / `efibootmgr` が揃っています。
 
 - 公式: <https://www.system-rescue.org/>
-- 2026-11-17 時点の最新: **SystemRescue 13.03**(2026-11-07 リリース、1368 MiB)
-- BIOS/レガシーと UEFI の両方で起動可能。`dd`・`parted`・`growpart`・`resize2fs`・
-  `chroot`・`nmcli`/`nmtui`・`gpg` など、このガイドで使うツールが一通り入っている
-- カーネルが新しいため、NVMe・USB・WiFi の認識確認にも使える
+- 2026-11-17 時点の最新: **SystemRescue 13.03**
+- USB メモリは 2 GiB 以上
 
-推奨する理由:
-
-1. ZIGNOS のイメージ書き込み(`dd`)とパーティション操作を同じ環境で完結できる
-2. ZIGNOS が起動しないときのレスキュー(mount + chroot)にそのまま使える
-3. ローカルコンソール(VGA)とシリアルの両方で操作できる
-
-### 入手と検証
+### USB へ書き込む
 
 ```sh
-# ダウンロード(高速な CDN ミラー)
+# ダウンロードと検証(例)
 curl -LO https://fastly-cdn.system-rescue.org/releases/13.03/systemrescue-13.03-amd64.iso
 curl -LO https://fastly-cdn.system-rescue.org/releases/13.03/systemrescue-13.03-amd64.iso.sha256
-
-# チェックサム検証
 sha256sum --check systemrescue-13.03-amd64.iso.sha256
 
-# 署名検証(任意だが推奨)
-#   公開鍵: https://www.system-rescue.org/security/signing-keys/gnupg-pubkey-fdupoux-20210704-v001.pem
-gpg --import gnupg-pubkey-fdupoux-20210704-v001.pem
-gpg --verify systemrescue-13.03-amd64.iso.asc systemrescue-13.03-amd64.iso
-```
-
-> SourceForge のミラーを使う場合は
-> `https://sourceforge.net/projects/systemrescuecd/files/sysresccd-x86/13.03/systemrescue-13.03-amd64.iso/download`
-> から取得できます。
-
-### USB メモリへの書き込み
-
-Linux / macOS:
-
-```sh
-lsblk                      # 書き込み先を必ず確認(例: /dev/sdb)
-sudo umount /dev/sdb* 2>/dev/null
-sudo dd if=systemrescue-13.03-amd64.iso of=/dev/sdb bs=4M status=progress conv=fsync
+# USB へ書き込み(/dev/sdX は USB 全体。間違えるとディスクを壊す)
+sudo dd if=systemrescue-13.03-amd64.iso of=/dev/sdX bs=4M status=progress conv=fsync
 sync
 ```
 
-Windows:
+### 起動
 
-- **Rufus** を推奨。パーティション方式 **MBR**、ターゲット **BIOS または UEFI**、
-  ファイルシステム FAT32、ISO モードで書き込む(BIOS/UEFI 両対応になる)
-- または SystemRescue USB writer(AppImage)を使う
+1. USB を挿してファームウェアの起動メニューを開く
+2. **UEFI 機は UEFI モード**(CSM 無効)、BIOS 機はレガシーモードで起動
+3. **Secure Boot を無効**にする(ZIGNOS の GRUB/カーネルは未署名)
+4. 起動後、有線 LAN は自動で DHCP。WiFi は `nmtui` で設定
 
-### SystemRescue の起動
+---
 
-1. USB を挿して電源投入 → ブートメニュー(F12/F11/Esc など)で USB を選択
-2. 作業する ZIGNOS イメージに合わせたモードで起動する
-   (BIOS 版なら CSM/レガシー、UEFI 版なら UEFI。SystemRescue は両対応)
-3. ファームウェア設定で **Secure Boot を無効**にする(ZIGNOS の GRUB/カーネルは未署名)
-4. SystemRescue が起動したら、必要に応じて `nmtui` でネットワークを設定
-   (有線なら自動で DHCP。WiFi は `nmtui` または `iwctl`)
+## 2. ディスクを準備する
 
-## 準備するもの
+### UEFI(GPT + ESP)の場合
 
-| もの | 目安 | 備考 |
-|---|---|---|
-| ターゲットディスク | BIOS: 12 GiB / UEFI: 12 GiB+ | BIOS は MBR(2 TiB まで)、UEFI は GPT + 100MiB ESP |
-| SystemRescue USB | 2 GiB 以上 | 上記 |
-| ZIGNOS イメージ | 12 GiB(スパース) | `zignos-build/make-image.sh`(開発者向け・非公開)で生成。公開配布は準備中 |
-| ZIGNOS 起動用 USB(方法 B) | 12 GiB 以上 | イメージを `dd` したもの |
-| 有線 LAN | - | WiFi は firmware 導入後(`linux-firmware`) |
-
-### ZIGNOS イメージの用意
-
-現時点では公開イメージはありません。ビルドホスト(または build VM)で生成します。
-**ファームウェアに合ったイメージを選んでください**(両対応のハイブリッドでは
-ありません)。
+ESP は 512 MiB にします(100 MiB でも足りますが、将来の余裕をみて 512 MiB)。
 
 ```sh
-# zignos-build リポジトリ内で
+sfdisk <DISK> <<'EOF'
+label: gpt
+start=2048, size=1048576, type=C12A7328-F81F-11D2-BA4B-00A0C93EC93B, name="ZIGNOS ESP"
+start=1050624, type=0FC63DAF-8483-4772-8E79-3D69D8477DE4, name="zignos-root"
+EOF
+partx -u <DISK>
 
-# BIOS/レガシー(MBR、1 パーティション)
-sudo ZIGNOS_ROOT=/mnt OUT=/var/tmp/zignos-bios.img ./make-image.sh
+# NVMe は <DISK>p1 / <DISK>p2、SATA は <DISK>1 / <DISK>2
+mkfs.vfat -F32 -n ZIGNOSESP <DISK>p1
+mkfs.ext4 -L zignos-root <DISK>p2
 
-# UEFI(GPT、100MiB ESP + ext4 root)
-sudo ZIGNOS_ROOT=/mnt OUT=/var/tmp/zignos-uefi.img UEFI=1 ./make-image.sh
-
-sha256sum /var/tmp/zignos-*.img | tee zignos-images.sha256
+mkdir -p /mnt/zignos/boot/efi
+mount <DISK>p2 /mnt/zignos
+mount <DISK>p1 /mnt/zignos/boot/efi
 ```
 
-UEFI 版の生成にはホストに `mkfs.vfat`(dosfstools)と `losetup` が必要です。
-生成したイメージを USB メモリや SSH で実機へ運びます(12 GiB あるので、
-`gzip`/`xz` で圧縮すると転送が楽です)。
+### BIOS(MBR)の場合
 
 ```sh
-# 例: 圧縮して転送
-gzip -c zignos-uefi.img | ssh user@target 'cat > zignos-uefi.img.gz'
+sfdisk <DISK> <<'EOF'
+label: dos
+start=2048, type=83, bootable
+EOF
+partx -u <DISK>
+
+mkfs.ext4 -L zignos-root <DISK>1
+mount <DISK>1 /mnt/zignos
 ```
 
-## インストール方法 A: ZIGNOS の USB から内部ディスクへ(推奨)
+---
 
-`zignos-install` が**実行中の ZIGNOS を丸ごとコピー**し、GRUB とユーザーを作ります。
-起動したファームウェアを自動判定し、BIOS なら MBR(ext4 1 パーティション)、
-UEFI なら GPT(100MiB ESP + ext4 root)でディスク全面を使います。
+## 3. stage3 tarball を用意する
 
-### 1. ZIGNOS イメージを USB へ書き込む
-
-SystemRescue 上で、ファームウェアに合ったイメージを書き込みます
-(UEFI 機なら `zignos-uefi.img`)。
+stage3 は「カーネルと GRUB を除いた最小ベース」です。現在は公開準備中なので、
+開発者向けには build VM で生成します(公開後はダウンロードページの tarball を使えます)。
 
 ```sh
-lsblk                                  # USB のデバイス名を確認(例: /dev/sdX)
-sudo dd if=zignos-uefi.img of=/dev/sdX bs=4M status=progress conv=fsync
-sync
+# ビルドホストの作業ツリー内
+sudo OUT=/var/tmp/zignos-stage3.tar.xz ./make-stage3.sh
+sha256sum /var/tmp/zignos-stage3.tar.xz > /var/tmp/zignos-stage3.tar.xz.sha256
 ```
 
-> `/dev/sdX` は**ディスク全体**を指定します。`/dev/sdX1` ではありません。
-> 書き込み先を間違えると作業用ディスクを破壊します。
-
-### 2. ZIGNOS を USB から起動
-
-BIOS なら CSM/レガシーモード、UEFI なら UEFI モード(CSM 無効)で USB を起動します。
-Secure Boot は無効にしてください(GRUB/カーネルは未署名)。
-
-```text
-zignos login: root
-Password: <初期パスワード>  # 配布イメージの初期パスワード。必ず変更する
-```
-
-**ログインは VGA(tty1)とシリアル(ttyS0)の両方**で可能です。画面が出ない場合は
-シリアルケーブルを使ってください。
-
-### 3. 内部ディスクへインストール
+生成物を USB / SSH で実機へ運び、**展開前にチェックサムを検証**します。
 
 ```sh
-lsblk                   # ターゲットを確認(例: /dev/nvme0n1, /dev/sda)
-zignos-install /dev/nvme0n1
+sha256sum --check zignos-stage3.tar.xz.sha256
 ```
 
-- 対話でユーザー名・パスワードを設定(既定ユーザー名は `zignos`)
-- `/root/.ssh/authorized_keys` があれば新ユーザーへ引き継ぎます(openssh を入れた場合に有効)
-- 確認のため `YES` の入力を求められます。**対象ディスクの全データが消えます**
-- NVMe/eMMC(`/dev/nvme0n1` など)のパーティション名 `p1` にも対応しています
-- UEFI で起動した場合は自動的に GPT + ESP になり、`/EFI/BOOT/BOOTX64.EFI`
-  (ファームウェアのフォールバックパス)が書かれます。`efibootmgr` が入っていれば
-  NVRAM エントリも登録します(無ければフォールバックパスだけで起動)
-- 画面に `installing GRUB (UEFI)` / `installing GRUB (BIOS)` と表示されます
+> 2026-11-18 時点の stage3 は **53 パッケージ / 約 976 MiB** です。
+> root はロック済み、SSH ホスト鍵・machine-id・ユーザーは含みません。
 
-> UEFI の ESP は**インストール時に `/boot/efi` へマウントされるだけ**で、fstab には
-> 登録していません(起動後の通常運用では未マウント)。ESP を常時マウントしたい場合は
-> `blkid /dev/nvme0n1p1` で UUID を調べ、`/etc/fstab` に
-> `UUID=... /boot/efi vfat defaults 0 0` を追加してください。
+---
 
-非対話で実行する場合:
+## 4. stage3 を展開する
 
 ```sh
-ZIGNOS_USER=yourname ZIGNOS_PASSWORD='...' zignos-install --yes /dev/nvme0n1
+tar -xpf zignos-stage3.tar.xz -C /mnt/zignos
 ```
 
-完了すると `ZIGNOS-INSTALL-COMPLETE` と表示されます。USB を抜いて再起動し、
-内部ディスクから起動してください。
-
-### 4. 初回起動後の確認
+`/etc/resolv.conf` はビルド環境のものが入っているため、実機のネットワークに
+合わせて上書きします(SystemRescue の 127.0.0.53 スタブは chroot では使えません)。
 
 ```sh
-uname -r                              # 7.1.8
-rc-status                             # udev / console / console-vga が started
-lsmod                                 # モジュールがロードされている
+printf 'nameserver 1.1.1.1\nnameserver 8.8.8.8\n' > /mnt/zignos/etc/resolv.conf
 ```
 
-ベースシステムは最小構成(Gentoo の @system 相当)なので、SSH や DHCP は入っていません。
-使うものを自分で入れて有効化します:
+---
+
+## 5. chroot に入る
+
+stage3 には `zignos-enter.sh` は含まれていません。手動でマウントして入るのが確実です。
+**UEFI では `/sys` を rbind して efivarfs を chroot から見えるようにします**
+(efibootmgr が NVRAM を読み書きするため)。
 
 ```sh
-zpkg install openssh && rc-update add sshd default    # root の SSH ログインは無効
-zpkg install dhcpcd  && rc-update add dhcpcd boot
+mkdir -p /mnt/zignos/{dev,proc,sys,run}
+mount --rbind /dev /mnt/zignos/dev
+mount --make-rslave /mnt/zignos/dev
+mount -t proc proc /mnt/zignos/proc
+mount --rbind /sys /mnt/zignos/sys
+mount --make-rslave /mnt/zignos/sys
+mount --rbind /run /mnt/zignos/run
+mount --make-rslave /mnt/zignos/run
+
+chroot /mnt/zignos /bin/bash -l
 ```
 
-## インストール方法 B: イメージを直接ディスクへ書き込む
+`zignos-enter.sh` を使う場合は、UEFI のときだけ `/sys` の rbind を
+手動で追加してください(ヘルパーは sysfs を新規マウントするため efivarfs が
+見えないことがあります)。
 
-ZIGNOS を USB から起動せず、SystemRescue から直接ターゲットディスクへ `dd` します。
-ユーザー作成は手動になります。BIOS イメージは MBR、UEFI イメージは GPT+ESP の
-レイアウトで、**それぞれ対応するファームウェアでしか起動できません**。
+chroot に入ったら、まず root のパスワードを設定します(stage3 ではロック済み)。
 
 ```sh
-# 1) ターゲットへ書き込み(全データ消去)
-#    UEFI 機は zignos-uefi.img、BIOS 機は zignos-bios.img
-sudo dd if=zignos-uefi.img of=/dev/nvme0n1 bs=4M status=progress conv=fsync
-sync
+passwd
+```
 
-# 2) ルートパーティションをディスク全面まで拡張(12G イメージを 500G ディスクへ)
-#    BIOS イメージ: root = パーティション 1
-#    UEFI イメージ: ESP = 1、root = 2
-sudo parted /dev/nvme0n1 resizepart 2 100%     # BIOS なら 1
-sudo partprobe /dev/nvme0n1
-sudo e2fsck -f /dev/nvme0n1p2                  # BIOS なら nvme0n1p1
-sudo resize2fs /dev/nvme0n1p2                  # BIOS なら nvme0n1p1
+---
 
-# 3) 起動して root でログインし、ユーザーを作成
-#    (root の初期パスワードはイメージの案内を参照)
+## 6. ベースの初期設定
+
+stage3 にはエディタ・DHCP・SSH・man がありません。設定ファイルは `cat` の
+ヒアドキュメントで作れます(必要なら後で `zpkg install vim nano`)。
+
+### ホスト名
+
+```sh
+echo zignos > /etc/hostname
+```
+
+### タイムゾーン
+
+`tzdata` は入っています。既定は UTC です。
+
+```sh
+ln -sf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
+date
+```
+
+### キーボード(必要な場合)
+
+```sh
+loadkeys jp106
+cat > /etc/conf.d/keymaps <<'EOF'
+keymap="jp106"
+EOF
+rc-update add keymaps boot
+```
+
+### fstab
+
+UUID は `blkid` で確認します。UEFI では ESP も fstab に登録しておくと、
+`grub-install` やカーネル更新時に `/boot/efi` が使えます。
+
+```sh
+blkid <DISK>p2     # root の UUID
+blkid <DISK>p1     # ESP の UUID(UEFI のみ)
+
+cat > /etc/fstab <<EOF
+UUID=<ROOT-UUID> / ext4 defaults 0 0
+UUID=<ESP-UUID> /boot/efi vfat defaults 0 0
+proc  /proc proc  defaults 0 0
+sysfs /sys  sysfs defaults 0 0
+EOF
+```
+
+BIOS の場合は ESP の行を削除します。`/boot/efi` を常時マウントしたくない場合は
+ESP の行をコメントアウトしても構いません(GRUB 導入時だけマウントします)。
+
+---
+
+## 7. カーネルを導入する
+
+```sh
+zpkg install linux
+```
+
+- `x86_64-generic.config` でビルドされ、`/boot/vmlinuz`、`/boot/initramfs.img`、
+  `/usr/lib/modules/7.1.8` が入ります
+- 初回はソースをダウンロードしてビルドするため **数分〜十数分**かかります
+- 設定を変える場合は
+  `/usr/share/zignos/recipes/core/linux/x86_64-generic.config` を編集し、
+  `zpkg install -f linux` で再ビルドします
+
+```sh
+ls -l /boot/vmlinuz /boot/initramfs.img
+ls /usr/lib/modules
+```
+
+---
+
+## 8. GRUB を導入する
+
+### UEFI(既定。efibootmgr を使う)
+
+GRUB の `uefi` USE フラグを有効にすると、**efibootmgr と efivar が依存として
+自動で入ります**。これが以前の「フォールバックパスに置くだけ」より簡単な点です。
+
+```sh
+# UEFI 用にビルド(efibootmgr/efivar も依存で入る)
+zpkg use --package grub uefi
+zpkg install linux grub
+
+# x86_64-efi モジュールと efibootmgr を確認
+ls /usr/lib/grub/x86_64-efi
+command -v efibootmgr
+```
+
+> すでに GRUB を入れてしまった場合は、USE を変えたあと
+> `zpkg upgrade grub` または `zpkg install -f grub` で再ビルドしてください。
+
+`/etc/default/grub` を作ります(シリアルコンソールも有効にする例)。
+
+```sh
+cat > /etc/default/grub <<'EOF'
+GRUB_DISTRIBUTOR="ZIGNOS"
+GRUB_TIMEOUT=5
+GRUB_DEFAULT=0
+GRUB_CMDLINE_LINUX_DEFAULT="console=tty0 console=ttyS0"
+GRUB_CMDLINE_LINUX=""
+GRUB_TERMINAL="console serial"
+GRUB_SERIAL_COMMAND="serial --unit=0 --speed=115200"
+EOF
+```
+
+ESP が `/boot/efi` にマウントされていることを確認して、GRUB をインストールします。
+
+```sh
+mountpoint /boot/efi || mount <DISK>p1 /boot/efi
+
+/usr/sbin/grub-install \
+  --target=x86_64-efi \
+  --efi-directory=/boot/efi \
+  --bootloader-id=ZIGNOS \
+  --recheck
+
+/usr/sbin/grub-mkconfig -o /boot/grub/grub.cfg
+```
+
+`grub-install` は efibootmgr が使える環境なら **NVRAM エントリまで自動で作ります**。
+確認します。
+
+```sh
+efibootmgr -v
+```
+
+`Boot####` に `ZIGNOS` があり、`\EFI\ZIGNOS\grubx64.efi` を指していれば完了です。
+`BootOrder` の先頭に来ていない場合は、`Boot####` の番号を確認して設定します。
+
+```sh
+# 例: ZIGNOS が Boot0003 の場合
+efibootmgr --bootorder 0003,0000
+```
+
+自動登録されなかった場合(または `--no-nvram` で入れた場合)は、手動で追加します。
+
+```sh
+efibootmgr --create \
+  --disk <DISK> --part 1 \
+  --label ZIGNOS \
+  --loader '\EFI\ZIGNOS\grubx64.efi'
+
+efibootmgr -v
+```
+
+- `--part 1` は **ESP のパーティション番号**です(NVMe でも `1`)
+- `--loader` はバックスラッシュで書きます(シェルではシングルクォート)
+- `efibootmgr` が「EFI variables are not supported」と言う場合は、UEFI モードで
+  起動していないか、chroot に efivarfs が見えていません。SystemRescue を UEFI で
+  起動し直し、`/sys` を rbind してからやり直してください
+
+フォールバック(`/EFI/BOOT/BOOTX64.EFI`)も置きたい場合は、NVRAM が消えたとき用に
+スタンドアロン版を作れます(必須ではありません)。
+
+```sh
+/usr/bin/grub-mkstandalone -O x86_64-efi \
+  -o /boot/efi/EFI/BOOT/BOOTX64.EFI \
+  --modules="part_gpt part_msdos fat ext2 normal search search_fs_uuid linux echo serial terminal" \
+  "boot/grub/grub.cfg=/boot/grub/grub.cfg"
+```
+
+### BIOS(MBR)
+
+```sh
+zpkg use --package grub bios
+zpkg install linux grub
+
+cat > /etc/default/grub <<'EOF'
+GRUB_DISTRIBUTOR="ZIGNOS"
+GRUB_TIMEOUT=5
+GRUB_CMDLINE_LINUX_DEFAULT="console=tty0 console=ttyS0"
+GRUB_TERMINAL="console serial"
+GRUB_SERIAL_COMMAND="serial --unit=0 --speed=115200"
+EOF
+
+/usr/sbin/grub-install --target=i386-pc --boot-directory=/boot <DISK>
+/usr/sbin/grub-mkconfig -o /boot/grub/grub.cfg
+```
+
+---
+
+## 9. 初回起動前の仕上げ
+
+### 一般ユーザー
+
+```sh
 useradd -m -G wheel -s /bin/bash yourname
 passwd yourname
+```
+
+`wheel` グループは initscripts が提供します。特権昇格は base では `su` のみです。
+`doas` を使うなら:
+
+```sh
+zpkg install doas
+```
+
+### SSH(任意)
+
+```sh
+zpkg install openssh
+rc-update add sshd default
 install -d -m700 -o yourname -g yourname /home/yourname/.ssh
-# 必要なら authorized_keys を配置(600)
+# /home/yourname/.ssh/authorized_keys を 600 で置く
 ```
 
-> UEFI イメージの ESP は 100MiB 固定です。カーネル/initramfs は root 側の
-> `/boot` にあり、ESP には `BOOTX64.EFI` だけが入ります。
-> BIOS イメージは MBR のため 2 TiB を超えるディスクでは末尾が使えません
-> (UEFI/GPT イメージは 2TiB 超でも可)。
+`sshd` は root ログインを無効にして起動します。コンソールの root は復旧用に残ります。
 
-## インストール方法 C: レスキューと保守
+### ネットワーク(任意)
 
-ZIGNOS が起動しないときは SystemRescue から修復します。
-
-```sh
-# ルートパーティションをマウント
-mkdir -p /mnt/zignos
-mount /dev/nvme0n1p1 /mnt/zignos
-
-# 設定ファイルの確認・修正(例: fstab, grub.cfg)
-cat /mnt/zignos/etc/fstab
-cat /mnt/zignos/boot/grub/grub.cfg
-
-# chroot して zpkg を操作する場合
-mount --bind /dev  /mnt/zignos/dev
-mount -t proc proc /mnt/zignos/proc
-mount -t sysfs sys /mnt/zignos/sys
-chroot /mnt/zignos /bin/bash
-zpkg list
-zpkg upgrade
-```
-
-`/etc/fstab` と GRUB の `root=` は **ファイルシステムの UUID** で書かれています
-(initramfs が busybox `blkid` で解決)。イメージを別ディスクへコピーした場合は
-UUID が変わるため、`blkid` で確認して書き換えてください。
-
-```sh
-blkid /dev/nvme0n1p1
-# → UUID="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" PARTUUID="xxxxxxxx-01"
-```
-
-## インストール後の設定
-
-### パスワードとユーザー
-
-- root の初期パスワードは配布イメージの案内を参照し、**最初に `passwd` で変更**してください
-- 通常ユーザーは `zignos-install`(方法 A)が作成します。方法 B では手動作成
-- 特権昇格はベースでは `su` のみ。`doas`(`wheel` グループ、`permit persist :wheel`)や
-  `sudo` は好みで `zpkg install doas` / `zpkg install sudo` としてください
-
-### ネットワーク
-
-- 有線: dhcpcd を入れて有効化します(ベースには含まれません)
+stage3 には DHCP クライアントが入っていません。有線で使うなら:
 
 ```sh
 zpkg install dhcpcd
 rc-update add dhcpcd boot
-rc-service dhcpcd start              # /etc/resolv.conf に DNS も書かれる
 ```
 
-- WiFi:
+WiFi は firmware と supplicant が必要です。
 
 ```sh
-zpkg install wpa_supplicant iw linux-firmware   # 約 1.0 GiB DL / 2.0 GiB 導入
-modprobe iwlwifi                     # チップに合わせて ath10k / rtw89 / mt7921e など
-dmesg | tail                         # firmware ロードと wlan の生成を確認
-rc-update add wpa_supplicant default # 初回のみ
-rc-service wpa_supplicant start
-
-wpa_cli
-> add_network
-> set_network 0 ssid "MySSID"
-> set_network 0 psk "MyPassphrase"
-> enable_network 0
-> save_config
-> quit
-
-# インターフェース名を変える場合(既定 wlan0)
-#   /etc/conf.d/wpa_supplicant に WPA_IFACE=wlp2s0 などを書く
+zpkg install wpa_supplicant iw linux-firmware
+rc-update add wpa_supplicant default
+# /etc/conf.d/wpa_supplicant の WPA_IFACE(既定 wlan0)を必要なら変更
 ```
 
-- WiFi ドライバは**モジュール**として同梱されています(`iwlwifi`/`ath10k`/`ath11k`/
-  `rtw88`/`rtw89`/`mt76`/`brcmfmac` など)。**起動時に存在するデバイス**も、
-  起動後に挿した USB 機器も、eudev + kmod が uevent 経由で自動ロードします。
-  それでも読み込まれない場合は `lspci -k` / `lsusb` でチップを調べて
-  `modprobe <driver>` を実行してください
-- `iw dev` でインターフェースが見えない場合は `dmesg | grep -i firmware` と
-  `lspci -k` を確認してください
+`linux-firmware` は約 2 GiB あります。必要なファームウェアだけを入れる運用も可能です。
 
-### UEFI ブートエントリ(efibootmgr)
-
-UEFI インストールは**リムーバブルパス**(`/EFI/BOOT/BOOTX64.EFI`)に GRUB を置くため、
-NVRAM に何も登録しなくても起動します。`efibootmgr` は main/ にあり、ベースには含みません:
+### chroot を抜けて再起動
 
 ```sh
-zpkg install efibootmgr
-efibootmgr -v                        # 現在のエントリ一覧
+exit
 
-# ZIGNOS エントリを追加(ESP が /dev/nvme0n1p1 の場合)
-efibootmgr --create --disk /dev/nvme0n1 --part 1 \
-  --label ZIGNOS --loader '\EFI\BOOT\BOOTX64.EFI'
-
-# 起動順の変更(例: ZIGNOS を最初に)
-efibootmgr -o 0003,0001,0002
+umount -R /mnt/zignos/dev
+umount -R /mnt/zignos/sys
+umount -R /mnt/zignos/run
+umount /mnt/zignos/proc
+umount /mnt/zignos/boot/efi 2>/dev/null || true
+umount /mnt/zignos
+sync
+reboot
 ```
 
-- `zignos-install` は、実行中のイメージに `efibootmgr` があれば**自動でエントリを追加**します
-  (無い場合はリムーバブルパスで起動)
-- GRUB を自分で入れる場合、`zpkg use --package grub uefi` にしておくと
-  `zpkg install grub` の依存として efibootmgr も入ります(指定なしは BIOS/UEFI 両方、
-  `bios` のみなら efibootmgr は入りません)
-- Secure Boot は無効にしてください(GRUB/カーネルは未署名)
+ファームウェアの起動メニューで **ZIGNOS** を選びます。UEFI で NVRAM 登録が
+うまくいっていない場合は、USB を抜いて再起動し、ファームウェアの一時起動メニューから
+`\EFI\ZIGNOS\grubx64.efi` または `\EFI\BOOT\BOOTX64.EFI` を選びます。
 
-### 時刻・キーボード
+---
 
-- RTC は UTC で扱います。NTP 同期は `zpkg install chrony` のうえで
-  `rc-update add chronyd default`(ベースには含まれません)
-- `tzdata` はベースに含まれます(既定は UTC)。日本時間にするには
-  `ln -sf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime`
-- キーボード: `loadkeys jp106`(kbd の keymaps を使用)。恒久設定は
-  `/etc/conf.d/keymaps` と keymaps サービス
-
-### システム更新(ローリングリリース)
-
-ZIGNOS はローリングリリースです。レシピツリーの HEAD が現在のリリースで、
-システムは `zpkg upgrade` で追従します。
+## 10. 初回起動後
 
 ```sh
-zpkg upgrade             # world 全体をレシピの版へ
-zpkg upgrade --newuse    # USE フラグが変わったパッケージも再ビルド
-zpkg recover             # 中断したトランザクションの復旧
+uname -r                 # 7.1.8
+rc-status                # udev / console / console-vga が started
+ip addr                  # 有線 DHCP を入れた場合
 ```
 
-レシピは `/usr/share/zignos/recipes/{core,main}` に同梱されています。
+- root のパスワードはインストール時に設定済みです
+- ネットワーク・SSH・エディタ・man は必要に応じて `zpkg install`
+- 時刻同期: `zpkg install chrony && rc-update add chronyd default`
+- システム更新: `zpkg upgrade`
+
+### 代替 A: ZIGNOS イメージから `zignos-install`
+
+ZIGNOS の起動イメージを USB に書き、そこから `zignos-install` で内部ディスクへ
+コピーする方法です。ユーザー作成と GRUB 導入まで自動化されます。
+
+```sh
+# SystemRescue でイメージを USB へ
+dd if=zignos-uefi.img of=/dev/sdX bs=4M status=progress conv=fsync
+
+# ZIGNOS を USB から起動後
+lsblk
+zignos-install /dev/nvme0n1
+```
+
+UEFI で起動した場合は GPT + ESP、BIOS なら MBR になります。`efibootmgr` が
+入っていれば NVRAM も登録します。イメージは `make-image.sh` で
+生成します(公開配布は準備中)。
+
+### 代替 B: イメージを直接 `dd`
+
+```sh
+dd if=zignos-uefi.img of=/dev/nvme0n1 bs=4M status=progress conv=fsync
+sync
+
+# root パーティションをディスク全面へ(UEFI は 2、BIOS は 1)
+parted /dev/nvme0n1 resizepart 2 100%
+partprobe /dev/nvme0n1
+e2fsck -f /dev/nvme0n1p2
+resize2fs /dev/nvme0n1p2
+```
+
+起動後に root でログインし、ユーザーを作成します(初期パスワードはイメージの案内を参照)。
+
+### 代替 C: レスキューと保守
+
+```sh
+mount <DISK>p2 /mnt/zignos
+mount <DISK>p1 /mnt/zignos/boot/efi   # UEFI
+
+# 設定確認
+cat /mnt/zignos/etc/fstab
+cat /mnt/zignos/boot/grub/grub.cfg
+
+# chroot して zpkg を操作
+mount --rbind /dev /mnt/zignos/dev
+mount -t proc proc /mnt/zignos/proc
+mount --rbind /sys /mnt/zignos/sys
+chroot /mnt/zignos /bin/bash
+```
+
+`/etc/fstab` と GRUB の `root=` は **ファイルシステムの UUID** です。ディスクを
+コピーした場合は `blkid` で確認して書き換えてください。
+
+---
+
+## ネットワークと WiFi の補足
+
+- 有線: `dhcpcd` を入れて `rc-update add dhcpcd boot`
+- WiFi: `wpa_supplicant` + `iw` + `linux-firmware`。`/etc/conf.d/wpa_supplicant` の
+  `WPA_IFACE`(既定 `wlan0`)を環境に合わせる
+- WiFi ドライバはカーネルモジュールです。起動時もホットプラグも **eudev + kmod** が
+  uevent 経由で自動ロードします
+- 読み込まれない場合は `lspci -k` / `lsusb` でチップを確認し、`modprobe <driver>`
+- `iw dev` でインターフェースが見えない場合は `dmesg | grep -i firmware` を確認
 
 ## カーネル設定とカスタマイズ
 
-> **Kernel Config には以下のガイドが役に立つでしょう。**
->
-> - [Gentoo AMD64 ハンドブック — Configuring the Linux kernel](https://wiki.gentoo.org/wiki/Handbook:AMD64/Installation/Kernel)
-> - [Gentoo Kernel Configuration Guide](https://wiki.gentoo.org/wiki/Kernel/Gentoo_Kernel_Configuration_Guide)(個別オプションの意味を調べるとき)
-
-ZIGNOS のカーネルは **`x86_64_defconfig`(カーネル同梱の汎用設定)をベース**に、
-`zignos-recipes/core/linux/x86_64-generic.config` をマージして作ります
-(`scripts/kconfig/merge_config.sh` + `make olddefconfig`)。
-
-- **起動に必要なものは組み込み(=y)**: ACPI/APIC、SATA AHCI、NVMe、USB
-  (XHCI/EHCI/OHCI/UHCI + storage + HID + AT キーボード)、VT/VGA/simpledrm/fbcon、
-  ext4/vfat、virtio、e1000e/r8169/igb など。initramfs は busybox だけで動きます
-- **追加ハードウェアはモジュール(=m)**: Intel/AMD/NVIDIA GPU、WiFi
-  (iwlwifi/ath/rtw/mt76/brcmfmac)、追加 NIC、XFS/Btrfs/NTFS3 など。
-  eudev が uevent 経由で kmod の `modprobe` を呼び、デバイスの
-  `MODALIAS` に合うドライバを自動ロードします
-- **UEFI の画面**: ファームウェアの GOP framebuffer を使う `simpledrm` + `fbcon` が
-  入っているため、GPU ドライバが動く前でも VGA/HDMI にログインプロンプトが出ます
-- **ログイン**: `console`(ttyS0)と `console-vga`(tty1)の両方が default runlevel で動きます
-
-### 自分用に調整する
-
-方針は「基本はどの端末でも起動、細部は個人で弄る」です。設定を変えたいときは
-`x86_64-generic.config` を編集してカーネルを再ビルドします。
-
-```sh
-# ベースにはエディタが無いので、まず好きなものを入れる(例: vim / nano)
-zpkg install vim
-
-# 例: NVIDIA GPU を組み込みにする / 使わないドライバを外す
-vim /usr/share/zignos/recipes/core/linux/x86_64-generic.config
-zpkg install -f linux          # カーネル + モジュール + initramfs を再生成
-```
-
-- 実行中のカーネル設定は `/boot/config-$(uname -r)` で確認できます
-- モジュールは `/lib/modules/$(uname -r)`、`lsmod` / `modprobe <driver>` で操作
-- WiFi を使うときは `main/linux-firmware` を導入してから
-  `modprobe iwlwifi`(または該当ドライバ)を実行します
+- 既定は `x86_64_defconfig` + `core/linux/x86_64-generic.config`
+- 起動系(ACPI/APIC、SATA AHCI、NVMe、USB/XHCI、VT/VGA/simpledrm、ext4/vfat、
+  virtio、主要 NIC)は組み込み、GPU/WiFi/追加 NIC はモジュール
+- 変更する場合はレシピの設定ファイルを編集し、`zpkg install -f linux`
+- カーネル更新時は initramfs も同時に再生成されます
 
 ## トラブルシューティング
 
-| 症状 | 確認・対処 |
-|---|---|
-| USB から起動しない | ファームウェアに合ったイメージか(BIOS 版/MBR、UEFI 版/GPT)。Secure Boot を無効に。USB を `dd` で書いたか |
-| GRUB は出るがカーネルで止まる | `root=UUID` が実際の root と一致しているか。`blkid` で UUID を確認し grub.cfg を修正 |
-| initramfs が rescue shell に落ちる | 表示された `Available filesystems` に root が見えるか。UUID 不一致 or ストレージドライバ不足 |
-| `VFS: Unable to mount root fs` | initramfs が読まれていない(grub.cfg の `initrd` 行、`/boot/initramfs.img` の存在) |
-| 画面にログインプロンプトが出ない | VGA は tty1(`console-vga`)、シリアルは ttyS0。`rc-status` で両サービスの状態を確認 |
-| `iw dev` に wlan が出ない | `lspci -k` でチップを確認し `modprobe <driver>`。`dmesg` に `MODALIAS` の失敗が出ていないか |
-| WiFi が association で失敗する | `linux-firmware` 未導入。`dmesg` の `firmware: failed to load` を確認 |
-| 起動時に fsck が走らない | 仕様(root は initramfs が ro マウント、fstab pass 0)。必要ならレスキュー環境で `e2fsck -f` |
-| ディスクが `/dev/nvme0n1` と表示される | 正常。`zignos-install` は `p1` 形式に対応。手動操作時は `nvme0n1p1` |
-| UEFI で OS が見つからない | UEFI モードで起動したか。ESP の `/EFI/BOOT/BOOTX64.EFI` を確認。BIOS 設定で CSM を切る |
-| root で SSH できない | 仕様(`PermitRootLogin=no`)。`zignos-install` が作ったユーザーでログイン(openssh を入れていない場合はローカルコンソールのみ) |
+### `grub-install` が EFI variables を読めない
 
-ログの確認:
+- SystemRescue を **UEFI モード**で起動しているか確認
+- chroot に `/sys` を rbind しているか確認(`mount --rbind /sys /mnt/zignos/sys`)
+- `efibootmgr -v` が動くか確認。動かなければ NVRAM 登録はできないので、
+  フォールバック `\EFI\BOOT\BOOTX64.EFI` で起動するか、UEFI 環境で再実行
+
+### NVRAM に ZIGNOS が出ない
 
 ```sh
-dmesg | less
-rc-service <name> status
-rc-status --all
+efibootmgr -v
+efibootmgr --create --disk <DISK> --part 1 --label ZIGNOS \
+  --loader '\EFI\ZIGNOS\grubx64.efi'
+efibootmgr --bootorder <ZIGNOSのBoot番号>,<他>
 ```
 
-システムログの常駐コレクタ(rsyslog 等)は未導入です。必要なら `main/` に追加します。
+### stage3 の root にログインできない
 
-## 既知の制約と今後の予定
+stage3 の root はロックされています。chroot に入って `passwd` で設定してください。
 
-- **イメージはファームウェア別**: BIOS 版(MBR)と UEFI 版(GPT+ESP)を別々に生成。
-  1 つのイメージで両対応(ハイブリッド)ではない
-- **Secure Boot は無効化が必要**: GRUB/カーネルは未署名
-- **UEFI の NVRAM 登録は任意**: 基本は `/EFI/BOOT/BOOTX64.EFI` のフォールバックパス。
-  `efibootmgr`(main/)を入れておけばインストーラが自動登録し、手動でも
-  `efibootmgr --create ...` で追加できる
-- **暗号化なし**: LUKS、署名付きモジュール、TPM は未対応
-- **インストーラの構成は単純**: スワップや `/home` 分離は未対応(UEFI は ESP + root の 2 つ)
-- **WiFi は firmware 導入後**: `main/linux-firmware`(約 2.0 GiB)を入れて
-  `modprobe` する。自動ロードは eudev + kmod が行う
-- **公開イメージなし**: 現状は自分でビルドする開発者向け。配布時は署名付きイメージを想定
-- **タイムゾーンの既定は UTC**: `tzdata` は入っているので `/etc/localtime` を差し替えれば任意の地域に設定できる
-- **モジュール署名なし**: `CONFIG_MODULE_SIG` は無効(改ざん検知は未対応)
+### エディタ / ネットワーク / SSH がない
+
+stage3 は最小ベースです。`zpkg install vim nano dhcpcd openssh` などで追加します。
+chroot 内でネットワークを使うには `/etc/resolv.conf` と NIC の設定が必要です。
+
+### `zpkg install linux` が遅い / 失敗する
+
+初回はカーネルソースのダウンロードとビルドが走ります。ネットワークと空き容量
+(数 GiB)を確認してください。binpkg リポジトリを設定していればそちらを使います。
+
+## 既知の制約
+
+- **Secure Boot 非対応**(GRUB/カーネルは未署名。無効化が必要)
+- **LUKS / TPM 非対応**
+- **GUI は未収録**(CLI の最小ベース。必要なものを自分で追加)
+- **WiFi は firmware 導入後**。`linux-firmware` は約 2 GiB
+- **stage3 の公開は準備中**。現在は `make-stage3.sh` で生成
+- **x86_64 のみ**。BIOS/UEFI の両方に対応
+- root の初期パスワードは配布イメージの案内を参照し、**最初に変更**する

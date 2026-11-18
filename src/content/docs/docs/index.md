@@ -9,8 +9,8 @@ ZIGNOS は、ゼロからビルドするソースベースの Linux ディスト
 
 ## はじめに
 
-- [実機インストール](/docs/install/) — SystemRescue を使った BIOS / UEFI への導入
-- [stage3 tarball](/docs/stage3/) — 展開して chroot し、zpkg でカーネルと GRUB を導入
+- [実機インストール](/docs/install/) — stage3 tarball を既定にした BIOS / UEFI への導入(UEFI GRUB + efibootmgr)
+- [stage3 tarball](/docs/stage3/) — tarball の中身・ビルド・配布のリファレンス
 
 > stage3 のダウンロードは現在**準備中**です。公開は [ニュース](/news/) で案内します。
 
@@ -21,5 +21,5 @@ ZIGNOS は、ゼロからビルドするソースベースの Linux ディスト
 
 ## プロジェクト
 
-- [ロードマップ](/docs/roadmap/) — M0–M30 の記録と現在の状況
+- [ロードマップ](/docs/roadmap/) — M0–M33 の記録と現在の状況
 - [プロジェクト概要](/about/)
