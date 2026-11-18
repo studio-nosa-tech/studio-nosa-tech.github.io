@@ -282,6 +282,9 @@ mountpoint /boot/efi || mount <DISK>p1 /boot/efi
 /usr/sbin/grub-mkconfig -o /boot/grub/grub.cfg
 ```
 
+> `grub-mkconfig` が `Found linux image: /boot/vmlinuz-7.1.8` を表示することを
+> 確認してください。出ない場合は「GRUB のメニューに ZIGNOS が出ない」を参照。
+
 `grub-install` は efibootmgr が使える環境なら **NVRAM エントリまで自動で作ります**。
 確認します。
 
