@@ -207,6 +207,8 @@ Portage(emerge)風のフェーズ行を入れた。
   の install と world 記録)。`go test ./...` / `go vet ./...` 通過
 - [x] **実レシピ確認** — chroot で `zpkg depends networkmanager`、`zpkg depends -r glib`
   (networkmanager / sshfs)、`zpkg remove glib` の拒否を確認
+- [x] **zpkg r8 / stage3 再生成** — 新しい zpkg をビルド環境へインストールし、stage3 を
+  53 パッケージ / 976 MiB で再生成。同梱 zpkg 0.1.0-r8 とレシピ r8 を確認
 - [ ] **SAT solver** — 将来課題。候補選択は `internal/resolve` に分離済み
 
 ## M35: zpkg sync — レシピツリーの同期(2026-11-19 検証)
