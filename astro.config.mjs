@@ -44,6 +44,7 @@ export default defineConfig({
           label: '設計',
           items: [
             { label: 'zpkg', slug: 'docs/design-pkg' },
+            { label: 'zpkg 設定', slug: 'docs/zpkg-config' },
             { label: 'システム', slug: 'docs/design-system' },
           ],
         },

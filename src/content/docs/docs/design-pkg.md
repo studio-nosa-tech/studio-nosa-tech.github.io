@@ -6,6 +6,9 @@ description: zpkg の設計。レシピ形式、DB schema 2、USE フラグ、�
 ステータス: v0.9 設計(実装と合わせて更新する。DB schema 2・world/upgrade・USE
 フラグ・フック・トランザクションは実装済み — 後述の各節参照)
 
+> 実際の設定ファイル(`use.conf` / `package.use` / `make.conf` / `binrepo.conf` /
+> `sync.conf`)と環境変数は [zpkg 設定](/docs/zpkg-config/) にまとめています。
+
 ## 目標
 
 - ソースベースのパッケージマネージャ。KISS Linux の `kiss` を最小構成の参考にする
