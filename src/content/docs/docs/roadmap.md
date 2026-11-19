@@ -1,6 +1,6 @@
 ---
 title: ロードマップ
-description: M0–M38 のマイルストーン記録と現在の状況。
+description: M0–M39 のマイルストーン記録と現在の状況。
 ---
 
 マイルストーンごとに完了条件を明記する。進捗はこのファイルのチェックボックスで管理する。
@@ -8,7 +8,7 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 /about/ の「ステータス」も参照。
 
 > 各マイルストーン節の数値・構成は**その時点の記録**。パッケージ数やベース構成は
-> 以後のマイルストーンで変わっている(現在は M38 の節と下の「現在のシステム」が正)。
+> 以後のマイルストーンで変わっている(現在は M39 の節と下の「現在のシステム」が正)。
 
 ## 現在のシステム(2026-11-19)
 
@@ -20,7 +20,7 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 - 無線: wpa_supplicant 2.12 + iw(libnl、D-Bus 制御 IF)を main/ から任意インストール。WiFi ドライバはカーネルモジュール、firmware は `main/linux-firmware`
 - サービス: ベースが有効化するのは udev(eudev)/ console(ttyS0)/ console-vga(tty1) のみ。mdev はフォールバックとして同梱するが無効。dhcpcd/dbus/sshd/chronyd/wpa_supplicant/crond/nftables は入れてから自分で有効化
 - 運用: ベースは toolchain + coreutils + zpkg + tzdata + eudev + inetutils/procps。main/ には 86 パッケージ(エディタ / SSH / man / git / curl / wget / doas、M30 のネットワーク診断・ビルド・圧縮・監視、M34 の NetworkManager/nmtui)があり、任意インストール
-- zpkg: DB schema 2・world/upgrade・USE フラグ(package.use/IUSE)・フック(ldconfig 自動)・トランザクション・slots・binpkg リポジトリ・レシピ同期(`zpkg sync`)・依存アトム解決(バージョン制約 / provides / conflicts / 逆依存 / USE 制約)・Ed25519 署名(index / レシピ manifest / ロールバック・期限)・bubblewrap ビルド隔離(ro root / namespace / capability / network)
+- zpkg: DB schema 2・world/upgrade・USE フラグ(package.use/IUSE)・フック(ldconfig 自動)・トランザクション・slots・binpkg リポジトリ・レシピ同期(`zpkg sync`)・依存アトム解決(バージョン制約 / provides / conflicts / 逆依存 / USE 制約)・Ed25519 署名(index / レシピ manifest / ロールバック・期限)・bubblewrap ビルド隔離(ro root / namespace / capability / network)・再現可能ビルド(SOURCE_DATE_EPOCH / ログ / provenance / SBOM)
 - bootstrap: stage0/1(cross toolchain、メンテナ専用)→ stage2 フェーズ1(bootstrap core)→ **フェーズ2(base.list 全量)**。/usr は完全に zpkg 管理
 - リリースモデル: **ローリングリリース**(ブートストラップ設計)。更新は `zpkg upgrade` と `build-system.sh`
 
@@ -66,8 +66,9 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 | M36 | zpkg 依存解決(アトム / バックトラック / 逆依存) | 完了(2026-11-19 実走行) | - |
 | M37 | パッケージ署名と検証(Ed25519 / index / recipes) | 完了(2026-11-19 実走行) | - |
 | M38 | ビルド環境の隔離(bubblewrap / ro root / network) | 完了(2026-11-19 実走行) | - |
+| M39 | 再現可能なビルド(SOURCE_DATE_EPOCH / log / provenance / SBOM) | 完了(2026-11-19 実走行) | - |
 
-次の候補: **UEFI での起動確認と実機検証** / GUI 要素の調査 / ストレージ系(LUKS/LVM/XFS/Btrfs) / 公式署名鍵の運用と binpkg リポジトリの公開 / 最小依存ビルドルート / resource limit / SAT solver(複数バージョン・スロットを含む完全解)。
+次の候補: **UEFI での起動確認と実機検証** / GUI 要素の調査 / ストレージ系(LUKS/LVM/XFS/Btrfs) / 公式署名鍵の運用と binpkg リポジトリの公開 / 最小依存ビルドルート / 完全な固定ビルドルート / resource limit / SAT solver(複数バージョン・スロットを含む完全解)。
 
 ## M25: stage3 tarball(2026-11-17 完走)
 
@@ -182,6 +183,47 @@ Portage(emerge)風のフェーズ行を入れた。
   owned ファイルが prune されることも確認。両プラットフォーム構成で BIOS/UEFI
   イメージとも **BOOT CHECK PASSED**(7.1.8)
 
+
+## M39: 再現可能なビルド(2026-11-19 検証)
+
+同じレシピ・ソース・ビルド環境から同じ成果物を目指すため、入力と出力を記録し、
+binpkg の時刻を固定し、2 回ビルドの manifest 比較を実装した。
+
+- [x] **SOURCE_DATE_EPOCH** — 既定 `946684800`(2000-01-01T00:00:00Z)。
+  `ZPKG_SOURCE_DATE_EPOCH` → `SOURCE_DATE_EPOCH` → `/etc/zpkg/build.conf` の順。
+  build 環境へ `KBUILD_BUILD_TIMESTAMP` / `KBUILD_BUILD_USER=zignos` /
+  `KBUILD_BUILD_HOST=zignos-build` / `PYTHONHASHSEED=0` も渡す
+- [x] **umask 022** — サンドボックス/直接ビルドとも wrapper 経由でレシピを実行
+- [x] **binpkg の正規化** — gzip header と tar 全エントリの `ModTime` を
+  SOURCE_DATE_EPOCH に固定。所有者・モード・内容・順序はビルドのまま
+- [x] **work dir** — `build/<name>-<version>[-rN][-opts]`。`--clean` で work 全体を
+  削除し、`--repro-check` は 2 回目の前に自動 clean
+- [x] **ビルドログ** — 既定で `$ZPKG_CACHE/logs/<base>.log`。ヘッダに package /
+  recipe digest / epoch / sandbox / network / started / build script を書き、
+  stdout/stderr を tee。失敗時も残る。`BUILD_LOG=0` で無効
+- [x] **provenance** — `provenance.json`(schema 1)に package / recipe digest /
+  sources / build / toolchain / dependencies / 全ビルド環境 / artifact hash /
+  log hash を記録。DB と binpkg sidecar に保存
+- [x] **SPDX 2.3 SBOM** — per-package と system。artifact の SHA-256、purl、
+  `DEPENDS_ON` / `BUILD_DEPENDENCY_OF` / `BUILD_TOOL_OF`、system は
+  `SPDXRef-System-zignos` への `CONTAINS`。DB の `sbom.json` と binpkg の
+  `.spdx.json` に保存
+- [x] **CLI** — `zpkg provenance` / `sbom` / `sbom --system` / `log` を追加。
+  `zpkg info` は recipe digest・epoch・ログ・SBOM を表示
+- [x] **再現性検証** — `zpkg build --repro-check` が 2 回ビルドして destroot の
+  manifest を比較。差分は path ごとに表示して失敗し、一致時は
+  `Reproducible: <pkg> (manifest matches, artifact <sha256>)` を表示する
+- [x] **レシピ修正** — `core/zpkg` を `go build -trimpath -buildvcs=false` に、
+  initramfs を `find | sort`・mtime 正規化・`gzip -n` で決定的に生成
+- [x] **テスト** — provenance / SPDX / tar mtime / build.conf / diff の
+  ユニットテストと、VM の chroot での実パッケージ(zlib / zpkg)ビルド。
+  `go test ./...` / `go vet ./...` 通過
+- [x] **zpkg r11 / stage3 r11** — 54 パッケージ / 977 MiB。provenance と
+  SBOM を DB に含む
+- [ ] **完全な固定ビルドルート** — makedepends だけが見える root は次段階
+- [ ] **全レシピのバイト一致保証** — manifest 比較は内容の一致まで
+- [ ] **ライセンス情報** — レシピに license メタデータがなく SBOM は
+  `NOASSERTION`
 
 ## M38: ビルド環境の隔離(2026-11-19 検証)
 

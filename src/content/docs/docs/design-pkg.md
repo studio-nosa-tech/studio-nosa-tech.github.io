@@ -184,7 +184,7 @@ linux-firmware に実在する空白入りファイル名がきっかけ(M22)。
 実行する(`internal/sandbox`)。
 
 - root 全体を `--ro-bind / /` で読み取り専用にし、書き込み可能なのは
-  `$ZPKG_CACHE/build/<pkg>` だけ
+  `$ZPKG_CACHE/build/<name>-<version>[-rN][-opts]` だけ
 - `/tmp` / `/run` / `/var/tmp` / `/var/lib` / `/var/log` / `/var/spool` /
   `/root` / `/home` / `/mnt` / `/media` / `/srv` は空の tmpfs
 - `/etc/ssh` / `/etc/ssl/private` / `/etc/zpkg` / NetworkManager の接続設定 /
@@ -210,6 +210,38 @@ bubblewrap の `pivot_root` は chroot 先が mount point であることを要�
 `zignos-enter.sh` は private mount namespace 内で root を bind mount してから
 chroot するため、stage3 のディレクトリ chroot でもサンドボックスが動く。
 素の `chroot` では `auto` が警告して直接ビルドへフォールバックする。
+
+## 再現可能なビルド(M39)
+
+同じレシピ・ソース・ビルド環境から同じ成果物を目指すため、入力を固定し、
+出力を記録する(`internal/provenance` / `internal/spdx`)。
+
+- **SOURCE_DATE_EPOCH** — 既定 `946684800`(2000-01-01T00:00:00Z)。
+  `ZPKG_SOURCE_DATE_EPOCH` → `SOURCE_DATE_EPOCH` → `/etc/zpkg/build.conf` の順。
+  build 環境に `KBUILD_BUILD_TIMESTAMP` / `KBUILD_BUILD_USER=zignos` /
+  `KBUILD_BUILD_HOST=zignos-build` / `PYTHONHASHSEED=0` も渡す
+- **umask** — レシピは `umask 022; exec "$0" "$@"` の wrapper 経由で実行
+- **binpkg の正規化** — gzip header と tar 全エントリの `ModTime` を
+  SOURCE_DATE_EPOCH にし、AccessTime/ChangeTime をゼロにする。所有者・モード・
+  内容・順序はビルドのまま
+- **work dir** — `build/<name>-<version>[-rN][-opts]`。`--clean` は work 全体を
+  削除し、`--repro-check` は 2 回目の前に自動 clean
+- **ビルドログ** — `$ZPKG_CACHE/logs/<base>.log` に既定で保存。ヘッダに
+  package / recipe / recipe digest / epoch / sandbox / network / started /
+  build script を書き、stdout/stderr を tee する。`BUILD_LOG=0` で無効
+- **provenance.json** — package / recipe(digest・署名 key/generation)/
+  sources / build / toolchain / dependencies / build_dependencies /
+  environment(全インストール済みパッケージと hash)/ artifact(sha256・size・
+  manifest_sha256)/ log(sha256)。DB と binpkg sidecar に保存
+- **SPDX 2.3 SBOM** — per-package と system。artifact の SHA-256、purl、
+  `DEPENDS_ON` / `BUILD_DEPENDENCY_OF` / `BUILD_TOOL_OF`、system は
+  `SPDXRef-System-zignos` への `CONTAINS`
+- **再現性検証** — `zpkg build --repro-check` が 2 回ビルドして destroot の
+  manifest(Kind / Path / Hash / Link)を比較する
+- **制限** — manifest 比較であり、tar のバイト一致・所有者・mtime は保証しない。
+  固定ビルドルートは未実装。SBOM のライセンスは `NOASSERTION`
+
+詳細は [再現可能なビルド](/docs/reproducibility/) を参照。
 
 ## USE フラグ(v0.9)
 
@@ -345,8 +377,8 @@ binrepo/
 
 | コマンド | 内容 |
 |---|---|
-| `build [-f] [--no-sandbox] <pkg>...` | fetch → 検証 → destroot まで(インストールしない)。build は既定で bubblewrap 内 |
-| `install [-f] [-p] [--asdeps] [--no-sandbox] <pkg>...` | build/install。`-p` は pretend、`--asdeps` は world に追加しない |
+| `build [-f] [--no-sandbox] [--clean] [--repro-check] <pkg>...` | fetch → 検証 → destroot まで(インストールしない)。`--clean` は work を削除、`--repro-check` は 2 回ビルドして manifest 比較 |
+| `install [-f] [-p] [--asdeps] [--no-sandbox] [--clean] [--repro-check] <pkg>...` | build/install。`-p` は pretend、`--asdeps` は world に追加しない。`--clean` / `--repro-check` はキャッシュを使わずソースビルド |
 | `upgrade [-p] [--newuse] [pkg...]` | world(または指定 pkg)をレシピの版へ。`version.Compare(installed, recipe)` で判定。`--newuse` は実効 USE フラグが変わったパッケージも再ビルド |
 | `remove [-f] <pkg>...` | 削除 + world から除去。逆依存があると停止(`-f` で強制) |
 | `info <pkg>...` | インストール済みメタデータと利用可能レシピ |
@@ -362,6 +394,9 @@ binrepo/
 | `sign --key <private> <file>...` / `verify <file>...` | detached 署名の生成・検証 |
 | `sign-recipes --key <private> [--generation N] [--expires ...] [dir]` | レシピツリーの manifest と署名を生成 |
 | `depends [-r] <pkg>...` | 依存順の表示。`-r` はインストール済みの逆依存を表示 |
+| `provenance <pkg>...` | 記録済みのビルド来歴(JSON)を表示 |
+| `sbom <pkg>...` / `sbom --system [-o <file>]` | SPDX 2.3 SBOM の表示・出力 |
+| `log [-p] <pkg>...` | ビルドログの表示(`-p` はパスだけ) |
 | `list` / `search <term>` | 導入済み一覧 / レシピ検索(provides も検索対象) |
 
 binpkg のキャッシュ名は `<name>-<version>[-rN][-<opts8>].pkg.tar.gz`。revision や実効オプションが変わると別ファイルになる。

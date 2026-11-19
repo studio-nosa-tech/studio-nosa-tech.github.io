@@ -26,8 +26,8 @@ ZIGNOS の **stage3 tarball** は、カーネルとブートローダーを除�
 - 同梱: レシピツリー `/usr/share/zignos/recipes`、`/etc/zignos-stage3`(ビルド情報)、
   空の `/boot`、fstab の雛形
 - 署名済みツリーでは `recipes.manifest` / `recipes.manifest.sig` も同梱される。
-  現行の r10 は公式署名鍵が未運用のため未署名で、`zpkg sync` には
-  `--allow-unsigned` が必要(詳細は [パッケージ署名と検証](/docs/signing/))
+  現行の r11 は公式署名鍵が未運用のため未署名で、`zpkg sync` には
+  `--allow-unsigned` が必要(詳細は [パッケージ署名と検証](/docs/signing/))。zpkg は 0.1.0-r11 で、DB には provenance と SPDX SBOM も含まれる
 
 > 旧構成(2026-11-17)は 2.1 GiB / 86 パッケージだった。現在は最小ベース化と
 > eudev / tzdata / inetutils / procps の追加を経て 54 パッケージ / 977 MiB。

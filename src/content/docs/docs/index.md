@@ -20,9 +20,10 @@ ZIGNOS は、ゼロからビルドするソースベースの Linux ディスト
 - [zpkg 設定](/docs/zpkg-config/) — USE、make.conf、binpkg、レシピ同期、環境変数
 - [署名と検証](/docs/signing/) — Ed25519、信頼済み鍵、ロールバック・期限対策
 - [ビルド環境の隔離](/docs/build-sandbox/) — bubblewrap、読み取り専用 root、ネットワーク分離
+- [再現可能なビルド](/docs/reproducibility/) — SOURCE_DATE_EPOCH、ビルドログ、provenance、SPDX SBOM
 - [システム設計](/docs/design-system/) — init、サービス、特権昇格、カーネル方針
 
 ## プロジェクト
 
-- [ロードマップ](/docs/roadmap/) — M0–M36 の記録と現在の状況
+- [ロードマップ](/docs/roadmap/) — M0–M39 の記録と現在の状況
 - [プロジェクト概要](/about/)

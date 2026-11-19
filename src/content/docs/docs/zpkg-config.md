@@ -16,6 +16,7 @@ description: ZIGNOS のパッケージマネージャ zpkg の設定ファイル
 ├── sync.conf      # zpkg sync の既定ソース
 ├── security.conf  # 署名検証ポリシー
 ├── sandbox.conf   # ビルドサンドボックス
+├── build.conf     # 再現性(SOURCE_DATE_EPOCH / ログ / SBOM)
 └── trusted.d/     # 信頼する公開鍵(*.pub)
 ```
 
@@ -30,6 +31,7 @@ description: ZIGNOS のパッケージマネージャ zpkg の設定ファイル
 | `sync.conf` | レシピ同期の既定ソース | `RECIPEURL=<URL またはパス>` |
 | `security.conf` | 署名検証ポリシー | `TRUSTED_KEYS=...` / `ALLOW_UNSIGNED=0|1` / `ALLOW_EXPIRED=0|1` |
 | `sandbox.conf` | ビルドサンドボックス | `SANDBOX=auto|require|off` / `BUILD_NET=0|1` / `BWRAP=...` |
+| `build.conf` | 再現性と記録 | `SOURCE_DATE_EPOCH=<unix>` / `BUILD_LOG=0|1` / `SBOM=0|1` |
 | `trusted.d/` | 信頼する公開鍵 | `<keyid>.pub`(PKIX PEM) |
 
 ## USE フラグ
@@ -200,6 +202,25 @@ BUILD_NET=1
 サンドボックスの内容と chroot の注意は
 [ビルド環境の隔離](/docs/build-sandbox/) を参照してください。
 
+## 再現性(`build.conf`)
+
+```sh
+# /etc/zpkg/build.conf
+SOURCE_DATE_EPOCH=946684800
+BUILD_LOG=1
+SBOM=1
+```
+
+- `SOURCE_DATE_EPOCH` はビルドの固定時刻です。既定は `946684800`
+  (2000-01-01T00:00:00Z)。`ZPKG_SOURCE_DATE_EPOCH` → `SOURCE_DATE_EPOCH`
+  環境変数 → このファイルの順で優先されます
+- `BUILD_LOG=1`(既定)は `$ZPKG_CACHE/logs/` にビルドログを保存します
+- `SBOM=1`(既定)は SPDX 2.3 SBOM を生成します
+- 環境変数 `ZPKG_BUILD_LOG` / `ZPKG_SBOM` がこのファイルより優先されます
+
+値を変えると binpkg の tar/gzip の mtime が変わり、artifact の SHA-256 も
+変わります。詳細は [再現可能なビルド](/docs/reproducibility/) を参照してください。
+
 ## パスと環境変数
 
 | 変数 | 既定 | 内容 |
@@ -218,6 +239,9 @@ BUILD_NET=1
 | `ZPKG_SANDBOX` | `auto` | `auto` / `require` / `off` |
 | `ZPKG_BUILD_NET` | `1` | `0` でビルドをネットワーク分離 |
 | `ZPKG_BWRAP` | `bwrap` | bubblewrap の実行ファイル |
+| `ZPKG_SOURCE_DATE_EPOCH` | `946684800` | 固定ビルド時刻(標準の `SOURCE_DATE_EPOCH` も可) |
+| `ZPKG_BUILD_LOG` | `1` | `0` でビルドログを保存しない |
+| `ZPKG_SBOM` | `1` | `0` で SPDX SBOM を生成しない |
 | `ZPKG_USE` | なし | グローバル USE を丸ごと上書き |
 | `ZPKG_CFLAGS` | なし | `CFLAGS` を上書き(空文字も有効) |
 | `ZPKG_MAKEOPTS` | なし | `MAKEOPTS` を上書き(空文字も有効) |
