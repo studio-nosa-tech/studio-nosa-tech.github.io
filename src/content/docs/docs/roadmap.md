@@ -1,6 +1,6 @@
 ---
 title: ロードマップ
-description: M0–M42 のマイルストーン記録と現在の状況。
+description: M0–M44 のマイルストーン記録と現在の状況。
 ---
 
 マイルストーンごとに完了条件を明記する。進捗はこのファイルのチェックボックスで管理する。
@@ -8,19 +8,19 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 /about/ の「ステータス」も参照。
 
 > 各マイルストーン節の数値・構成は**その時点の記録**。パッケージ数やベース構成は
-> 以後のマイルストーンで変わっている(現在は M42 の節と下の「現在のシステム」が正)。
+> 以後のマイルストーンで変わっている(現在は M44 の節と下の「現在のシステム」が正)。
 
-## 現在のシステム(2026-11-19)
+## 現在のシステム(2026-11-20)
 
-- **GUI: 設計中** — KDE Plasma 6 (Wayland)。`desktop/` はまだ 0 パッケージ。`plasma-meta`(Plasma 本体)と `kde-applications`(KDE アプリ)に分離し、stable は Linux/KDE LTS、testing は最新安定版、unstable はさらに挑戦的な版を追従する。M43 以降で基盤から実装する
-- **base.list {{base.top_level}} トップレベル = 依存込み {{base.closure}} パッケージ**(唯一の定義)/ 12G ブータブルイメージ(BIOS/UEFI 版)。レシピツリーは各チャンネル {{recipes.per_channel}} 個(core 76 + main 86)× 3 = {{recipes.total}}
-- 起動: BIOS/MBR または UEFI/GPT → GRUB 2.14 → kernel 7.1.8 + initramfs(busybox) → OpenRC 0.64.1 → eudev 3.3.0 → serial/VGA ログイン(shadow)
+- **GUI: M44 完了** — KDE Plasma 6.4.5 (Wayland) が QEMU で起動。Qt 6.8.5 LTS / KF6 6.18.0 / KWin / plasmashell / Xwayland 24.1.9 を `desktop/` に実装。stable は Qt 6.8 LTS に合わせ Plasma 6.4.5、testing は最新安定版、unstable はさらに挑戦的な版を追従する
+- **base.list {{base.top_level}} トップレベル = 依存込み {{base.closure}} パッケージ**(唯一の定義)/ 12G ブータブルイメージ(BIOS/UEFI 版)。レシピツリーは各チャンネル {{recipes.per_channel}} 個(core 76 + main 86)× 3 = {{recipes.total}}(r12 時点)。**M44 の開発ツリーは core 77 + main 87 + desktop 169 = 333 / チャンネル**
+- 起動: BIOS/MBR または UEFI/GPT → GRUB 2.14 → kernel 7.1.8 + initramfs(busybox) → OpenRC 0.64.1 → eudev 3.3.0 → serial/VGA ログイン(shadow / PAM)
 - カーネル: x86_64_defconfig + `x86_64-generic.config`(起動系は組み込み、GPU/WiFi/追加 NIC はモジュール)。root は initramfs が `root=UUID=` で解決
 - ネットワーク: **ベースには含まない**(Gentoo 流の opt-in)。`zpkg install dhcpcd openssh` の後 `rc-update add dhcpcd boot` / `rc-update add sshd default`
 - NetworkManager 1.58.1 は main から任意導入。`zpkg install networkmanager` → `rc-update add networkmanager default`。WiFi は別途 `zpkg install wpa_supplicant`
 - 無線: wpa_supplicant 2.12 + iw(libnl、D-Bus 制御 IF)を main/ から任意インストール。WiFi ドライバはカーネルモジュール、firmware は `main/linux-firmware`
-- サービス: ベースが有効化するのは udev(eudev)/ console(ttyS0)/ console-vga(tty1) のみ。mdev はフォールバックとして同梱するが無効。dhcpcd/dbus/sshd/chronyd/wpa_supplicant/crond/nftables は入れてから自分で有効化
-- 運用: ベースは toolchain + coreutils + zpkg + tzdata + eudev + inetutils/procps。main/ には 86 パッケージ(エディタ / SSH / man / git / curl / wget / doas、M30 のネットワーク診断・ビルド・圧縮・監視、M34 の NetworkManager/nmtui)があり、任意インストール
+- サービス: ベースが有効化するのは udev(eudev)/ console(ttyS0)/ console-vga(tty1) のみ。mdev はフォールバックとして同梱するが無効。dhcpcd/dbus/sshd/chronyd/wpa_supplicant/crond/nftables は入れてから自分で有効化。デスクトップでは dbus/elogind/polkit を default で有効化する
+- 運用: ベースは toolchain + coreutils + zpkg + tzdata + eudev + inetutils/procps。main/ には 87 パッケージ(エディタ / SSH / man / git / curl / wget / doas、M30 のネットワーク診断・ビルド・圧縮・監視、M34 の NetworkManager/nmtui)があり、任意インストール
 - zpkg: DB schema 2・world/upgrade・USE フラグ(package.use/IUSE)・フック(ldconfig 自動)・トランザクション・slots・binpkg リポジトリ・レシピ同期(`zpkg sync`)・依存アトム解決(バージョン制約 / provides / conflicts / 逆依存 / USE 制約)・Ed25519 署名(index / レシピ manifest / ロールバック・期限)・bubblewrap ビルド隔離(ro root / namespace / capability / network)・再現可能ビルド(SOURCE_DATE_EPOCH / ログ / provenance / SBOM)・リリースチャンネル(stable/testing/unstable)・upgrade の差分表示/全ビルド後インストール/整合性チェック・リリースマニフェスト(ビルドごとの release.json)
 - bootstrap: stage0/1(cross toolchain、メンテナ専用)→ stage2 フェーズ1(bootstrap core)→ **フェーズ2(base.list 全量)**。/usr は完全に zpkg 管理
 - リリースモデル: **ローリングリリース**(ブートストラップ設計)。更新は `zpkg upgrade` と `build-system.sh`
@@ -71,8 +71,10 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 | M40 | リリースチャンネルと安全な upgrade(zpkg 0.2.0) | 完了(2026-11-19 実走行) | - |
 | M41 | リリース情報の一元管理(release.json / 配布物の自動生成) | 完了(2026-11-19 実走行) | - |
 | M42 | KDE Plasma 6 (Wayland) 設計(plasma-meta/kde-applications 分離・3段階チャンネル) | 設計完了(2026-11-19) | - |
+| M43 | デスクトップ基盤(PAM / elogind / Wayland / Mesa / フォント / Qt6) | 完了(2026-11-19 実走行) | - |
+| M44 | KF6 + KWin + Plasma 最小(Xwayland / kactivitymanagerd / PAM login) | 完了(2026-11-20 QEMU 実走行) | - |
 
-次の候補: **KDE Plasma 6 (Wayland) 基盤(M43: PAM/elogind/Wayland/Mesa/Qt6)** / UEFI での起動確認と実機検証 / リリースマニフェストの CI 連携 / ストレージ系(LUKS/LVM/XFS/Btrfs) / 公式署名鍵の運用と binpkg リポジトリの公開 / 最小依存ビルドルート / 完全な固定ビルドルート / resource limit / SAT solver(複数バージョン・スロットを含む完全解)。
+次の候補: **M45: フル Plasma(PLM / 音声 / NetworkManager / 電源 / 設定)** / デスクトップ入りイメージ・ISO(M46) / UEFI での起動確認と実機検証 / リリースマニフェストの CI 連携 / ストレージ系(LUKS/LVM/XFS/Btrfs) / 公式署名鍵の運用と binpkg リポジトリの公開 / 最小依存ビルドルート / 完全な固定ビルドルート / resource limit / SAT solver(複数バージョン・スロットを含む完全解)。
 
 ## M25: stage3 tarball(2026-11-17 完走)
 
@@ -188,10 +190,42 @@ Portage(emerge)風のフェーズ行を入れた。
   イメージとも **BOOT CHECK PASSED**(7.1.8)
 
 
+## M44: KF6 + KWin + Plasma 最小(2026-11-20 QEMU 実走行)
+
+Qt 6.8.5 / KF6 6.18.0 / Plasma 6.4.5 のデスクトップスタックを実装し、QEMU の
+virtio-gpu 上で `startplasma-wayland` からパネルとデスクトップまで起動できることを
+確認しました。詳細は[デスクトップ環境](/docs/desktop/)にまとめています。
+
+- **Qt / KF6 / Plasma** — qtbase / qtdeclarative / qtwayland / qt5compat /
+  qttools / qtpositioning / qtlocation / qtsensors / qtshadertools、ECM と
+  KF6 6.18 の依存一式、Plasma 6.4.5 の KWin / plasma-workspace /
+  plasma-desktop / plasma-integration / breeze / systemsettings /
+  kscreenlocker / kactivitymanagerd などを追加。stable の Plasma は Qt 6.8 LTS
+  で動く 6.4.5 に固定(6.6 系は Qt 6.10 / KF6 6.22 要求)
+- **PAM ログイン** — `linux-pam` を `core/` へ移動し、shadow を PAM 対応に
+  再ビルド。`/etc/pam.d` の login/su/passwd 等を追加。コンソールログインが
+  elogind の seat0 セッションになり、KWin が DRM を取得できる
+- **Xwayland / XKB** — Xwayland 24.1.9 / xkbcomp 1.4.7 / libXfont2 /
+  libfontenc / libxshmfence。ksmserver は Wayland でも xcb を強制するため
+  Xwayland が必須で、Xwayland は xkbcomp 無しでは起動直後に落ちる
+- **Mesa の DRI ドライバ** — Mesa 26 は `platforms=wayland` だけでは DRI
+  megadriver (`dril`)を作らないため、`wayland,x11` と
+  `gallium-drivers=virgl,softpipe` で `virtio_gpu` / `kms_swrast` /
+  `swrast` を導入
+- **kactivitymanagerd** — plasmashell の起動に必須。無いと
+  `Aborting shell load: The activity manager daemon is not running` で終了する
+- **kcminit の回避** — kcm_style の phase 0 フックが krdb の xrdb 呼び出しで
+  戻らず startplasma が停止するため、`kcm_style_init.so` をインストールしない。
+  恒久修正は M45
+- **QEMU 検証** — 36G MBR イメージ / virtio-vga / TCG / noapic。tty1 の PAM
+  ログイン → `dbus-run-session -- startplasma-wayland` → KWin (DRM) →
+  Xwayland → ksmserver → plasmashell を起動し、QMP のスクリーンショットで
+  パネルとデスクトップを確認(GPU は `kms_swrast` のソフトウェア GL)
+
 ## M42: KDE Plasma 6 (Wayland) デスクトップ設計(メタ分離・3段階チャンネル)(2026-11-19)
 
 最初のデスクトップ環境として KDE Plasma 6 を Wayland で導入するための設計調査。
-`desktop/` は 0 パッケージのまま、依存・OpenRC 統合・PoC 手順を確定した。
+M42 時点の `desktop/` は 0 パッケージで、依存・OpenRC 統合・PoC 手順を確定した。
 
 - [x] **メタパッケージ分離** — `desktop/plasma-meta`(Plasma セッション)と
   `desktop/kde-applications`(KDE Gear アプリ)に分ける。`plasma-meta` は
@@ -209,14 +243,15 @@ Portage(emerge)風のフェーズ行を入れた。
   OpenRC では elogind が必須で、seatd との併用はしない
 - [x] **PAM の課題** — 現在の shadow / util-linux / openssh / sudo は PAM 無効。
   PoC では PAM を `desktop/` に限定し、製品化時に `core` へ昇格して
-  認証系を再ビルドする
+  認証系を再ビルドする。**M44 で `linux-pam` を core へ移し、shadow を
+  PAM 対応にした**(SSH/doas の回帰テストは M45)
 - [x] **カーネル** — DRM/KMS と virtio-gpu、入力は既存。音声(`CONFIG_SND*`)が
   未設定のため、PipeWire の前に HDA/USB/virtio-snd を追加する
 - [x] **QEMU 検証計画** — QEMU 10.0.13 の `virtio-vga-gl` / `egl-headless` /
   virtio 入力を使い、elogind の PAM セッションから `startplasma-wayland` を
   起動してスクリーンショットと入力で確認する
-- [ ] **M43: 基盤** — PAM / elogind / polkit / Wayland / Mesa / フォント / Qt6 + メタレシピ骨格
-- [ ] **M44: KF6 + KWin + Plasma 最小** — QEMU でデスクトップ表示を確認
+- [x] **M43: 基盤** — 完了(2026-11-19)。PAM / elogind / polkit、Wayland / 入力、フォント、Mesa 26.2.7、Qt 6.8.5 を追加し、EGL 1.5 + OpenGL ES 3.1 と QML offscreen(`QML_OK 6.8.5`)を確認。`plasma-meta` / `kde-applications` は骨格のみ。あわせて initscripts r18 に `zignos-fstab` と `root-rw` を追加し、fstab の UUID 不一致で `/` が read-only になる問題を修正・自動復旧
+- [x] **M44: KF6 + KWin + Plasma 最小** — 完了(2026-11-20 QEMU 実走行)。Qt 6.8.5 / KF6 6.18.0 / Plasma 6.4.5 / Xwayland 24.1.9 / xkbcomp 1.4.7 / kactivitymanagerd を追加。`linux-pam` を core へ移して shadow を PAM 対応にし、tty1 のログインが elogind の seat0 セッションになることを確認。virtio-gpu + TCG で `startplasma-wayland` → KWin(DRM)→ Xwayland → ksmserver → plasmashell を起動し、パネルとデスクトップをスクリーンショットで確認。kickoff(kirigami-addons)・音量(plasma-pa)・壁紙・UDisks2・PLM・PipeWire・Xwayland GLX は M45
 - [ ] **M45: フル Plasma** — PLM / 音声 / NetworkManager / 電源 / 設定
 - [ ] **M46: 配布物** — デスクトップ入りイメージ/ISO、実機 GPU、6.8 移行
 

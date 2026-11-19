@@ -4,10 +4,11 @@ description: ZIGNOS のデスクトップ環境として KDE Plasma 6 を Waylan
 ---
 
 ZIGNOS はコンソール主体の最小ベースとして育ってきましたが、最初のデスクトップ
-環境として **KDE Plasma 6 (Wayland)** を導入する設計をまとめました。
+環境として **KDE Plasma 6 (Wayland)** を導入しています。
 
-**現在は設計段階で、`desktop/` にパッケージはまだありません。実装は M43 以降です。** stage3 と既定の
-イメージは CLI の最小ベースのままです。
+**M44 で KF6 + KWin + Plasma 最小構成が QEMU で起動するところまで実装しました。
+`desktop/` には 169 レシピがあり、Qt 6.8.5 / KF6 6.18.0 / Plasma 6.4.5 /
+Xwayland 24.1.9 を含みます。stage3 と既定のイメージは CLI の最小ベースのままです。**
 
 ## 目標
 
@@ -26,7 +27,7 @@ ZIGNOS はコンソール主体の最小ベースとして育ってきました�
 | コンポーネント | Stable(LTS/安定) | Testing(最新安定) | Unstable(挑戦的) |
 |---|---|---|---|
 | Linux kernel | 6.18 LTS | 7.3 最新安定 | 7.4-rc / mainline |
-| KDE Plasma | 6.6 LTS | 6.8 | 6.9 dev / beta |
+| KDE Plasma | 6.4.5(Qt 6.8 LTS 対応) | 6.8 | 6.9 dev / beta |
 | Qt | 6.8 LTS | 6.11 | 6.12 dev / beta |
 | KDE Frameworks | 6.18 | 6.32 | 6.33 / master |
 | KDE Gear(アプリ) | 25.04.3 | 26.08 | 26.12 beta |
@@ -74,16 +75,46 @@ dbus → elogind → polkit → upower → display-manager
 
 KWin 6 は logind API に依存しており、seatd/libseat は使いません。そのため
 OpenRC では **elogind が必須**です。また、セッション作成と画面ロックには
-PAM が必要になります。現在の ZIGNOS は PAM を使っていないため、デスクトップ
-導入に合わせて PAM の追加と認証まわりの整備を行います。
+PAM が必要です。M44 で **Linux-PAM を `core` に移し、shadow を PAM 対応**に
+しました。コンソールログインが elogind の seat0 セッションを作り、KWin が
+DRM を取得できます。
+
+## 実装状況(M43–M44)
+
+2026-11-20 時点で、`desktop/` に次のスタックを追加し、build VM の chroot と
+QEMU でビルド・起動を確認しています。
+
+- **セッション**: Linux-PAM 1.7.3(core)/ elogind 257.16 / polkit 128。
+  shadow は PAM 対応、`/etc/pam.d` に login/su/passwd 等を同梱
+- **Wayland**: wayland 1.25 / wayland-protocols 1.49 / libxkbcommon 1.13 /
+  xkeyboard-config 2.45
+- **入力・DRM**: libdrm 2.4.134 / libevdev / mtdev / libinput 1.32 / pixman
+- **フォント**: freetype 2.15 / harfbuzz 15.1 / fontconfig 2.18 / libpng /
+  libjpeg-turbo / DejaVu
+- **グラフィックス**: libglvnd 1.7 + Mesa 26.2.7(virgl / softpipe / swrast、
+  LLVM なし)。DRI megadriver (`dril`)から `virtio_gpu` / `kms_swrast` /
+  `swrast` ドライバを導入
+- **Qt / KF6 / Plasma**: Qt 6.8.5(qtbase / qtdeclarative / qtwayland /
+  qt5compat / qttools / qtpositioning / qtlocation / qtsensors)、
+  KF6 6.18.0、Plasma 6.4.5(KWin / plasma-workspace / plasma-desktop /
+  systemsettings / kscreenlocker / kactivitymanagerd など)
+- **Xwayland**: Xwayland 24.1.9 / xkbcomp 1.4.7 / libXfont2 / libfontenc /
+  libxshmfence。ksmserver は Wayland でも xcb を要求するため必須
+- **QEMU 検証**: virtio-gpu + TCG + `noapic` で起動し、tty1 の PAM ログイン →
+  elogind セッション(seat0)→ `startplasma-wayland` → KWin(DRM)→ Xwayland →
+  ksmserver → plasmashell を確認。QMP のスクリーンショットでパネルと
+  デスクトップを確認しました(GPU は `kms_swrast` のソフトウェア GL)
+
+`plasma-meta` / `kde-applications` のメタレシピは用意済みで、M45 で
+アプリと周辺コンポーネント(PLM / 音声 / ネットワーク / 電源)を追加します。
 
 ## フェーズ
 
 | # | 内容 |
 |---|---|
 | M42 | 設計調査(完了) |
-| M43 | 基盤(PAM / elogind / polkit / Wayland / Mesa / フォント / Qt6)+ メタレシピ骨格 |
-| M44 | KF6 + KWin + Plasma 最小 + `plasma-meta`(QEMU でデスクトップ表示) |
+| M43 | 基盤(PAM / elogind / polkit / Wayland / Mesa / フォント / Qt6)+ メタレシピ骨格(完了) |
+| M44 | KF6 + KWin + Plasma 最小 + `plasma-meta`(完了。QEMU でパネル/デスクトップ表示) |
 | M45 | フル Plasma(ログイン / 音声 / ネットワーク / 電源 / 設定)+ `kde-applications` |
 | M46 | デスクトップ入りイメージ / 実機検証 / 次期 LTS 移行 |
 
@@ -103,9 +134,15 @@ QEMU の virtio-gpu と Wayland を使い、DRM/seat を含む実際のセッシ
 
 ## 現在の制限
 
-- `desktop/` はまだ 0 パッケージ
+- `desktop/` は 169 レシピ。Plasma シェルは起動するが、KDE アプリ
+  (`kde-applications` の中身)はまだ無い
+- ランチャー(kickoff)は kirigami-addons、音量アプレットは plasma-pa が
+  必要で、M45 で追加する
+- 壁紙パッケージ / UDisks2 / Plasma Login Manager / PipeWire は未導入。
+  ログインはコンソールの PAM ログインから `startplasma-wayland` を起動する
+- Xwayland の GLX は無効(Mesa の desktop GL / libGL をまだ入れていない)
+- kcm_style の起動時フックは、xrdb 呼び出しのハングを避けるため無効にしている
 - カーネルに音声(`CONFIG_SND*`)の設定が無く、PipeWire の前に追加が必要
-- PAM がベースに無く、認証まわりの整備が前提
 - デスクトップ入りイメージ/ISO はまだ無い
 
-設計の詳細は、リポジトリ内の `zignos/docs/desktop-kde.md` にあります。
+設計・実装の詳細は、リポジトリ内の `zignos/docs/desktop-kde.md` にあります。

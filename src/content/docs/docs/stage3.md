@@ -25,7 +25,9 @@ ZIGNOS の **stage3 tarball** は、カーネルとブートローダーを除�
   `zpkg install` で追加する)
 - 同梱: レシピツリー `/usr/share/zignos/recipes/stable/{core,main,desktop}`、
   `/etc/zpkg/make.conf`(`CHANNEL=stable`)、`/etc/zignos-stage3`(ビルド情報)、
-  空の `/boot`、fstab の雛形
+  空の `/boot`、fstab の雛形(root 行は未記載。
+  `/mnt/zignos/usr/sbin/zignos-fstab /mnt/zignos` で生成するか `blkid` の
+  UUID を記入する。間違った UUID を有効にすると `/` が read-only で起動する)
 - 署名済みツリーでは `recipes.manifest` / `recipes.manifest.sig` も同梱される。
   現行の {{stage3.revision}} は公式署名鍵が未運用のため未署名で、`zpkg sync` には
   `--allow-unsigned` が必要(詳細は [パッケージ署名と検証](/docs/signing/))。zpkg は {{zpkg.version}} で、DB には provenance と SPDX SBOM も含まれる
