@@ -215,8 +215,10 @@ unstable** の3チャンネルに分け、`zpkg upgrade` を「何が変わる�
 - [x] **整合性チェック** — 更新後に world/ターゲットを再解決し、closure の
   DB・manifest(パス・種類・symlink target・版)を検証。`--verify` は全ファイルの
   sha256 も照合。成功チャンネルを `$ZPKG_DB/.channel` に記録
-- [x] **孤立パッケージ** — 既定は一覧表示のみ。`--prune` で、依存されていない
-  slot 0 の孤立だけ削除。依存されているものは kept と表示
+- [x] **孤立パッケージ** — 以前の依存 closure にあり新しい closure で不要になった
+  slot 0 のパッケージだけを対象に、既定は一覧表示。`--prune` で依存されていない
+  ものだけ削除し、依存されているものは kept と表示。world 外の無関係な
+  パッケージは対象にしない
 - [x] **zbuild 側** — `bootstrap.sh` / `stage2.sh` / `build-system.sh` /
   `make-stage3.sh` / `make-image.sh` が `CHANNEL`(既定 stable)に対応。
   stage3/イメージは選択チャンネルだけを
