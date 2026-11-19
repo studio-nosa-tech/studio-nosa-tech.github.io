@@ -83,9 +83,8 @@ DRM を取得できます。
 
 ## 実装状況(M43–M46)
 
-2026-11-20 時点で、`desktop/` に次のスタックを追加し、build VM の chroot で
-ビルド・起動を確認しています。Plasma セッション自体は M45 まで QEMU で確認済みで、
-M46 の UDisks2 とアプリは chroot で確認しています。
+2026-11-20 時点で、`desktop/` に次のスタックを追加し、build VM の chroot と
+BIOS/MBR の検証イメージ(QEMU)でビルド・起動を確認しています。
 
 - **セッション**: Linux-PAM 1.7.3(core)/ elogind 257.16 / polkit 128。
   shadow は PAM 対応、`/etc/pam.d` に login/su/passwd 等を同梱
@@ -135,8 +134,13 @@ M46 の UDisks2 とアプリは chroot で確認しています。
   KWalletManager。`kde-applications` は 9 アプリになりました
 - **確認**: chroot で UDisks2 の D-Bus 起動と `udisksctl status`、各アプリの
   `--version` と offscreen 起動を確認
+- **検証イメージ**: `zignos-m46.img`(BIOS/MBR、16 GiB sparse / 実使用 8.8 GiB)を
+  QEMU で起動し、tty1 の PAM ログイン → `startplasma-wayland`(kms_swrast)で
+  壁紙・パネルを確認。Kate / Ark / Gwenview / Okular / KWalletManager の
+  ウィンドウと `udisksctl status`(vda / sr0)も動作。開発ツールを含む検証用で、
+  クリーンな配布用イメージ/ISO と UEFI 版は次の増分です
 
-Spectacle(OpenCV 必須)と kio-extras、デスクトップ入りイメージは次の増分です。
+Spectacle(OpenCV 必須)と kio-extras、配布用イメージ/ISO は次の増分です。
 
 Plasma Login Manager は Plasma 6.6 以降(Qt 6.10 / KF6 6.22)でのみ提供される
 ため、現在はコンソール PAM ログイン + `startplasma-wayland` を使います。
@@ -163,7 +167,7 @@ dbus-run-session -- startplasma-wayland
 | M43 | 基盤(PAM / elogind / polkit / Wayland / Mesa / フォント / Qt6)+ メタレシピ骨格(完了) |
 | M44 | KF6 + KWin + Plasma 最小 + `plasma-meta`(完了。QEMU でパネル/デスクトップ表示) |
 | M45 | フル Plasma(音声 / ネットワーク / 電源 / 設定 / アプリ)+ `kde-applications`(完了。QEMU で確認) |
-| M46 | UDisks2 / KDE アプリ拡張(第1増分完了)。デスクトップ入りイメージ / 実機検証 / Plasma 6.6・PLM / Spectacle・kio-extras は次の増分 |
+| M46 | UDisks2 / KDE アプリ拡張 / 検証イメージ(第1増分完了)。クリーンな配布用イメージ / UEFI / 実機検証 / Plasma 6.6・PLM / Spectacle・kio-extras は次の増分 |
 
 各フェーズの完了条件と依存関係は [ロードマップ](/docs/roadmap/) に記録します。
 
@@ -191,6 +195,7 @@ QEMU の virtio-gpu と Wayland を使い、DRM/seat を含む実際のセッシ
 - Xwayland の GLX は有効(Mesa の `libGL` / `libGLX_mesa`)。実機 GPU の
   検証は次の増分
 - PipeWire の Bluetooth / RTKit 連携は未導入
-- デスクトップ入りイメージ/ISO はまだ無い
+- デスクトップ入りイメージ/ISO はまだ無い(BIOS/MBR の検証イメージは QEMU で
+  確認済み。クリーンな配布用と UEFI 版は次の増分)
 
 設計・実装の詳細は、リポジトリ内の `zignos/docs/desktop-kde.md` にあります。
