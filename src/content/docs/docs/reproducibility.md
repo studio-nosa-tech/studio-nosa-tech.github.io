@@ -46,13 +46,13 @@ SBOM=1
 ```
 zpkg build log
 package: zlib-1.3.2
-recipe: /usr/share/zignos/recipes/core/zlib
+recipe: /usr/share/zignos/recipes/stable/core/zlib
 recipe_digest: 2c625969f0a9...
 source_date_epoch: 946684800
 sandbox: bwrap
 network: on
 started: 2026-11-19T00:25:42Z
-build_script: /usr/share/zignos/recipes/core/zlib/build
+build_script: /usr/share/zignos/recipes/stable/core/zlib/build
 ---
 ```
 
@@ -72,14 +72,14 @@ zpkg log -p zlib       # パスだけ表示
 {
   "schema": 1,
   "package": {"name": "zlib", "version": "1.3.2", "revision": 0, "slot": "0", "arch": "amd64"},
-  "recipe": {"repo": "/usr/share/zignos/recipes/core", "dir": ".../core/zlib",
+  "recipe": {"repo": "/usr/share/zignos/recipes/stable/core", "dir": ".../core/zlib",
              "digest": "2c625969f0a9...", "keyid": "...", "generation": 42},
   "sources": [{"url": "https://zlib.net/fossils/zlib-1.3.2.tar.gz",
                "file": "zlib-1.3.2.tar.gz", "sha256": "bb32...", "size": 1502830}],
   "build": {"sandbox": "bwrap", "network": "on",
             "source_date_epoch": 946684800,
             "started": "2026-11-19T00:25:42Z", "finished": "2026-11-19T00:25:49Z",
-            "origin": "source", "zpkg_version": "0.1.0-r11"},
+            "origin": "source", "zpkg_version": "0.2.0"},
   "toolchain": [{"name": "gcc", "version": "16.2.0"}, ...],
   "dependencies": [{"name": "glibc", "version": "2.44"}],
   "build_dependencies": [{"name": "gcc", "version": "16.2.0"}],

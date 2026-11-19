@@ -229,7 +229,7 @@ zpkg install linux
   `/usr/lib/modules/7.1.8` が入ります
 - 初回はソースをダウンロードしてビルドするため **数分〜十数分**かかります
 - 設定を変える場合は
-  `/usr/share/zignos/recipes/core/linux/x86_64-generic.config` を編集し、
+  `/usr/share/zignos/recipes/stable/core/linux/x86_64-generic.config` を編集し、
   `zpkg install -f linux` で再ビルドします
 
 ```sh
@@ -464,7 +464,9 @@ ip addr                  # 有線 DHCP を入れた場合
 - root のパスワードはインストール時に設定済みです
 - ネットワーク・SSH・エディタ・man は必要に応じて `zpkg install`
 - 時刻同期: `zpkg install chrony && rc-update add chronyd default`
-- システム更新: `zpkg upgrade`
+- システム更新: `zpkg upgrade`(実行前に変更一覧・依存差分・警告を表示)
+- チャンネル確認: `zpkg channel`。testing / unstable は
+  `zpkg sync` でレシピツリーを取り込んでから `zpkg channel testing` で切り替え
 
 ### 代替 A: ZIGNOS イメージから `zignos-install`
 
@@ -579,7 +581,7 @@ stage3 に同梱された `/usr/share/zignos/recipes` は、その stage3 を作
 zpkg sync --from zignos-stage3-<new>.tar.xz
 
 # レシピだけの tarball / ディレクトリ / URL も可
-zpkg sync --from zignos-recipes-20261119.tar.xz
+zpkg sync --from zignos-recipes-20261119-r12.tar.xz
 zpkg sync --from ./zignos-recipes
 zpkg sync --from https://example.invalid/zignos-recipes.tar.xz
 
@@ -594,19 +596,32 @@ zpkg search networkmanager
 失敗しても旧ツリーは残ります。`--from` を省略した場合は
 `ZPKG_RECIPE_URL` または `/etc/zpkg/sync.conf` の `RECIPEURL=` を使います。
 
+配布用レシピ tarball は **stable / testing / unstable の3チャンネル**を
+含みます。stage3 は stable だけを同梱しているため、testing / unstable を
+使う場合はこの tarball を sync してから切り替えます。
+
+```sh
+zpkg sync --from zignos-recipes-20261119-r12.tar.xz --allow-unsigned
+zpkg channel testing      # /etc/zpkg/make.conf の CHANNEL= を更新
+zpkg upgrade -p           # 変更一覧を確認
+zpkg upgrade              # 実行(確認プロンプトあり)
+```
+
+チャンネルの詳細は [リリースチャンネル](/docs/channels/) を参照してください。
+
 新しい zpkg はレシピツリーの `recipes.manifest` を trusted key で検証します。
 署名がないツリーは既定で拒否されるため、**現行の未署名配布物**では明示的に
 `--allow-unsigned` を付けてください(公式署名鍵の運用開始後は不要です)。
 
 ```sh
-zpkg sync --from zignos-recipes-20261119.tar.xz --allow-unsigned
+zpkg sync --from zignos-recipes-20261119-r12.tar.xz --allow-unsigned
 ```
 
 署名済みツリーを検証する場合は、先に公開鍵を登録します。
 
 ```sh
 zpkg key import zignos-signing.pub
-zpkg sync --from zignos-recipes-20261119.tar.xz
+zpkg sync --from zignos-recipes-20261119-r12.tar.xz
 ```
 
 詳細は [パッケージ署名と検証](/docs/signing/) を参照してください。

@@ -23,11 +23,15 @@ ZIGNOS の **stage3 tarball** は、カーネルとブートローダーを除�
   ユーザーデータ、キャッシュ、SSH ホスト鍵、machine-id、root パスワード(ロック済み)
 - SSH / DHCP / WiFi / エディタ / man は含まれない(Gentoo 流。chroot 後に
   `zpkg install` で追加する)
-- 同梱: レシピツリー `/usr/share/zignos/recipes`、`/etc/zignos-stage3`(ビルド情報)、
+- 同梱: レシピツリー `/usr/share/zignos/recipes/stable/{core,main,desktop}`、
+  `/etc/zpkg/make.conf`(`CHANNEL=stable`)、`/etc/zignos-stage3`(ビルド情報)、
   空の `/boot`、fstab の雛形
 - 署名済みツリーでは `recipes.manifest` / `recipes.manifest.sig` も同梱される。
-  現行の r11 は公式署名鍵が未運用のため未署名で、`zpkg sync` には
-  `--allow-unsigned` が必要(詳細は [パッケージ署名と検証](/docs/signing/))。zpkg は 0.1.0-r11 で、DB には provenance と SPDX SBOM も含まれる
+  現行の r12 は公式署名鍵が未運用のため未署名で、`zpkg sync` には
+  `--allow-unsigned` が必要(詳細は [パッケージ署名と検証](/docs/signing/))。zpkg は 0.2.0 で、DB には provenance と SPDX SBOM も含まれる
+- testing / unstable は同梱されない。全チャンネル入りのレシピ tarball を
+  `zpkg sync` で取り込み、`zpkg channel testing` で切り替える
+  (詳細は [リリースチャンネル](/docs/channels/))
 
 > 旧構成(2026-11-17)は 2.1 GiB / 86 パッケージだった。現在は最小ベース化と
 > eudev / tzdata / inetutils / procps の追加を経て 54 パッケージ / 977 MiB。

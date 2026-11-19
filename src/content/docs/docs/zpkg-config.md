@@ -11,7 +11,7 @@ description: ZIGNOS のパッケージマネージャ zpkg の設定ファイル
 /etc/zpkg/
 ├── use.conf       # グローバル USE フラグ
 ├── package.use    # パッケージ単位の USE フラグ
-├── make.conf      # CFLAGS / MAKEOPTS
+├── make.conf      # CHANNEL / CFLAGS / MAKEOPTS
 ├── binrepo.conf   # binpkg リポジトリ
 ├── sync.conf      # zpkg sync の既定ソース
 ├── security.conf  # 署名検証ポリシー
@@ -26,7 +26,7 @@ description: ZIGNOS のパッケージマネージャ zpkg の設定ファイル
 |---|---|---|
 | `use.conf` | 全パッケージの USE フラグ | 空白区切りのフラグ。`#` から行末までコメント |
 | `package.use` | パッケージ単位の USE 上書き | 1 行 `<package> flag -flag ...` |
-| `make.conf` | ビルドフラグ | `CFLAGS=...` / `MAKEOPTS=...` |
+| `make.conf` | チャンネルとビルドフラグ | `CHANNEL=stable|testing|unstable` / `CFLAGS=...` / `MAKEOPTS=...` |
 | `binrepo.conf` | binpkg リポジトリ | `BINREPO=<URL またはパス>` |
 | `sync.conf` | レシピ同期の既定ソース | `RECIPEURL=<URL またはパス>` |
 | `security.conf` | 署名検証ポリシー | `TRUSTED_KEYS=...` / `ALLOW_UNSIGNED=0|1` / `ALLOW_EXPIRED=0|1` |
@@ -89,6 +89,7 @@ zpkg upgrade --newuse       # 実効 USE が変わったパッケージを再ビ
 
 ```sh
 # /etc/zpkg/make.conf
+CHANNEL=stable
 CFLAGS="-O2 -pipe"
 MAKEOPTS="-j8"
 ```
@@ -101,6 +102,27 @@ MAKEOPTS="-j8"
 
 値はビルドスクリプトへ `ZPKG_CFLAGS` / `ZPKG_MAKEOPTS` として渡されます。
 実際にコンパイラへ渡すかは各レシピの `build` 次第です。
+
+## リリースチャンネル(`make.conf`)
+
+```sh
+# /etc/zpkg/make.conf
+CHANNEL=stable     # stable(既定)/ testing / unstable
+```
+
+- `ZPKG_CHANNEL` 環境変数は1回の実行だけ上書きします
+- `zpkg upgrade --channel <ch>` も1回だけ上書きします
+- 永続的に切り替えるには `zpkg channel <ch>` を使います(他の行は保持)
+- 切り替え後は `zpkg upgrade -p` で差分を確認してから `zpkg upgrade` を
+  実行してください。upgrade は変更一覧・依存差分・警告を表示し、全ビルド
+  成功後にインストール、完了後に整合性チェックを行います
+- `--prune` は不要になった依存を削除、`--allow-downgrade` はダウングレードを
+  許可、`--verify` は全ファイルの sha256 を照合します
+
+レシピツリーは `$ZPKG_ROOT/usr/share/zignos/recipes/<channel>/` にあります。
+stage3 は stable のみ同梱するため、testing / unstable は `zpkg sync` で
+全チャンネル入りのレシピ tarball を取り込んでから切り替えます。詳細は
+[リリースチャンネル](/docs/channels/) を参照してください。
 
 ## binpkg リポジトリ(`binrepo.conf`)
 
@@ -236,6 +258,7 @@ SBOM=1
 | `ZPKG_TRUSTED_KEYS` | `$ZPKG_ROOT/etc/zpkg/trusted.d` | 信頼する `*.pub` のディレクトリ |
 | `ZPKG_ALLOW_UNSIGNED` | なし | `1` で署名のない index/レシピツリーを許可(開発用) |
 | `ZPKG_ALLOW_EXPIRED` | なし | `1` で署名の期限切れだけ許可(復旧用) |
+| `ZPKG_CHANNEL` | `stable` | `stable` / `testing` / `unstable`(`make.conf` より優先) |
 | `ZPKG_SANDBOX` | `auto` | `auto` / `require` / `off` |
 | `ZPKG_BUILD_NET` | `1` | `0` でビルドをネットワーク分離 |
 | `ZPKG_BWRAP` | `bwrap` | bubblewrap の実行ファイル |
@@ -261,6 +284,7 @@ grub uefi -bios
 
 ```sh
 # /etc/zpkg/make.conf
+CHANNEL=stable
 CFLAGS="-O2 -pipe"
 MAKEOPTS="-j8"
 ```

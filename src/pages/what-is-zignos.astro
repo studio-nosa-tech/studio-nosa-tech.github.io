@@ -74,8 +74,8 @@ import PageLayout from '../layouts/PageLayout.astro';
           <span class="icon">◆</span>
           <h3>ローリングリリース</h3>
           <p>
-            レシピツリーの HEAD が常に現在のリリース。
-            <code>zpkg upgrade</code> でシステム全体を追従させます。
+            各チャンネル(stable / testing / unstable)の HEAD が現在のリリース。
+            <code>zpkg upgrade</code> が変更内容を示し、確認してから追従します。
           </p>
         </article>
       </div>
@@ -88,8 +88,8 @@ import PageLayout from '../layouts/PageLayout.astro';
           bubblewrap によるビルド隔離を持ちます。
         </li>
         <li>
-          <strong>レシピツリー</strong> — core と main の 2 カテゴリ、現在 162 レシピ。
-          core はベースシステム、main は任意で入れる CLI ツール群です。
+          <strong>レシピツリー</strong> — stable / testing / unstable の3チャンネル、
+          各チャンネル 162 レシピ。core はベースシステム、main は任意で入れる CLI ツール群です。
         </li>
         <li>
           <strong>stage3</strong> — カーネルとブートローダーを除いた、chroot 可能な
@@ -109,7 +109,7 @@ import PageLayout from '../layouts/PageLayout.astro';
       <div class="stats">
         <div class="stat"><strong>60</strong><span>ベースパッケージ(依存込み)</span></div>
         <div class="stat"><strong>37</strong><span>base.list のトップレベル</span></div>
-        <div class="stat"><strong>162</strong><span>レシピ(core 76 + main 86)</span></div>
+        <div class="stat"><strong>486</strong><span>レシピ(162 × 3チャンネル)</span></div>
         <div class="stat"><strong>54</strong><span>stage3 のパッケージ数</span></div>
       </div>
       <p>
@@ -165,7 +165,8 @@ import PageLayout from '../layouts/PageLayout.astro';
         </dd>
         <dt>パッケージはどれくらいありますか?</dt>
         <dd>
-          現在 162 レシピ(core 76 + main 86)。ベースは 37 パッケージ、
+          各チャンネル 162 レシピ(core 76 + main 86)で、stable / testing /
+          unstable の3チャンネルがあります。ベースは 37 パッケージ、
           依存込みで 60 です。
         </dd>
       </dl>

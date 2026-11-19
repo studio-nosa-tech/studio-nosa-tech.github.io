@@ -89,6 +89,12 @@ zpkg sign-recipes --key ~/zignos-signing.key \
 
 ディレクトリ、レシピ tarball、stage3 tarball のどの入力でも同じ検証が行われます。
 
+チャンネルツリー(`stable/` / `testing/` / `unstable/`)では**ツリー全体**を
+1つの `recipes.manifest` で署名します。配布用レシピ tarball は全チャンネルを
+含むため、1回の sync で全チャンネルが検証されます。stage3 は stable サブツリー
+だけを同梱するため、そのサブツリー単体には manifest がなく、現行どおり
+未署名として扱われます。
+
 ## クライアント側の検証
 
 ```sh

@@ -1,6 +1,6 @@
 ---
 title: ロードマップ
-description: M0–M39 のマイルストーン記録と現在の状況。
+description: M0–M40 のマイルストーン記録と現在の状況。
 ---
 
 マイルストーンごとに完了条件を明記する。進捗はこのファイルのチェックボックスで管理する。
@@ -8,11 +8,11 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 /about/ の「ステータス」も参照。
 
 > 各マイルストーン節の数値・構成は**その時点の記録**。パッケージ数やベース構成は
-> 以後のマイルストーンで変わっている(現在は M39 の節と下の「現在のシステム」が正)。
+> 以後のマイルストーンで変わっている(現在は M40 の節と下の「現在のシステム」が正)。
 
 ## 現在のシステム(2026-11-19)
 
-- **base.list 37 トップレベル = 依存込み 60 パッケージ**(唯一の定義)/ 12G ブータブルイメージ(BIOS/UEFI 版)。レシピツリーは 162 個(core 76 + main 86)
+- **base.list 37 トップレベル = 依存込み 60 パッケージ**(唯一の定義)/ 12G ブータブルイメージ(BIOS/UEFI 版)。レシピツリーは各チャンネル 162 個(core 76 + main 86)× 3 = 486
 - 起動: BIOS/MBR または UEFI/GPT → GRUB 2.14 → kernel 7.1.8 + initramfs(busybox) → OpenRC 0.64.1 → eudev 3.3.0 → serial/VGA ログイン(shadow)
 - カーネル: x86_64_defconfig + `x86_64-generic.config`(起動系は組み込み、GPU/WiFi/追加 NIC はモジュール)。root は initramfs が `root=UUID=` で解決
 - ネットワーク: **ベースには含まない**(Gentoo 流の opt-in)。`zpkg install dhcpcd openssh` の後 `rc-update add dhcpcd boot` / `rc-update add sshd default`
@@ -20,7 +20,7 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 - 無線: wpa_supplicant 2.12 + iw(libnl、D-Bus 制御 IF)を main/ から任意インストール。WiFi ドライバはカーネルモジュール、firmware は `main/linux-firmware`
 - サービス: ベースが有効化するのは udev(eudev)/ console(ttyS0)/ console-vga(tty1) のみ。mdev はフォールバックとして同梱するが無効。dhcpcd/dbus/sshd/chronyd/wpa_supplicant/crond/nftables は入れてから自分で有効化
 - 運用: ベースは toolchain + coreutils + zpkg + tzdata + eudev + inetutils/procps。main/ には 86 パッケージ(エディタ / SSH / man / git / curl / wget / doas、M30 のネットワーク診断・ビルド・圧縮・監視、M34 の NetworkManager/nmtui)があり、任意インストール
-- zpkg: DB schema 2・world/upgrade・USE フラグ(package.use/IUSE)・フック(ldconfig 自動)・トランザクション・slots・binpkg リポジトリ・レシピ同期(`zpkg sync`)・依存アトム解決(バージョン制約 / provides / conflicts / 逆依存 / USE 制約)・Ed25519 署名(index / レシピ manifest / ロールバック・期限)・bubblewrap ビルド隔離(ro root / namespace / capability / network)・再現可能ビルド(SOURCE_DATE_EPOCH / ログ / provenance / SBOM)
+- zpkg: DB schema 2・world/upgrade・USE フラグ(package.use/IUSE)・フック(ldconfig 自動)・トランザクション・slots・binpkg リポジトリ・レシピ同期(`zpkg sync`)・依存アトム解決(バージョン制約 / provides / conflicts / 逆依存 / USE 制約)・Ed25519 署名(index / レシピ manifest / ロールバック・期限)・bubblewrap ビルド隔離(ro root / namespace / capability / network)・再現可能ビルド(SOURCE_DATE_EPOCH / ログ / provenance / SBOM)・リリースチャンネル(stable/testing/unstable)・upgrade の差分表示/全ビルド後インストール/整合性チェック
 - bootstrap: stage0/1(cross toolchain、メンテナ専用)→ stage2 フェーズ1(bootstrap core)→ **フェーズ2(base.list 全量)**。/usr は完全に zpkg 管理
 - リリースモデル: **ローリングリリース**(ブートストラップ設計)。更新は `zpkg upgrade` と `build-system.sh`
 
@@ -67,6 +67,7 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 | M37 | パッケージ署名と検証(Ed25519 / index / recipes) | 完了(2026-11-19 実走行) | - |
 | M38 | ビルド環境の隔離(bubblewrap / ro root / network) | 完了(2026-11-19 実走行) | - |
 | M39 | 再現可能なビルド(SOURCE_DATE_EPOCH / log / provenance / SBOM) | 完了(2026-11-19 実走行) | - |
+| M40 | リリースチャンネルと安全な upgrade(zpkg 0.2.0) | 完了(2026-11-19 実走行) | - |
 
 次の候補: **UEFI での起動確認と実機検証** / GUI 要素の調査 / ストレージ系(LUKS/LVM/XFS/Btrfs) / 公式署名鍵の運用と binpkg リポジトリの公開 / 最小依存ビルドルート / 完全な固定ビルドルート / resource limit / SAT solver(複数バージョン・スロットを含む完全解)。
 
@@ -183,6 +184,61 @@ Portage(emerge)風のフェーズ行を入れた。
   owned ファイルが prune されることも確認。両プラットフォーム構成で BIOS/UEFI
   イメージとも **BOOT CHECK PASSED**(7.1.8)
 
+
+## M40: リリースチャンネルと安全な upgrade(zpkg 0.2.0)
+
+ローリングリリースの破壊的変更に備え、レシピツリーを **stable / testing /
+unstable** の3チャンネルに分け、`zpkg upgrade` を「何が変わるかを見せてから
+実行する」コマンドにした。zpkg は **0.1.0 → 0.2.0**。
+
+- [x] **ツリー構造** — `zignos-recipes/{stable,testing,unstable}/{core,main,desktop}`。
+  初期状態は3チャンネル同一(162 レシピ/チャンネル、合計 486)。変更は
+  unstable → testing → stable の順に昇格。内容変更時は必ず revision を上げる
+- [x] **チャンネル選択** — `/etc/zpkg/make.conf` の `CHANNEL=`(既定 stable)、
+  `ZPKG_CHANNEL`、`--channel`。`zpkg channel` で表示・永続切替。
+  `$ZPKG_ROOT/usr/share/zignos/recipes/<channel>/{core,main,desktop}` を
+  自動探索し、M39 以前のフラットツリーは stable として受理
+- [x] **sync** — チャンネルツリーの検証・統計表示・archive prefix 検出に対応。
+  `Recipe tree: 486 recipes (stable 76/86, testing 76/86, unstable 76/86)`。
+  stage3 は stable のみ同梱し、testing/unstable は sync で追加
+- [x] **upgrade の計画** — `internal/upgrade`。upgrade / rebuild / downgrade /
+  new dependency、依存と makedepends の追加・削除・制約変更、孤立パッケージ、
+  `upgrade_warning`、主要パッケージのメジャー版本変更、新 conflict、slot 変更、
+  チャンネル変更を表示
+- [x] **確認とダウングレード** — 通常は `Proceed? [Y/n]`。ダウングレードは
+  `--allow-downgrade` が無ければ `[y/N]` の専用確認、あれば省略。`--yes` は
+  通常確認を省略。非対話では `--yes` 必須
+- [x] **全ビルド → インストール** — 計画した全パッケージを先に build/pack し、
+  1つでも失敗すればシステムは無変更。インストールはパッケージ単位の
+  トランザクションで、失敗時はそのパッケージだけロールバック。再実行で再開、
+  クラッシュは `zpkg recover`
+- [x] **整合性チェック** — 更新後に world/ターゲットを再解決し、closure の
+  DB・manifest(パス・種類・symlink target・版)を検証。`--verify` は全ファイルの
+  sha256 も照合。成功チャンネルを `$ZPKG_DB/.channel` に記録
+- [x] **孤立パッケージ** — 既定は一覧表示のみ。`--prune` で、依存されていない
+  slot 0 の孤立だけ削除。依存されているものは kept と表示
+- [x] **zbuild 側** — `bootstrap.sh` / `stage2.sh` / `build-system.sh` /
+  `make-stage3.sh` / `make-image.sh` が `CHANNEL`(既定 stable)に対応。
+  stage3/イメージは選択チャンネルだけを
+  `/usr/share/zignos/recipes/<channel>` に同梱し、`make.conf` に CHANNEL を書く
+- [x] **zpkg 0.2.0** — レシピ version を 0.2.0(revision 0)に変更。usage と
+  provenance のフォールバックも 0.2.0。0.1.0-r11 からの upgrade を実走行で確認
+- [x] **テスト** — config(既定/make.conf/env/legacy/TreeRoot)、sync(channel
+  tree/legacy/mixed/archive prefix)、upgrade plan(actions/deps/警告/孤立)、
+  integrity(欠落/種別/hash)、channel コマンド。`go test ./...` / `go vet ./...` 通過
+- [x] **実走行** — VM の合成チャンネルツリーで stable 1.0 → testing 2.0 の差分表示・
+  更新・整合性 OK、依存追加/削除、孤立の `--prune`、ダウングレードの確認と
+  `--allow-downgrade`、ビルド失敗時に無変更、`--verify` の hash 検出、
+  フラットツリーの legacy fallback を確認
+- [x] **zpkg 0.2.0 / stage3 r12** — 54 パッケージ / 977 MiB。stable のみ同梱、
+  `/etc/zpkg/make.conf` は `CHANNEL=stable`
+- [ ] **セット全体のロールバック** — 現状はビルド全成功後にインストールし、
+  失敗時はパッケージ単位で戻す。全パッケージを1トランザクションで巻き戻す
+  仕組みは将来
+- [ ] **チャンネル単位の sync** — 現状はツリー全体を置換する。1チャンネルだけを
+  追加・更新するコマンドは将来
+- [ ] **同一版数のチャンネル切替** — 内容が同じ version+revision のままなら
+  upgrade では再インストールされない(revision 運用で回避)
 
 ## M39: 再現可能なビルド(2026-11-19 検証)
 

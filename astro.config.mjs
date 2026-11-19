@@ -45,6 +45,7 @@ export default defineConfig({
           items: [
             { label: 'zpkg', slug: 'docs/design-pkg' },
             { label: 'zpkg 設定', slug: 'docs/zpkg-config' },
+            { label: 'リリースチャンネル', slug: 'docs/channels' },
             { label: '署名と検証', slug: 'docs/signing' },
             { label: 'ビルド隔離', slug: 'docs/build-sandbox' },
             { label: '再現可能ビルド', slug: 'docs/reproducibility' },

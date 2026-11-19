@@ -44,7 +44,7 @@ install(競合検出 + DB 記録) / remove(internal/install, internal/pkgdb)
 ## レシピ形式(ディレクトリ型・KISS 式)
 
 ```
-recipes/core/<pkg>/
+recipes/<channel>/core/<pkg>/
 ├── version       # 1 行。必須
 ├── sources       # 1 行 1 URL。省略可(ソースなしパッケージ)
 ├── checksums     # 1 行 1 個の sha256。sources と同じ順・同数
@@ -103,7 +103,8 @@ $ZPKG_DB/<name>/
   "version": "6.8.2",
   "revision": 0,
   "slot": "0",
-  "repo": "/sources/zignos-recipes/core",
+  "repo": "/sources/zignos-recipes/stable/core",
+  "channel": "stable",
   "arch": "amd64",
   "installed": "2026-11-16T03:45:23Z",
   "useflags": [],
@@ -373,19 +374,44 @@ binrepo/
 - 初回の信頼は公開鍵 fingerprint の out-of-band 確認に依存する
 - GPG/OpenPGP は未対応。署名 envelope の `algorithm` を拡張して将来追加する
 
+## リリースチャンネルと upgrade(M40)
+
+zpkg 0.2.0 から、レシピツリーは `stable` / `testing` / `unstable` の3チャンネルを
+持つ。選択は `/etc/zpkg/make.conf` の `CHANNEL=`(既定 stable)、
+`ZPKG_CHANNEL` 環境変数、`--channel` の順で上書きできる。
+
+- 既定 repo は `$ZPKG_ROOT/usr/share/zignos/recipes/<channel>/{core,main,desktop}`。
+  フラットツリーは stable として受理する(r11 以前との互換)
+- `zpkg channel` が実効値・取得元・利用可能チャンネルを表示し、
+  `zpkg channel <ch>` が `make.conf` を原子的に更新する
+- `zpkg upgrade` は `internal/upgrade` で版比較(upgrade / downgrade / rebuild /
+  new dependency)、依存と makedepends の差分、警告(`upgrade_warning`、主要
+  パッケージのメジャー版本変更、新 conflict、slot 変更、チャンネル変更)、
+  孤立パッケージを計画する
+- 実行は **全パッケージのビルド → インストール**。ビルド失敗時はシステムを
+  変更しない。インストール失敗はパッケージ単位でロールバックし、再実行で
+  再開、クラッシュは `zpkg recover`
+- 完了後に world / ターゲットを再解決し、closure の manifest を検証する。
+  `--verify` は全ファイルの sha256 も照合する
+- 制限: セット全体の自動ロールバックはしない。同じ version+revision のまま
+  内容を変えると binpkg が衝突するため、変更時は revision を上げる
+
+詳細は [リリースチャンネル](/docs/channels/) を参照。
+
 ## コマンド(v0.9)
 
 | コマンド | 内容 |
 |---|---|
 | `build [-f] [--no-sandbox] [--clean] [--repro-check] <pkg>...` | fetch → 検証 → destroot まで(インストールしない)。`--clean` は work を削除、`--repro-check` は 2 回ビルドして manifest 比較 |
 | `install [-f] [-p] [--asdeps] [--no-sandbox] [--clean] [--repro-check] <pkg>...` | build/install。`-p` は pretend、`--asdeps` は world に追加しない。`--clean` / `--repro-check` はキャッシュを使わずソースビルド |
-| `upgrade [-p] [--newuse] [pkg...]` | world(または指定 pkg)をレシピの版へ。`version.Compare(installed, recipe)` で判定。`--newuse` は実効 USE フラグが変わったパッケージも再ビルド |
+| `upgrade [-p] [-y] [--newuse] [--prune] [--allow-downgrade] [--channel <ch>] [--verify] [pkg...]` | world(または指定 pkg)を選択チャンネルの版へ。変更一覧・依存差分・警告を表示し、全ビルド成功後にインストール。`--newuse` は USE 変更時の再ビルド、`--prune` は孤立依存の削除、`--allow-downgrade` はダウングレード許可、`--verify` は全ファイルの sha256 検証 |
 | `remove [-f] <pkg>...` | 削除 + world から除去。逆依存があると停止(`-f` で強制) |
 | `info <pkg>...` | インストール済みメタデータと利用可能レシピ |
 | `owner <path>...` | パスの所有パッケージ |
 | `world` | 明示インストール一覧 |
 | `use [flag|-flag]...` | グローバル USE の表示・編集(`-flag` で無効化) |
 | `use --package <pkg> [flag|-flag]...` | パッケージ単位 USE の表示・編集(`package.use`) |
+| `channel [stable\|testing\|unstable]` | 実効チャンネルと利用可能ツリーの表示、`make.conf` の `CHANNEL=` 更新 |
 | `recover` | 中断されたトランザクションの修復(install はロールバック、remove は完了) |
 | `mkindex [--key <private>] [--generation N] [--expires ...] [dir]` | binpkg リポジトリ用の `index.json` を生成。`--key` で署名し `keys/<keyid>.pub` も出力 |
 | `sync [--from <src>] [--dest <dir>] [-n] [--allow-unsigned]` | レシピツリーを stage3/レシピ tarball・ディレクトリ・URL から原子的に置換。`recipes.manifest` を検証 |
@@ -487,15 +513,15 @@ ZPKG_NAME ZPKG_VERSION ZPKG_ROOT ZPKG_USE
 
 ```
 zignos-recipes/
-├── core/     bootstrap 最小セット(LFS 相当)
-├── main/     CLI 実用パッケージ
-├── desktop/  GUI(M4 以降)
-└── <カテゴリ>/<パッケージ>/{version, sources, checksums, depends, build}
+├── stable/   {core,main,desktop}   # 既定。stage3/イメージに同梱
+├── testing/  {core,main,desktop}   # 次期 stable の検証
+├── unstable/ {core,main,desktop}   # 開発中
+└── <channel>/<category>/<pkg>/{version, sources, checksums, depends, build}
 ```
 
 zpkg はカテゴリディレクトリを `ZPKG_REPOS` に指定して使う。複数リポジトリ(overlay、例: 個人用フォーク)は `ZPKG_REPOS` の複数指定で自然にサポート(先頭優先)。
 
-インストール済みシステムでは **レシピツリーを `/usr/share/zignos/recipes/{core,main,desktop}` に同梱**し、`ZPKG_REPOS` 未設定時はこの3カテゴリを自動で検索する(gentoo の `/var/db/repos` 相当)。したがってビルド済みイメージでも `zpkg search` / `zpkg install <pkg>` がそのまま動く。`ZPKG_REPOS` を明示すれば上書きできる(開発時のソースツリー、overlay など)。
+インストール済みシステムでは **レシピツリーを `/usr/share/zignos/recipes/<channel>/{core,main,desktop}` に同梱**し、`ZPKG_REPOS` 未設定時は `/etc/zpkg/make.conf` の `CHANNEL=`(既定 stable)に対応する3カテゴリを自動で検索する(gentoo の `/var/db/repos` 相当)。M39 以前のフラットな `recipes/{core,main,desktop}` は stable として受理する。したがってビルド済みイメージでも `zpkg search` / `zpkg install <pkg>` がそのまま動く。`ZPKG_REPOS` を明示すれば上書きできる(開発時のソースツリー、overlay など)。
 
 ## bootstrap チェーン(M2)
 
