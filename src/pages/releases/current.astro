@@ -1,0 +1,157 @@
+---
+import PageLayout from '../../layouts/PageLayout.astro';
+import release from '../../data/release.json';
+
+const bootLabel: Record<string, string> = {
+  passed: '合格',
+  failed: '失敗',
+  'not-tested': '未検証',
+};
+const availabilityLabel =
+  release.availability === 'available' ? '公開中' : '公開準備中';
+const short = (sha: string) => sha.slice(0, 12);
+const generated = release.generated.replace('T', ' ').replace('Z', ' UTC');
+const newsSlug = release.release.replace(/\./g, '-');
+---
+
+<PageLayout
+  title={`リリース ${release.release} — ZIGNOS`}
+  description={`ZIGNOS ${release.release} のリリース情報。stage3 ${release.stage3.revision}、${release.stage3.package_count} パッケージ、zpkg ${release.zpkg.version}。`}
+>
+  <div class="wrap">
+    <section class="page-hero">
+      <span class="eyebrow">RELEASE · {release.channel.toUpperCase()}</span>
+      <h1>ZIGNOS {release.release}</h1>
+      <p>{release.build_date} · {availabilityLabel}</p>
+    </section>
+
+    <div class="prose">
+      <div class="notice">
+        <strong>このページはリリースマニフェストから生成しています。</strong>
+        ダウンロードページ、リリースノート、インストールガイドも同じ
+        <a href="/releases.json">release.json</a> を参照します。
+      </div>
+
+      <h2>概要</h2>
+      <div class="stats">
+        <div class="stat">
+          <strong>{release.stage3.package_count}</strong>
+          <span>stage3 のパッケージ数</span>
+        </div>
+        <div class="stat">
+          <strong>{release.stage3.size_mib} MiB</strong>
+          <span>stage3 のサイズ</span>
+        </div>
+        <div class="stat">
+          <strong>{release.stage3.revision}</strong>
+          <span>stage3 リビジョン</span>
+        </div>
+        <div class="stat">
+          <strong>zpkg {release.zpkg.version}</strong>
+          <span>パッケージマネージャ</span>
+        </div>
+      </div>
+
+      <h2>stage3</h2>
+      <table>
+        <tbody>
+          <tr><th>ファイル</th><td><code>{release.stage3.filename}</code></td></tr>
+          <tr><th>サイズ</th><td>{release.stage3.size.toLocaleString('en-US')} バイト ({release.stage3.size_mib} MiB)</td></tr>
+          <tr><th>SHA-256</th><td><code class="hash">{release.stage3.sha256}</code></td></tr>
+          <tr><th>チャンネル</th><td>{release.channel}</td></tr>
+          <tr><th>パッケージ</th><td>{release.stage3.package_count}</td></tr>
+        </tbody>
+      </table>
+
+      <h2>カーネルとブートローダー</h2>
+      <p>
+        stage3 には含まれず、chroot 後に <code>zpkg install linux grub</code> で導入します。
+      </p>
+      <table>
+        <tbody>
+          <tr>
+            <th>Linux kernel</th>
+            <td>{release.kernel.version}-r{release.kernel.revision}</td>
+          </tr>
+          <tr>
+            <th>GRUB</th>
+            <td>{release.bootloader.version}-r{release.bootloader.revision}</td>
+          </tr>
+          <tr>
+            <th>ベース</th>
+            <td>トップレベル {release.base.top_level} / 依存込み {release.base.closure}</td>
+          </tr>
+          <tr>
+            <th>レシピ</th>
+            <td>{release.recipes.total} (各チャンネル {release.recipes.per_channel})</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>起動検証</h2>
+      <table>
+        <tbody>
+          <tr><th>BIOS</th><td>{bootLabel[release.boot.bios] ?? release.boot.bios}</td></tr>
+          <tr><th>UEFI</th><td>{bootLabel[release.boot.uefi] ?? release.boot.uefi}</td></tr>
+          <tr><th>実機</th><td>{bootLabel[release.boot.hardware] ?? release.boot.hardware}</td></tr>
+        </tbody>
+      </table>
+      <p>
+        起動結果は <code>qemu-test.sh</code> がリリースビルド時に記録します。
+        未検証の項目は、検証後に次のマニフェストで更新されます。
+      </p>
+
+      <h2>配布物</h2>
+      <table>
+        <thead>
+          <tr><th>名前</th><th>ファイル</th><th>サイズ</th></tr>
+        </thead>
+        <tbody>
+          {release.artifacts.map((a) => (
+            <tr>
+              <td>{a.name}</td>
+              <td><code>{a.filename}</code></td>
+              <td>{a.size.toLocaleString('en-US')}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p class="mono">
+        recipes SHA-256: <code class="hash">{release.recipes.sha256}</code><br />
+        zpkg SHA-256: <code class="hash">{release.artifacts.find((a) => a.name === 'zpkg')?.sha256}</code>
+      </p>
+
+      <h2>パッケージ ({release.stage3.package_count})</h2>
+      <details>
+        <summary>stage3 に含まれるパッケージの一覧</summary>
+        <ul class="package-list">
+          {release.stage3.packages.map((p) => (
+            <li>
+              <code>{p.name}</code> {p.version}{p.revision > 0 ? `-r${p.revision}` : ''}
+              <span class="muted">{p.category}</span>
+            </li>
+          ))}
+        </ul>
+      </details>
+
+      <h2>ソース</h2>
+      <table>
+        <tbody>
+          <tr><th>zignos</th><td><code>{short(release.source.zignos.commit)}</code></td></tr>
+          <tr><th>zpkg</th><td><code>{short(release.source.zpkg.commit)}</code></td></tr>
+          <tr><th>zignos-recipes</th><td><code>{short(release.source.recipes.commit)}</code></td></tr>
+          <tr><th>zignos-build</th><td><code>{short(release.source.build.commit)}</code></td></tr>
+        </tbody>
+      </table>
+      <p class="muted">マニフェスト生成: {generated}</p>
+
+      <h2>リンク</h2>
+      <ul>
+        <li><a href="/releases.json">release.json(機械可読マニフェスト)</a></li>
+        <li><a href={`/news/${newsSlug}/`}>リリースノート</a></li>
+        <li><a href="/download/">ダウンロード</a></li>
+        <li><a href="/docs/release-manifest/">リリースマニフェストの仕様</a></li>
+      </ul>
+    </div>
+  </div>
+</PageLayout>

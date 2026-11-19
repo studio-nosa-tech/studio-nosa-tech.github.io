@@ -469,6 +469,70 @@ pre {
   color: var(--text);
 }
 
+.prose table {
+  width: 100%;
+  margin: 1rem 0 1.6rem;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.prose th,
+.prose td {
+  padding: 0.55rem 0.7rem;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.prose th {
+  color: var(--muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.prose details {
+  margin: 1rem 0 1.6rem;
+}
+
+.prose summary {
+  cursor: pointer;
+  color: var(--accent-soft);
+}
+
+.hash {
+  word-break: break-all;
+  font-size: 0.78rem;
+}
+
+.mono {
+  font-size: 0.82rem;
+  line-height: 1.9;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.package-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+  gap: 0.25rem 1rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.package-list li {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: space-between;
+  font-size: 0.84rem;
+}
+
+.package-list .muted {
+  font-size: 0.75rem;
+}
+
 .notice {
   padding: 1rem 1.2rem;
   border: 1px solid var(--accent-dim);

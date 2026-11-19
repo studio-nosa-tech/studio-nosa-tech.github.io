@@ -13,7 +13,7 @@ ZIGNOS の **stage3 tarball** は、カーネルとブートローダーを除�
 ## 中身
 
 - `base.list` の**依存クロージャ**から linux と grub を除いた
-  **54 パッケージ**(2026-11-19 時点 / 約 977 MiB):
+  **{{stage3.package_count}} パッケージ**({{build_date}} 時点 / 約 {{stage3.size_mib}} MiB):
   glibc / gcc / binutils / make / bash / coreutils / tar / gzip / xz / bzip2 /
   pkgconf / busybox / openrc / initscripts / eudev / kmod / gperf / util-linux /
   shadow / e2fsprogs / kbd / tzdata / inetutils / procps / dosfstools / zpkg /
@@ -27,20 +27,21 @@ ZIGNOS の **stage3 tarball** は、カーネルとブートローダーを除�
   `/etc/zpkg/make.conf`(`CHANNEL=stable`)、`/etc/zignos-stage3`(ビルド情報)、
   空の `/boot`、fstab の雛形
 - 署名済みツリーでは `recipes.manifest` / `recipes.manifest.sig` も同梱される。
-  現行の r12 は公式署名鍵が未運用のため未署名で、`zpkg sync` には
-  `--allow-unsigned` が必要(詳細は [パッケージ署名と検証](/docs/signing/))。zpkg は 0.2.0 で、DB には provenance と SPDX SBOM も含まれる
+  現行の {{stage3.revision}} は公式署名鍵が未運用のため未署名で、`zpkg sync` には
+  `--allow-unsigned` が必要(詳細は [パッケージ署名と検証](/docs/signing/))。zpkg は {{zpkg.version}} で、DB には provenance と SPDX SBOM も含まれる
 - testing / unstable は同梱されない。全チャンネル入りのレシピ tarball を
   `zpkg sync` で取り込み、`zpkg channel testing` で切り替える
   (詳細は [リリースチャンネル](/docs/channels/))
 
 > 旧構成(2026-11-17)は 2.1 GiB / 86 パッケージだった。現在は最小ベース化と
-> eudev / tzdata / inetutils / procps の追加を経て 54 パッケージ / 977 MiB。
+> eudev / tzdata / inetutils / procps の追加を経て {{stage3.package_count}} パッケージ / {{stage3.size_mib}} MiB。
 
 ## 配布
 
 - stage3 の一般配布は**準備中(Coming soon)**。公開時はサイトの
   ダウンロードページと GitHub Releases で案内する
-- 現在は開発者向けに `make-stage3.sh` で生成する
+- 現在は開発者向けに `make-stage3.sh` で生成する。実際のファイル名・SHA-256 は
+  リリースマニフェスト(`/releases.json`、[仕様](/docs/release-manifest/))を参照
 - GitHub の 1 ファイル 2 GiB 制限があるため、公開時は分割して添付する
 
 ## ビルド
@@ -108,7 +109,7 @@ efibootmgr -v
 
 | 形態 | 中身 | 用途 |
 |---|---|---|
-| **stage3**(本ドキュメント) | base.list の依存クロージャ − linux/grub(53) | 既定の実機インストール。自分で展開・chroot して完成させる |
+| **stage3**(本ドキュメント) | base.list の依存クロージャ − linux/grub({{stage3.package_count}}) | 既定の実機インストール。自分で展開・chroot して完成させる |
 | **seed**(`make-seed.sh`) | 実行中のフルシステム | 開発者が既存システムを複製・拡張する |
 | **イメージ**(`make-image.sh`) | 起動可能な完成ディスク像(BIOS/UEFI) | dd してすぐ起動する |
 | **installer**(`zignos-install`) | 実行中システムを別ディスクへコピー | USB から起動して内部ディスクへ導入する |

@@ -44,7 +44,7 @@ description: init、コンソール、サービス、特権昇格、カーネル
   - supervise-daemon で agetty を動かすときは **`command_args_foreground`**(通常の `command_args` だと stdio が /dev/null に繋がり画面に出ない)
 - `/etc/securetty` に ttyS0 を許可、`/etc/profile` で PATH/PS1/umask を設定、`/etc/motd` でバナー
 - **`/etc/os-release`** は initscripts レシピが提供する(`NAME=ZIGNOS`、
-  `PRETTY_NAME="ZIGNOS 2026.11.17-alpha"`、`LOGO=zignos`)。fastfetch の os モジュールや
+  `PRETTY_NAME="ZIGNOS {{release}}"`、`LOGO=zignos`)。fastfetch の os モジュールや
   `ID=zignos` を見るツールが参照する。stage2 が書く `/etc/zignos-release`(ツリー判定用)とは別物
 - root パスワードは bootstrap 時に `chpasswd` で設定(配布イメージでは初回に必ず変更)
 - ベースアカウントは **initscripts レシピが所有する**(`/etc/passwd` の root/sshd/nobody、`/etc/group` の tty/sshd/utmp/nogroup 等)。個別パッケージのレシピはアカウントファイルを出さない — 部分的なファイルを destroot に置くと、インストール時に既存の `/etc/passwd` を丸ごと置き換えてしまう

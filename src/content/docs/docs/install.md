@@ -111,8 +111,9 @@ sha256sum /var/tmp/zignos-stage3.tar.xz > /var/tmp/zignos-stage3.tar.xz.sha256
 sha256sum --check zignos-stage3.tar.xz.sha256
 ```
 
-> 2026-11-19 時点の stage3 は **54 パッケージ / 約 977 MiB** です。
+> {{build_date}} 時点の stage3 は **{{stage3.package_count}} パッケージ / 約 {{stage3.size_mib}} MiB** です。
 > root はロック済み、SSH ホスト鍵・machine-id・ユーザーは含みません。
+> 現行のファイル名は `{{stage3.filename}}`、SHA-256 は `{{stage3.sha256}}` です。
 
 ---
 

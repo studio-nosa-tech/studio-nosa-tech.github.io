@@ -1,6 +1,6 @@
 ---
 title: ロードマップ
-description: M0–M40 のマイルストーン記録と現在の状況。
+description: M0–M41 のマイルストーン記録と現在の状況。
 ---
 
 マイルストーンごとに完了条件を明記する。進捗はこのファイルのチェックボックスで管理する。
@@ -8,11 +8,11 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 /about/ の「ステータス」も参照。
 
 > 各マイルストーン節の数値・構成は**その時点の記録**。パッケージ数やベース構成は
-> 以後のマイルストーンで変わっている(現在は M40 の節と下の「現在のシステム」が正)。
+> 以後のマイルストーンで変わっている(現在は M41 の節と下の「現在のシステム」が正)。
 
 ## 現在のシステム(2026-11-19)
 
-- **base.list 37 トップレベル = 依存込み 60 パッケージ**(唯一の定義)/ 12G ブータブルイメージ(BIOS/UEFI 版)。レシピツリーは各チャンネル 162 個(core 76 + main 86)× 3 = 486
+- **base.list {{base.top_level}} トップレベル = 依存込み {{base.closure}} パッケージ**(唯一の定義)/ 12G ブータブルイメージ(BIOS/UEFI 版)。レシピツリーは各チャンネル {{recipes.per_channel}} 個(core 76 + main 86)× 3 = {{recipes.total}}
 - 起動: BIOS/MBR または UEFI/GPT → GRUB 2.14 → kernel 7.1.8 + initramfs(busybox) → OpenRC 0.64.1 → eudev 3.3.0 → serial/VGA ログイン(shadow)
 - カーネル: x86_64_defconfig + `x86_64-generic.config`(起動系は組み込み、GPU/WiFi/追加 NIC はモジュール)。root は initramfs が `root=UUID=` で解決
 - ネットワーク: **ベースには含まない**(Gentoo 流の opt-in)。`zpkg install dhcpcd openssh` の後 `rc-update add dhcpcd boot` / `rc-update add sshd default`
@@ -20,7 +20,7 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 - 無線: wpa_supplicant 2.12 + iw(libnl、D-Bus 制御 IF)を main/ から任意インストール。WiFi ドライバはカーネルモジュール、firmware は `main/linux-firmware`
 - サービス: ベースが有効化するのは udev(eudev)/ console(ttyS0)/ console-vga(tty1) のみ。mdev はフォールバックとして同梱するが無効。dhcpcd/dbus/sshd/chronyd/wpa_supplicant/crond/nftables は入れてから自分で有効化
 - 運用: ベースは toolchain + coreutils + zpkg + tzdata + eudev + inetutils/procps。main/ には 86 パッケージ(エディタ / SSH / man / git / curl / wget / doas、M30 のネットワーク診断・ビルド・圧縮・監視、M34 の NetworkManager/nmtui)があり、任意インストール
-- zpkg: DB schema 2・world/upgrade・USE フラグ(package.use/IUSE)・フック(ldconfig 自動)・トランザクション・slots・binpkg リポジトリ・レシピ同期(`zpkg sync`)・依存アトム解決(バージョン制約 / provides / conflicts / 逆依存 / USE 制約)・Ed25519 署名(index / レシピ manifest / ロールバック・期限)・bubblewrap ビルド隔離(ro root / namespace / capability / network)・再現可能ビルド(SOURCE_DATE_EPOCH / ログ / provenance / SBOM)・リリースチャンネル(stable/testing/unstable)・upgrade の差分表示/全ビルド後インストール/整合性チェック
+- zpkg: DB schema 2・world/upgrade・USE フラグ(package.use/IUSE)・フック(ldconfig 自動)・トランザクション・slots・binpkg リポジトリ・レシピ同期(`zpkg sync`)・依存アトム解決(バージョン制約 / provides / conflicts / 逆依存 / USE 制約)・Ed25519 署名(index / レシピ manifest / ロールバック・期限)・bubblewrap ビルド隔離(ro root / namespace / capability / network)・再現可能ビルド(SOURCE_DATE_EPOCH / ログ / provenance / SBOM)・リリースチャンネル(stable/testing/unstable)・upgrade の差分表示/全ビルド後インストール/整合性チェック・リリースマニフェスト(ビルドごとの release.json)
 - bootstrap: stage0/1(cross toolchain、メンテナ専用)→ stage2 フェーズ1(bootstrap core)→ **フェーズ2(base.list 全量)**。/usr は完全に zpkg 管理
 - リリースモデル: **ローリングリリース**(ブートストラップ設計)。更新は `zpkg upgrade` と `build-system.sh`
 
@@ -68,8 +68,9 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 | M38 | ビルド環境の隔離(bubblewrap / ro root / network) | 完了(2026-11-19 実走行) | - |
 | M39 | 再現可能なビルド(SOURCE_DATE_EPOCH / log / provenance / SBOM) | 完了(2026-11-19 実走行) | - |
 | M40 | リリースチャンネルと安全な upgrade(zpkg 0.2.0) | 完了(2026-11-19 実走行) | - |
+| M41 | リリース情報の一元管理(release.json / 配布物の自動生成) | 完了(2026-11-19 実走行) | - |
 
-次の候補: **UEFI での起動確認と実機検証** / GUI 要素の調査 / ストレージ系(LUKS/LVM/XFS/Btrfs) / 公式署名鍵の運用と binpkg リポジトリの公開 / 最小依存ビルドルート / 完全な固定ビルドルート / resource limit / SAT solver(複数バージョン・スロットを含む完全解)。
+次の候補: **UEFI での起動確認と実機検証** / リリースマニフェストの CI 連携 / GUI 要素の調査 / ストレージ系(LUKS/LVM/XFS/Btrfs) / 公式署名鍵の運用と binpkg リポジトリの公開 / 最小依存ビルドルート / 完全な固定ビルドルート / resource limit / SAT solver(複数バージョン・スロットを含む完全解)。
 
 ## M25: stage3 tarball(2026-11-17 完走)
 
@@ -184,6 +185,40 @@ Portage(emerge)風のフェーズ行を入れた。
   owned ファイルが prune されることも確認。両プラットフォーム構成で BIOS/UEFI
   イメージとも **BOOT CHECK PASSED**(7.1.8)
 
+
+## M41: リリース情報の一元管理(2026-11-19 検証)
+
+stage3 のパッケージ数・サイズ・バージョン・チェックサムが複数ページに手書きされ、
+すでに不整合があった。ビルドごとに機械可読な **リリースマニフェスト** を生成し、
+ウェブサイト、ダウンロードページ、リリースノート、インストールガイドが
+同じデータを参照するようにした。リリース名は **2026.11.19-alpha**。
+
+- [x] **`release-manifest.py`** — schema 1 の JSON を生成。stage3 の
+  revision / filename / size / SHA-256 / package_count / packages、zpkg、
+  kernel、GRUB、base のトップレベルと closure、レシピ数、ビルド日、
+  ソースコミット、起動検証、配布物を記録。`record-boot` と `validate` も持つ
+- [x] **`make-stage3.sh`** — `release.conf` から release / revision を決定し、
+  パッキング後に `release.json` と `.sha256` を生成。stage3 の DB は
+  schema 2 以前の `version` のみのレコードにも対応
+- [x] **配布物の自動生成** — 全チャンネルのレシピ tarball と zpkg バイナリを
+  ビルド時に生成し、SHA-256 を manifest の `artifacts` に記録
+- [x] **`qemu-test.sh`** — BIOS / UEFI の起動結果を `record-boot` で JSON に
+  記録。python3 が無い場合や記録失敗で起動試験を落とさない
+- [x] **`publish-release.sh`** — manifest を検証し、`zignos/releases/` と
+  サイトの `src/data/release.json` へ同じバイト列を配置
+- [x] **サイト** — `{{stage3.package_count}}` などのトークンをビルド時に
+  マニフェストから置換。`/releases.json` と `/releases/current/` を追加し、
+  ダウンロード・ニュース・about・what-is も同じデータを参照
+- [x] **initscripts r15** — `/etc/os-release` を `ZIGNOS 2026.11.19-alpha` に更新
+- [x] **テスト** — manifest の生成・旧 DB レコード・record-boot・validate の
+  4 unittest。シェルスクリプトの構文と shellcheck を確認
+- [x] **stage3 r12** — {{stage3.package_count}} パッケージ / {{stage3.size_mib}} MiB、
+  zpkg {{zpkg.version}}、kernel {{kernel.full}}、GRUB {{bootloader.full}}。
+  同梱レシピは stable のみで、チャンネルの二重コピーも修正
+- [ ] **起動検証の実測** — 今回は BIOS / UEFI / 実機とも `not-tested`。
+  次回のイメージビルドで `qemu-test.sh check` の結果を manifest に反映する
+- [ ] **CI 連携** — 現状はリリース時に `publish-release.sh` を手で実行する。
+  ビルドからサイト公開までを自動化するのは将来
 
 ## M40: リリースチャンネルと安全な upgrade(zpkg 0.2.0)
 

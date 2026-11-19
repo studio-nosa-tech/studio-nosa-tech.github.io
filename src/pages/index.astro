@@ -2,6 +2,10 @@
 import PageLayout from '../layouts/PageLayout.astro';
 import logo from '../assets/logo.png';
 import wallpaper from '../assets/wallpaper.webp';
+import release from '../data/release.json';
+
+const available = release.availability === 'available';
+const newsSlug = release.release.replace(/\./g, '-');
 ---
 
 <PageLayout
@@ -22,7 +26,9 @@ import wallpaper from '../assets/wallpaper.webp';
         </p>
         <div class="buttons">
           <a class="btn primary" href="/docs/">ドキュメントを読む</a>
-          <a class="btn muted" href="/download/" aria-disabled="true">stage3 は準備中</a>
+          <a class="btn muted" href="/download/" aria-disabled={!available}>
+            {available ? 'stage3 をダウンロード' : 'stage3 は準備中'}
+          </a>
         </div>
         <p class="byline">
           Developed by <a href="https://studio-nosa.live/" rel="external">Studio NØSa.</a>
@@ -35,8 +41,8 @@ import wallpaper from '../assets/wallpaper.webp';
 
     <section class="section" aria-label="ベースシステムの規模">
       <div class="stats">
-        <div class="stat"><strong>59</strong><span>ベースパッケージ(依存込み)</span></div>
-        <div class="stat"><strong>36</strong><span>base.list のトップレベル</span></div>
+        <div class="stat"><strong>{release.base.closure}</strong><span>ベースパッケージ(依存込み)</span></div>
+        <div class="stat"><strong>{release.base.top_level}</strong><span>base.list のトップレベル</span></div>
         <div class="stat"><strong>BIOS / UEFI</strong><span>両ファームウェア対応</span></div>
         <div class="stat"><strong>OpenRC + zpkg</strong><span>init とパッケージ管理</span></div>
       </div>
@@ -102,10 +108,13 @@ import wallpaper from '../assets/wallpaper.webp';
       <div class="release">
         <span class="tag">ALPHA</span>
         <div>
-          <h3>ZIGNOS 2026.11.17-alpha</h3>
-          <p>初の alpha。stage3 tarball は公開準備中です(Coming soon)。</p>
+          <h3>ZIGNOS {release.release}</h3>
+          <p>
+            stage3 {release.stage3.revision} · {release.stage3.package_count} パッケージ / {release.stage3.size_mib} MiB · {release.build_date}
+            {available ? '' : ' (公開準備中)'}
+          </p>
         </div>
-        <a class="btn" href="/news/2026-11-17-alpha/">リリースノート</a>
+        <a class="btn" href={`/news/${newsSlug}/`}>リリースノート</a>
       </div>
     </section>
 

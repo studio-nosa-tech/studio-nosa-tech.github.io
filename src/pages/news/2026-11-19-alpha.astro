@@ -1,0 +1,130 @@
+---
+import PageLayout from '../../layouts/PageLayout.astro';
+import release from '../../data/release.json';
+
+const available = release.availability === 'available';
+---
+
+<PageLayout
+  title={`ZIGNOS ${release.release} — ZIGNOS`}
+  description={`ZIGNOS ${release.release} のリリースノート。リリースマニフェスト、zpkg ${release.zpkg.version}、stage3 ${release.stage3.revision}。`}
+>
+  <div class="wrap">
+    <section class="page-hero">
+      <span class="eyebrow">RELEASE · ALPHA</span>
+      <h1>ZIGNOS {release.release}</h1>
+      <p>{release.build_date}</p>
+    </section>
+
+    <div class="prose">
+      <div class="notice">
+        <strong>stage3 のダウンロードは{available ? '公開中です。' : '準備中です。'}</strong>
+        {' '}配布物のファイル名・サイズ・SHA-256 は
+        <a href="/releases/current/">現在のリリース</a> と
+        <a href="/releases.json">release.json</a> にまとめています。
+      </div>
+
+      <h2>今回のリリース</h2>
+      <p>
+        {release.release} は、リリース情報を機械可読なマニフェストに集約した
+        リリースです。ウェブサイト、ダウンロードページ、リリースノート、
+        インストールガイドが同じ <code>release.json</code> を参照するため、
+        パッケージ数・サイズ・バージョン・チェックサムの食い違いがなくなります。
+      </p>
+      <div class="stats">
+        <div class="stat">
+          <strong>{release.stage3.package_count}</strong>
+          <span>stage3 のパッケージ数</span>
+        </div>
+        <div class="stat">
+          <strong>{release.stage3.size_mib} MiB</strong>
+          <span>stage3 のサイズ</span>
+        </div>
+        <div class="stat">
+          <strong>{release.stage3.revision}</strong>
+          <span>stage3 リビジョン</span>
+        </div>
+        <div class="stat">
+          <strong>zpkg {release.zpkg.version}</strong>
+          <span>パッケージマネージャ</span>
+        </div>
+      </div>
+
+      <h2>ハイライト</h2>
+      <ul>
+        <li>
+          <strong>リリースマニフェスト</strong> — ビルドごとに
+          <code>release.json</code> を生成。stage3 の SHA-256、{release.stage3.package_count} 個の
+          パッケージとバージョン、zpkg / カーネル / GRUB の版、ベースの規模、
+          レシピ数、ビルド日、ソースコミット、起動検証の状態を記録
+        </li>
+        <li>
+          <strong>配布物の自動生成</strong> — stage3 tarball に加え、全チャンネルの
+          レシピツリーと zpkg バイナリをビルド時に生成し、SHA-256 を manifest に記録
+        </li>
+        <li>
+          <strong>zpkg {release.zpkg.version}</strong> — stable / testing / unstable の
+          3 チャンネル、<code>zpkg upgrade</code> の差分表示・全ビルド後インストール・
+          整合性チェック・パッケージ単位のロールバック
+        </li>
+        <li>
+          <strong>initscripts r15</strong> — <code>/etc/os-release</code> を
+          <code>ZIGNOS {release.release}</code> に更新
+        </li>
+        <li>
+          <strong>起動検証</strong> — 今回は BIOS / UEFI / 実機とも
+          <code>{release.boot.bios}</code>。<code>qemu-test.sh</code> が結果を
+          マニフェストに自動記録する仕組みを追加
+        </li>
+      </ul>
+
+      <h2>stage3</h2>
+      <table>
+        <tbody>
+          <tr><th>ファイル</th><td><code>{release.stage3.filename}</code></td></tr>
+          <tr><th>サイズ</th><td>{release.stage3.size.toLocaleString('en-US')} バイト ({release.stage3.size_mib} MiB)</td></tr>
+          <tr><th>SHA-256</th><td><code class="hash">{release.stage3.sha256}</code></td></tr>
+          <tr><th>チャンネル</th><td>{release.channel}</td></tr>
+        </tbody>
+      </table>
+
+      <h2>レシピとツールチェーン</h2>
+      <table>
+        <tbody>
+          <tr><th>レシピ</th><td>{release.recipes.total} (各チャンネル {release.recipes.per_channel})</td></tr>
+          <tr><th>レシピ tarball</th><td><code>{release.recipes.filename}</code></td></tr>
+          <tr><th>Linux kernel</th><td>{release.kernel.version}-r{release.kernel.revision}</td></tr>
+          <tr><th>GRUB</th><td>{release.bootloader.version}-r{release.bootloader.revision}</td></tr>
+          <tr><th>ベース</th><td>トップレベル {release.base.top_level} / 依存込み {release.base.closure}</td></tr>
+        </tbody>
+      </table>
+
+      <h2>アップグレード</h2>
+      <p>
+        既存システムはチャンネルを確認してから更新します。今回の変更は
+        initscripts の版数更新を含みます。
+      </p>
+      <pre><code>zpkg channel
+zpkg upgrade -p
+zpkg upgrade</code></pre>
+      <p>
+        詳しい差分表示と復旧の仕組みは
+        <a href="/docs/channels/">リリースチャンネル</a> を参照してください。
+      </p>
+
+      <h2>既知の制限</h2>
+      <ul>
+        <li>BIOS / UEFI / 実機の起動検証は未実施(<code>not-tested</code>)</li>
+        <li>公式署名鍵はまだ運用しておらず、配布物は未署名</li>
+        <li>ブータブルイメージはこのマニフェストの配布物に含まれない</li>
+      </ul>
+
+      <h2>次に</h2>
+      <p>
+        起動検証の自動記録を実際のイメージビルドで埋め、署名鍵の運用と
+        ブータブルイメージの配布を進めます。
+        <a href="/docs/roadmap/">ロードマップ</a> も参照してください。
+      </p>
+    </div>
+  </div>
+</PageLayout>

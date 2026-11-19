@@ -1,12 +1,17 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import sitemap from '@astrojs/sitemap';
+import { unified } from '@astrojs/markdown-remark';
+import remarkRelease from './src/plugins/remark-release.mjs';
 
 // Official ZIGNOS Project site. GitHub Pages serves this from the org root:
 //   https://studio-nosa-tech.github.io/
 // Public docs live under /docs (they are the canonical copies).
 export default defineConfig({
   site: 'https://studio-nosa-tech.github.io',
+  markdown: {
+    processor: unified({ remarkPlugins: [remarkRelease] }),
+  },
   integrations: [
     starlight({
       title: 'ZIGNOS',
@@ -54,7 +59,11 @@ export default defineConfig({
         },
         {
           label: 'プロジェクト',
-          items: [{ label: 'ロードマップ', slug: 'docs/roadmap' }],
+          items: [
+            { label: '現在のリリース', link: '/releases/current/' },
+            { label: 'リリースマニフェスト', slug: 'docs/release-manifest' },
+            { label: 'ロードマップ', slug: 'docs/roadmap' },
+          ],
         },
       ],
       customCss: ['/src/styles/starlight.css'],

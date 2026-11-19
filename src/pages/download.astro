@@ -1,69 +1,124 @@
 ---
 import PageLayout from '../layouts/PageLayout.astro';
+import release from '../data/release.json';
+
+const available = release.availability === 'available';
+const labels: Record<string, string> = {
+  stage3: 'stage3 tarball',
+  recipes: 'レシピツリー(全チャンネル)',
+  zpkg: 'zpkg バイナリ',
+};
+const artifacts = release.artifacts;
 ---
 
 <PageLayout
   title="ダウンロード — ZIGNOS"
-  description="ZIGNOS の stage3 tarball とブータブルイメージ。現在は公開準備中です。"
+  description={`ZIGNOS ${release.release} の stage3 tarball、レシピツリー、zpkg バイナリ。`}
 >
   <div class="wrap">
     <section class="page-hero">
       <span class="eyebrow">DOWNLOAD</span>
       <h1>ダウンロード</h1>
       <p>
-        ZIGNOS の配布物は現在 <strong>準備中(Coming soon)</strong> です。
-        公開できる状態になったら、このページと GitHub Releases で案内します。
+        <strong>ZIGNOS {release.release}</strong>
+        ({release.build_date} / {release.channel} チャンネル)の配布物です。
+        {available ? '下記のファイルを取得できます。' : '現在は公開準備中(Coming soon)です。'}
       </p>
     </section>
 
     <div class="prose">
       <div class="notice">
-        <strong>Coming soon.</strong>
-        alpha 版は非公開のリポジトリで検証中です。公開リリースのアナウンスは
-        <a href="/news/">ニュース</a> で行います。
+        <strong>{available ? '公開中です。' : 'Coming soon.'}</strong>
+        {' '}ファイル名・サイズ・SHA-256 はすべて
+        <a href="/releases.json">release.json</a> から生成しています。
+        公開時期は <a href="/news/">ニュース</a> で案内します。
       </div>
 
-      <h2>公開予定の配布物</h2>
-      <div class="grid">
-        <article class="card">
-          <h3>stage3 tarball</h3>
-          <p>
-            カーネル抜きの最小ベース(54 パッケージ / 約 977 MiB)。
-            展開して chroot し、<code>zpkg install linux grub</code> で完成させます。
-          </p>
-        </article>
-        <article class="card">
-          <h3>BIOS イメージ</h3>
-          <p>MBR + ext4 のブータブルイメージ。dd してすぐ起動できます。</p>
-        </article>
-        <article class="card">
-          <h3>UEFI イメージ</h3>
-          <p>GPT + ESP のブータブルイメージ。OVMF を含む UEFI 環境で検証済みです。</p>
-        </article>
-      </div>
+      <h2>このリリースの配布物</h2>
+      <table>
+        <thead>
+          <tr><th>配布物</th><th>ファイル</th><th>サイズ</th></tr>
+        </thead>
+        <tbody>
+          {artifacts.map((a) => (
+            <tr>
+              <td>{labels[a.name] ?? a.name}</td>
+              <td><code>{a.filename}</code></td>
+              <td>{a.size.toLocaleString('en-US')} バイト</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
-      <h2>それまでの試し方</h2>
-      <p>
-        現在は開発者向けにソースからのビルドのみです。手順の概要は
-        <a href="/docs/install/">インストールガイド</a>(stage3 が既定)と
-        <a href="/docs/stage3/">stage3 リファレンス</a> にあります。
+      <h3>SHA-256</h3>
+      <p class="mono">
+        {artifacts.map((a) => (
+          <>
+            <code class="hash">{a.sha256}</code> <span class="muted">{a.filename}</span><br />
+          </>
+        ))}
       </p>
-      <pre><code># ビルド環境(非公開リポジトリ)で
-sudo ./make-stage3.sh
 
-# 生成した tarball を展開して chroot
-tar -xpf zignos-stage3-*.tar.xz -C /mnt/zignos
+      <h2>stage3 の中身</h2>
+      <p>
+        カーネルとブートローダーを除いた最小ベース
+        (<strong>{release.stage3.package_count} パッケージ / 約 {release.stage3.size_mib} MiB</strong>)。
+        展開して chroot し、<code>zpkg install linux grub</code> で完成させます。
+        同梱されるのは <code>{release.channel}</code> チャンネルだけです。
+      </p>
+      <table>
+        <tbody>
+          <tr><th>stage3 リビジョン</th><td>{release.stage3.revision}</td></tr>
+          <tr><th>zpkg</th><td>{release.zpkg.version}</td></tr>
+          <tr><th>Linux kernel</th><td>{release.kernel.version}-r{release.kernel.revision}(stage3 には未収録)</td></tr>
+          <tr><th>GRUB</th><td>{release.bootloader.version}-r{release.bootloader.revision}(stage3 には未収録)</td></tr>
+        </tbody>
+      </table>
+
+      <h2>使い方</h2>
+      <pre><code># 1. 展開
+tar -xpf {release.stage3.filename} -C /mnt/zignos
+
+# 2. chroot
 zignos-enter.sh /mnt/zignos
 
-# chroot 内でカーネルとブートローダーを導入
+# 3. カーネルとブートローダー
 zpkg install linux grub</code></pre>
+      <p>
+        パーティション作成、UEFI の GRUB 登録、初回設定を含む手順は
+        <a href="/docs/install/">インストールガイド</a> を参照してください。
+      </p>
+
+      <h2>レシピツリー</h2>
+      <p>
+        <code>{release.recipes.filename}</code> には
+        stable / testing / unstable の全チャンネル
+        (各 {release.recipes.per_channel} レシピ、合計 {release.recipes.total})が入っています。
+        stage3 には stable だけが同梱されるため、他チャンネルは
+        <code>zpkg sync</code> で追加します。
+      </p>
+
+      <h2>ブータブルイメージ</h2>
+      <p>
+        現在のマニフェストは stage3 とレシピツリー、zpkg バイナリを対象にしています。
+        BIOS / UEFI のブータブルイメージは、起動検証の結果
+        (BIOS: {release.boot.bios} / UEFI: {release.boot.uefi})とあわせて
+        次のリリースで配布物に加える予定です。
+      </p>
 
       <h2>検証とセキュリティ</h2>
       <ul>
-        <li>配布物には sha256 チェックサムを添付します。</li>
+        <li>各ファイルには SHA-256 を添付します。展開・実行前に照合してください。</li>
         <li>stage3 の root はロック済みです。chroot 後に <code>passwd</code> で設定してください。</li>
         <li>Secure Boot は無効にしてください(GRUB / カーネルは未署名)。</li>
         <li>配布イメージの初期パスワードは初回起動時に必ず変更してください。</li>
+      </ul>
+
+      <h2>リンク</h2>
+      <ul>
+        <li><a href="/releases/current/">このリリースの詳細</a></li>
+        <li><a href="/releases.json">release.json</a></li>
+        <li><a href="/docs/release-manifest/">リリースマニフェストの仕様</a></li>
       </ul>
     </div>
   </div>

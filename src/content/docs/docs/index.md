@@ -26,5 +26,7 @@ ZIGNOS は、ゼロからビルドするソースベースの Linux ディスト
 
 ## プロジェクト
 
-- [ロードマップ](/docs/roadmap/) — M0–M40 の記録と現在の状況
+- [現在のリリース](/releases/current/) — {{release}} の stage3・バージョン・チェックサム・パッケージ一覧
+- [リリースマニフェスト](/docs/release-manifest/) — release.json のスキーマと生成・参照方法
+- [ロードマップ](/docs/roadmap/) — M0–M41 の記録と現在の状況
 - [プロジェクト概要](/about/)

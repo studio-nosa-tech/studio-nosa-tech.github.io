@@ -15,6 +15,10 @@ import PageLayout from '../../layouts/PageLayout.astro';
 
     <div class="prose">
       <div class="notice">
+        <strong>このページは 2026-11-17 時点の記録です。</strong>
+        最新のリリース情報は <a href="/releases/current/">現在のリリース</a> を参照してください。
+      </div>
+      <div class="notice">
         <strong>stage3 のダウンロードは準備中です。</strong>
         公開できる状態になったら、このページと <a href="/download/">ダウンロード</a> で
         案内します。
@@ -34,10 +38,10 @@ import PageLayout from '../../layouts/PageLayout.astro';
         <li>root はロック済み。SSH ホスト鍵や machine-id は含まない</li>
       </ul>
 
-      <h2>現在のベース</h2>
+      <h2>当時のベース</h2>
       <p>
         リリース後の開発でベースを Gentoo の <code>@system</code> 相当まで最小化しました。
-        現在の stage3 は <strong>53 パッケージ / 約 976 MiB</strong> です。
+        当時の stage3 は <strong>53 パッケージ / 約 976 MiB</strong> です。
         SSH / DHCP / WiFi / エディタ / man は含まれず、必要なものを
         <code>zpkg install</code> で追加します。
       </p>

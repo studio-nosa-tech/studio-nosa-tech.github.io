@@ -1,5 +1,8 @@
 ---
 import PageLayout from '../../layouts/PageLayout.astro';
+import release from '../../data/release.json';
+
+const newsSlug = release.release.replace(/\./g, '-');
 ---
 
 <PageLayout
@@ -14,6 +17,15 @@ import PageLayout from '../../layouts/PageLayout.astro';
     </section>
 
     <div class="post-list">
+      <a class="post-card" href={`/news/${newsSlug}/`}>
+        <time datetime={release.build_date}>{release.build_date}</time>
+        <h2>ZIGNOS {release.release}</h2>
+        <p>
+          リリースマニフェストの導入。stage3 {release.stage3.revision} は
+          {release.stage3.package_count} パッケージ / {release.stage3.size_mib} MiB、
+          zpkg {release.zpkg.version}。
+        </p>
+      </a>
       <a class="post-card" href="/news/2026-11-17-alpha/">
         <time datetime="2026-11-17">2026-11-17</time>
         <h2>ZIGNOS 2026.11.17-alpha</h2>

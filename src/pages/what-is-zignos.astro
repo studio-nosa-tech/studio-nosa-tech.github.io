@@ -1,5 +1,6 @@
 ---
 import PageLayout from '../layouts/PageLayout.astro';
+import release from '../data/release.json';
 ---
 
 <PageLayout
@@ -89,7 +90,8 @@ import PageLayout from '../layouts/PageLayout.astro';
         </li>
         <li>
           <strong>レシピツリー</strong> — stable / testing / unstable の3チャンネル、
-          各チャンネル 162 レシピ。core はベースシステム、main は任意で入れる CLI ツール群です。
+          各チャンネル {release.recipes.per_channel} レシピ。core はベースシステム、
+          main は任意で入れる CLI ツール群です。
         </li>
         <li>
           <strong>stage3</strong> — カーネルとブートローダーを除いた、chroot 可能な
@@ -107,13 +109,13 @@ import PageLayout from '../layouts/PageLayout.astro';
 
       <h2>数字で見るベース</h2>
       <div class="stats">
-        <div class="stat"><strong>60</strong><span>ベースパッケージ(依存込み)</span></div>
-        <div class="stat"><strong>37</strong><span>base.list のトップレベル</span></div>
-        <div class="stat"><strong>486</strong><span>レシピ(162 × 3チャンネル)</span></div>
-        <div class="stat"><strong>54</strong><span>stage3 のパッケージ数</span></div>
+        <div class="stat"><strong>{release.base.closure}</strong><span>ベースパッケージ(依存込み)</span></div>
+        <div class="stat"><strong>{release.base.top_level}</strong><span>base.list のトップレベル</span></div>
+        <div class="stat"><strong>{release.recipes.total}</strong><span>レシピ({release.recipes.per_channel} × 3チャンネル)</span></div>
+        <div class="stat"><strong>{release.stage3.package_count}</strong><span>stage3 のパッケージ数</span></div>
       </div>
       <p>
-        stage3 は約 977 MiB。カーネル、DHCP、WiFi、SSH、エディタ、man は含まれず、
+        stage3 は約 {release.stage3.size_mib} MiB。カーネル、DHCP、WiFi、SSH、エディタ、man は含まれず、
         必要なものを <code>zpkg install</code> で追加します。
       </p>
 

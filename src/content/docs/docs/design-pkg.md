@@ -3,7 +3,7 @@ title: zpkg 設計
 description: zpkg の設計。レシピ形式、DB schema 2、USE フラグ、トランザクション、binpkg。
 ---
 
-ステータス: v0.9 設計(実装と合わせて更新する。DB schema 2・world/upgrade・USE
+ステータス: v0.2.0 設計(実装と合わせて更新する。DB schema 2・world/upgrade・USE
 フラグ・フック・トランザクション・依存アトム解決は実装済み — 後述の各節参照)
 
 > 実際の設定ファイル(`use.conf` / `package.use` / `make.conf` / `binrepo.conf` /
@@ -15,7 +15,7 @@ description: zpkg の設計。レシピ形式、DB schema 2、USE フラグ、�
 - 最初は数百行〜1500 行程度のシンプルな実装。長期的に Gentoo Portage / Exherbo Paludis 相当へ進化させる
 - **Go で書く**: 単一静的バイナリとして chroot 内でも動かせる。将来の USE フラグ・ソルバー拡張も同じコードベースで行う
 
-## まだ無いもの(v0.9 時点)
+## まだ無いもの(v0.2.0 時点)
 
 - 公開バイナリリポジトリの配布・運用(署名の仕組みと `keys/` 出力は実装済み)
 
@@ -146,7 +146,7 @@ linux-firmware に実在する空白入りファイル名がきっかけ(M22)。
 
 `depends` は実行時依存。ビルド順序には `depends` + `makedepends` の両方を使う。
 
-## 依存解決(v0.9+ バックトラック)
+## 依存解決(v0.2.0+ バックトラック)
 
 `depends` / `makedepends` / `provides` / `conflicts` にはパッケージアトムを書ける。
 
@@ -244,7 +244,7 @@ chroot するため、stage3 のディレクトリ chroot でもサンドボッ�
 
 詳細は [再現可能なビルド](/docs/reproducibility/) を参照。
 
-## USE フラグ(v0.9)
+## USE フラグ(v0.2.0)
 
 - 設定はターゲットルート配下:
   - `$ZPKG_ROOT/etc/zpkg/use.conf` — グローバル USE フラグ(空白/改行区切り、`#` コメント可)
@@ -398,7 +398,7 @@ zpkg 0.2.0 から、レシピツリーは `stable` / `testing` / `unstable` の3
 
 詳細は [リリースチャンネル](/docs/channels/) を参照。
 
-## コマンド(v0.9)
+## コマンド(v0.2.0)
 
 | コマンド | 内容 |
 |---|---|

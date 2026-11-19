@@ -30,7 +30,7 @@ stage3 とイメージには **stable だけ**が同梱されます。testing / 
 使うには、全チャンネルを含むレシピ tarball を `zpkg sync` で取り込みます。
 
 ```sh
-zpkg sync --from zignos-recipes-<date>-r12.tar.xz
+zpkg sync --from zignos-recipes-<date>-<revision>.tar.xz
 ```
 
 ## チャンネルの選択

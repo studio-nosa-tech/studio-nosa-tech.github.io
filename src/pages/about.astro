@@ -1,5 +1,9 @@
 ---
 import PageLayout from '../layouts/PageLayout.astro';
+import release from '../data/release.json';
+
+const versionOf = (name: string) =>
+  release.stage3.packages.find((p) => p.name === name)?.version ?? '';
 ---
 
 <PageLayout
@@ -23,11 +27,11 @@ import PageLayout from '../layouts/PageLayout.astro';
     <div class="prose">
       <h2>基本情報</h2>
       <div class="stats stats-6">
-        <div class="stat"><strong>7.1.8</strong><span>Linux kernel</span></div>
-        <div class="stat"><strong>glibc 2.44</strong><span>libc</span></div>
-        <div class="stat"><strong>gcc 16.2.0</strong><span>toolchain</span></div>
-        <div class="stat"><strong>OpenRC 0.64.1</strong><span>init system</span></div>
-        <div class="stat"><strong>zpkg 0.9</strong><span>package manager</span></div>
+        <div class="stat"><strong>{release.kernel.version}-r{release.kernel.revision}</strong><span>Linux kernel</span></div>
+        <div class="stat"><strong>glibc {versionOf('glibc')}</strong><span>libc</span></div>
+        <div class="stat"><strong>gcc {versionOf('gcc')}</strong><span>toolchain</span></div>
+        <div class="stat"><strong>OpenRC {versionOf('openrc')}</strong><span>init system</span></div>
+        <div class="stat"><strong>zpkg {release.zpkg.version}</strong><span>package manager</span></div>
         <div class="stat"><strong>x86_64</strong><span>architecture</span></div>
       </div>
 
@@ -44,7 +48,7 @@ import PageLayout from '../layouts/PageLayout.astro';
         </article>
         <article class="card">
           <h3>zignos-recipes</h3>
-          <p>レシピツリー。core / main / desktop の 3 カテゴリ。</p>
+          <p>レシピツリー。stable / testing / unstable の 3 チャンネル × core / main / desktop。</p>
         </article>
         <article class="card">
           <h3>zignos-build</h3>
