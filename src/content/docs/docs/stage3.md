@@ -18,6 +18,10 @@ ZIGNOS の **stage3 tarball** は、カーネルとブートローダーを除�
   pkgconf / busybox / openrc / initscripts / eudev / kmod / gperf / util-linux /
   shadow / e2fsprogs / kbd / tzdata / inetutils / procps / dosfstools / zpkg /
   ca-certificates / bubblewrap と、その依存・makedepends
+- PAM 対応の `login` と `/etc/pam.d`(login / su / passwd / system-auth /
+  system-login / system-local-login)。開発ツリーの最新は **r15**
+  (2026.11.20-alpha / 55 パッケージ / 976 MiB、SHA-256
+  `0f54ff44cae3491b77282583bbf326667d1f603bc24116c8283895723feeaac0`)
 - meson / ninja / python3 / go など、ソースビルドに必要なものも含む
 - **含まないもの**: カーネル、initramfs、カーネルモジュール、GRUB、ブート設定、
   ユーザーデータ、キャッシュ、SSH ホスト鍵、machine-id、root パスワード(ロック済み)

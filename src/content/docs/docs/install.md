@@ -216,34 +216,35 @@ mount <DISK>1 /mnt/zignos
 
 stage3 は「カーネルと GRUB を除いた最小ベース」です。公開済みの最新は
 **2026.11.19-alpha / stage3 r12**、開発ツリーの最新は
-**2026.11.20-alpha / stage3 r13(55 パッケージ / 約 976 MiB)** です。
-r13 は `linux-pam` と WiFi 修正(`networkmanager-wifi`)を含みますが、このページの
+**2026.11.20-alpha / stage3 r15(55 パッケージ / 約 976 MiB)** です。
+r15 は `linux-pam` r3(`system-login` / `system-local-login` を含む)、
+initscripts r20、WiFi 修正(`networkmanager-wifi`)を含みますが、このページの
 時点では公開準備中です。公開後はダウンロードページの tarball を使えます。
 
 開発者向けには build VM で生成します。
 
 ```sh
 # ビルドホストの作業ツリー内
-sudo OUT=/var/tmp/zignos-stage3-20261120-r13-x86_64.tar.xz ./make-stage3.sh
-sha256sum /var/tmp/zignos-stage3-20261120-r13-x86_64.tar.xz \
-  > /var/tmp/zignos-stage3-20261120-r13-x86_64.tar.xz.sha256
+sudo OUT=/var/tmp/zignos-stage3-20261120-r15-x86_64.tar.xz ./make-stage3.sh
+sha256sum /var/tmp/zignos-stage3-20261120-r15-x86_64.tar.xz \
+  > /var/tmp/zignos-stage3-20261120-r15-x86_64.tar.xz.sha256
 ```
 
 生成物を USB / SSH で実機へ運び、**展開前にチェックサムを検証**します。
 
 ```sh
-sha256sum --check zignos-stage3-20261120-r13-x86_64.tar.xz.sha256
+sha256sum --check zignos-stage3-20261120-r15-x86_64.tar.xz.sha256
 ```
 
 > **公開済み(r12)**: {{build_date}} 時点で **{{stage3.package_count}} パッケージ /
 > 約 {{stage3.size_mib}} MiB**。ファイル名は `{{stage3.filename}}`、SHA-256 は
 > `{{stage3.sha256}}` です。
 >
-> **開発ビルド(r13)**: 2026-11-20 / **55 パッケージ / 約 976 MiB**。
-> ファイル名は `zignos-stage3-20261120-r13-x86_64.tar.xz`、SHA-256 は
-> `4e505306f0feb29fedcc78dfdd110eec05b40349d4fba29ad635066405f010eb`。
-> r13 は `linux-pam` / `/etc/pam.d` と、WiFi 用の `networkmanager-wifi` レシピを
-> 同梱します。
+> **開発ビルド(r15)**: 2026-11-20 / **55 パッケージ / 約 976 MiB**。
+> ファイル名は `zignos-stage3-20261120-r15-x86_64.tar.xz`、SHA-256 は
+> `0f54ff44cae3491b77282583bbf326667d1f603bc24116c8283895723feeaac0`。
+> r15 は `linux-pam` r3(`system-login` / `system-local-login` を含む)と、
+> WiFi 用の `networkmanager-wifi` レシピを同梱します。
 >
 > root はロック済み、SSH ホスト鍵・machine-id・ユーザーは含みません。
 
@@ -565,7 +566,7 @@ linux-firmware** をまとめて入れるメタパッケージです。ファー
 WiFi が認識されない事故を避けるため、WiFi を使う場合はこちらを使ってください。
 有線専用なら `zpkg install networkmanager` だけでも構いません。
 
-> `networkmanager-wifi` は **stage3 r13 以降**に同梱されています。r12 の場合は
+> `networkmanager-wifi` は **stage3 r13 以降**に同梱されています(現行の開発ビルドは r15)。r12 の場合は
 > `zpkg install networkmanager wpa_supplicant iw linux-firmware` を使ってください。
 >
 > **WiFi しか使えない機体**では、この chroot の中で WiFi スタックまで入れてから
@@ -775,7 +776,7 @@ stage3 に同梱された `/usr/share/zignos/recipes` は、その stage3 を作
 zpkg sync --from zignos-stage3-<new>.tar.xz
 
 # レシピだけの tarball / ディレクトリ / URL も可
-zpkg sync --from zignos-recipes-20261119-r13.tar.xz
+zpkg sync --from zignos-recipes-20261119-r15.tar.xz
 zpkg sync --from ./zignos-recipes
 zpkg sync --from https://example.invalid/zignos-recipes.tar.xz
 
@@ -795,7 +796,7 @@ zpkg search networkmanager
 使う場合はこの tarball を sync してから切り替えます。
 
 ```sh
-zpkg sync --from zignos-recipes-20261119-r13.tar.xz --allow-unsigned
+zpkg sync --from zignos-recipes-20261119-r15.tar.xz --allow-unsigned
 zpkg channel testing      # /etc/zpkg/make.conf の CHANNEL= を更新
 zpkg upgrade -p           # 変更一覧を確認
 zpkg upgrade              # 実行(確認プロンプトあり)
@@ -808,14 +809,14 @@ zpkg upgrade              # 実行(確認プロンプトあり)
 `--allow-unsigned` を付けてください(公式署名鍵の運用開始後は不要です)。
 
 ```sh
-zpkg sync --from zignos-recipes-20261119-r13.tar.xz --allow-unsigned
+zpkg sync --from zignos-recipes-20261119-r15.tar.xz --allow-unsigned
 ```
 
 署名済みツリーを検証する場合は、先に公開鍵を登録します。
 
 ```sh
 zpkg key import zignos-signing.pub
-zpkg sync --from zignos-recipes-20261119-r13.tar.xz
+zpkg sync --from zignos-recipes-20261119-r15.tar.xz
 ```
 
 詳細は [パッケージ署名と検証](/docs/signing/) を参照してください。
@@ -877,7 +878,8 @@ grep -E 'menuentry|linux /boot|initrd /boot' /boot/grub/grub.cfg
 - **Secure Boot 非対応**(GRUB/カーネルは未署名。無効化が必要)
 - **LUKS / TPM 非対応**
 - **GUI は stage3 に未収録**(CLI の最小ベース)。KDE Plasma 6 / Wayland は
-  `desktop/` から任意導入(M44 で起動確認済み: [デスクトップ環境](/docs/desktop/))
+  `desktop/` から任意導入(M46 で UDisks2・KDE アプリまで確認済み:
+  [デスクトップ環境](/docs/desktop/))
 - **WiFi は firmware 導入後**。`networkmanager-wifi` または `linux-firmware`
   (約 2 GiB)
 - **stage3 の公開は準備中**。現在は `make-stage3.sh` で生成
