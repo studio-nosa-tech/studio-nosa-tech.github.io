@@ -4,9 +4,9 @@ description: ZIGNOS のデスクトップ環境として KDE Plasma 6 を Waylan
 ---
 
 ZIGNOS はコンソール主体の最小ベースとして育ってきましたが、最初のデスクトップ
-環境として **KDE Plasma 6 (Wayland)** を導入する設計を始めました。
+環境として **KDE Plasma 6 (Wayland)** を導入する設計をまとめました。
 
-**現在は設計段階で、`desktop/` にパッケージはまだありません。** stage3 と既定の
+**現在は設計段階で、`desktop/` にパッケージはまだありません。実装は M43 以降です。** stage3 と既定の
 イメージは CLI の最小ベースのままです。
 
 ## 目標
@@ -17,23 +17,50 @@ ZIGNOS はコンソール主体の最小ベースとして育ってきました�
 - デスクトップは `desktop/` の任意パッケージとし、CLI ベースを肥大化させない
 - 日本語表示、NetworkManager、PipeWire、電源管理までを最終形に含める
 
-## 設計の基準
+## チャンネル方針
 
-最初の実装は LTS 系で固定します。現行の Plasma 6.8 は Qt 6.11 以上を要求し、
-Wayland 専用のため、最初のデスクトップとしては変更量が大きいからです。
+デスクトップは stable / testing と unstable でバージョン系列を分けます。
 
-| コンポーネント | 目標 |
-|---|---|
-| KDE Plasma | 6.6 LTS(Wayland セッション) |
-| Qt | 6.8 LTS |
-| KDE Frameworks | 6.18 |
-| Wayland | 1.25 |
-| Mesa | 26.2 系 |
-| セッション | elogind + Linux-PAM + polkit |
-| 音声 | PipeWire + WirePlumber |
-| ログイン | Plasma Login Manager(SDDM は代替) |
+- **stable / testing**: KDE Plasma の **LTS 系(6.6)** を固定
+- **unstable**: 最新の Plasma(現在 6.8)を追従
 
-Plasma 6.8 への移行は、基盤が安定してから別フェーズで行います。
+`core/` と `main/` は従来どおりチャンネル間で同じ内容を基本とし、
+`desktop/` だけを系列ごとに分岐させます。
+
+| コンポーネント | stable / testing(LTS) | unstable(最新追従) |
+|---|---|---|
+| KDE Plasma | 6.6 LTS | 6.8(以降は最新安定版) |
+| Qt | 6.8 LTS | 6.11(以降は最新安定版) |
+| KDE Frameworks | 6.18 | 6.32(以降は最新安定版) |
+| KDE Gear(アプリ) | 25.04.3 | 26.08(以降は最新安定版) |
+| Wayland | 1.25 | 最新安定版 |
+| Mesa | 26.2 系 | 26.3 系(以降は最新安定版) |
+| セッション | elogind + Linux-PAM + polkit | 同じ |
+| 音声 | PipeWire + WirePlumber | 同じ |
+| ログイン | Plasma Login Manager 6.6 | Plasma Login Manager 6.8 |
+
+KDE Gear には Plasma のような LTS がありません。そのため stable / testing では
+Qt 6.8 LTS でビルドできる最新の Gear(25.04.3)を固定し、unstable は最新の
+Gear を追従します。
+
+LTS のポイントリリースは testing → stable の順に適用し、最新版は unstable
+だけに入れます。新しい LTS 系列に切り替えるときだけ、stable / testing の
+系列を更新します。
+
+## パッケージ構成
+
+デスクトップ本体と KDE アプリは、別のメタパッケージに分けます。
+
+- **`plasma-meta`** — Plasma セッション本体(kwin / plasma-workspace /
+  plasma-desktop / systemsettings / plasma-nm / plasma-pa / powerdevil /
+  Plasma Login Manager など)。KDE アプリは含めません
+- **`kde-applications`** — KDE Gear のアプリ(Dolphin / Konsole / Kate / Ark /
+  Gwenview / Okular / Spectacle / KCalc / Filelight / KWalletManager など)。
+  Plasma 本体には依存しません
+
+`plasma-meta` と `kde-applications` は独立してインストール・削除できます。
+将来は `kde-applications-{utilities,graphics,multimedia,network,office,pim,sdk}`
+のサブメタへ分割できる構成にします。
 
 ## OpenRC との統合
 
@@ -53,10 +80,10 @@ PAM が必要になります。現在の ZIGNOS は PAM を使っていないた
 | # | 内容 |
 |---|---|
 | M42 | 設計調査(完了) |
-| M43 | 基盤(PAM / elogind / polkit / Wayland / Mesa / フォント / Qt6) |
-| M44 | KF6 + KWin + Plasma 最小(QEMU でデスクトップ表示) |
-| M45 | フル Plasma(ログイン / 音声 / ネットワーク / 電源 / 設定) |
-| M46 | デスクトップ入りイメージ / 実機検証 / 6.8 移行 |
+| M43 | 基盤(PAM / elogind / polkit / Wayland / Mesa / フォント / Qt6)+ メタレシピ骨格 |
+| M44 | KF6 + KWin + Plasma 最小 + `plasma-meta`(QEMU でデスクトップ表示) |
+| M45 | フル Plasma(ログイン / 音声 / ネットワーク / 電源 / 設定)+ `kde-applications` |
+| M46 | デスクトップ入りイメージ / 実機検証 / 次期 LTS 移行 |
 
 各フェーズの完了条件と依存関係は [ロードマップ](/docs/roadmap/) に記録します。
 

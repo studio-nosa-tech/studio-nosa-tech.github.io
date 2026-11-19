@@ -33,6 +33,25 @@ stage3 とイメージには **stable だけ**が同梱されます。testing / 
 zpkg sync --from zignos-recipes-<date>-<revision>.tar.xz
 ```
 
+## デスクトップ(KDE)のチャンネル方針
+
+KDE デスクトップ導入後は、`desktop/` だけチャンネルごとにバージョン系列を
+分けます。`core/` と `main/` は従来どおり同じ内容を基本とします。
+
+| チャンネル | KDE の系列 |
+|---|---|
+| `stable` | KDE Plasma 6.6 LTS / Qt 6.8 LTS / KF6 6.18 / KDE Gear 25.04.3 |
+| `testing` | stable と同じ LTS 系列。LTS ポイントリリースを先に検証 |
+| `unstable` | 最新の Plasma / Qt / KF6 / KDE Gear を追従 |
+
+- LTS のポイントリリースは testing → stable の順に適用します
+- 最新版は unstable のみ。新しい LTS 系列に切り替えるときだけ
+  stable / testing へ反映します
+- KDE Gear には Plasma のような LTS が無いため、stable / testing では
+  Qt 6.8 LTS でビルドできる最新の Gear(25.04.3)を固定します
+- stable ↔ unstable の切り替えは Qt / KF6 / Plasma / Gear の大規模更新に
+  なります。`zpkg upgrade -p` で差分を確認してください
+
 ## チャンネルの選択
 
 設定は `/etc/zpkg/make.conf` です。
