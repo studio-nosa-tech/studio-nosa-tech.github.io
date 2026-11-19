@@ -58,9 +58,128 @@ sync
 
 ## 2. ディスクを準備する
 
-### UEFI(GPT + ESP)の場合
+> **初心者には `cfdisk` を推奨します。** 対話式でパーティションを確認しながら
+> 作成・削除できるため、`sfdisk` のスクリプトを打ち間違える心配がありません。
+> 慣れている人向けの `sfdisk` 一括作成も 2.4 に残しています。
 
-ESP は 512 MiB にします(100 MiB でも足りますが、将来の余裕をみて 512 MiB)。
+まず対象ディスクを確認します。**以降の操作でディスクの全データが消えます。**
+
+```sh
+lsblk -o NAME,SIZE,MODEL,TYPE
+```
+
+`<DISK>` は `/dev/nvme0n1` や `/dev/sda` などの**ディスク全体**です。
+パーティション名は NVMe が `<DISK>p1`、SATA が `<DISK>1` になります。
+
+### 2.1 レイアウト例
+
+#### UEFI + GPT
+
+| マウントポイント | パーティション | パーティションタイプ | 容量 |
+|---|---|---|---|
+| `/mnt/zignos/boot/efi` | `<DISK>p1` | EFI システムパーティション(FAT32) | **512 MiB**(最低 300 MiB。複数カーネルなら 1 GiB) |
+| `[スワップ]`(任意) | `<DISK>p2` | Linux swap | 512 MiB 以上 |
+| `/mnt/zignos` | `<DISK>p3` | Linux x86-64 root(/) | 残りすべて |
+
+#### BIOS + MBR
+
+| マウントポイント | パーティション | パーティションタイプ | 容量 |
+|---|---|---|---|
+| `[スワップ]`(任意) | `<DISK>1` | Linux swap | 512 MiB 以上 |
+| `/mnt/zignos` | `<DISK>2` | Linux | 残りすべて |
+
+- **スワップは必須ではありません。** ハイバネーションを使う場合やメモリが
+  少ない場合に作成します。後からスワップファイルで追加することもできます
+- スワップを作らない場合、root は UEFI が `<DISK>p2`、BIOS が `<DISK>1` に
+  なり、以降の例の番号を 1 つずつ前に読み替えてください
+- ESP は **512 MiB** を推奨します。ZIGNOS は `/boot/vmlinuz-<ver>` と
+  `initramfs-<ver>.img` のコピーを置くため、複数カーネルを保持するなら 1 GiB
+- BIOS/MBR は **2 TiB 超のディスク**を扱えません。可能なら UEFI/GPT を使ってください
+- Secure Boot は無効にします(ZIGNOS の GRUB/カーネルは未署名)
+
+### 2.2 cfdisk で作る(推奨)
+
+```sh
+cfdisk <DISK>
+```
+
+1. UEFI なら **`gpt`**、BIOS なら **`dos`** を選ぶ
+2. `[New]` → `512M` → UEFI では type を **`EFI System`** にする
+3. スワップを作るなら `[New]` → `512M` → type を **`Linux swap`** にする
+4. `[New]` → 残り全部 → type を **`Linux filesystem`**(BIOS は `Linux`)にする
+   BIOS では root パーティションを選んで **`[Bootable]`** も付ける
+5. `[Write]` → `yes` で書き込み、`[Quit]` で終了
+6. カーネルにパーティションテーブルを再読込させる
+
+```sh
+partx -u <DISK>
+# 反映されない場合
+partprobe <DISK>
+```
+
+> `cfdisk` は起動直後に既存のパーティションテーブルを表示します。別の OS や
+> データが残っているディスクでは、**書き込む前に `lsblk` と表示内容を必ず確認**
+> してください。既存の署名が残って `mkfs` が拒否する場合は
+> `wipefs -a <DISK>` で消去できます(全データが消えます)。
+
+### 2.3 フォーマットしてマウントする
+
+#### UEFI + GPT
+
+スワップ無し(最小構成):
+
+```sh
+mkfs.vfat -F32 -n ZIGNOSESP <DISK>p1
+mkfs.ext4 -L zignos-root <DISK>p2
+
+mkdir -p /mnt/zignos/boot/efi
+mount <DISK>p2 /mnt/zignos
+mount <DISK>p1 /mnt/zignos/boot/efi
+```
+
+スワップ有り(root は p3):
+
+```sh
+mkfs.vfat -F32 -n ZIGNOSESP <DISK>p1
+mkswap <DISK>p2
+swapon <DISK>p2
+mkfs.ext4 -L zignos-root <DISK>p3
+
+mkdir -p /mnt/zignos/boot/efi
+mount <DISK>p3 /mnt/zignos
+mount <DISK>p1 /mnt/zignos/boot/efi
+```
+
+#### BIOS + MBR
+
+スワップ無し(最小構成):
+
+```sh
+mkfs.ext4 -L zignos-root <DISK>1
+mount <DISK>1 /mnt/zignos
+```
+
+スワップ有り(root は 2):
+
+```sh
+mkswap <DISK>1
+swapon <DISK>1
+mkfs.ext4 -L zignos-root <DISK>2
+mount <DISK>2 /mnt/zignos
+```
+
+スワップを `/etc/fstab` に残す場合は、`blkid` で UUID を確認して次の行を追加します。
+
+```
+UUID=<swap の UUID> none swap sw 0 0
+```
+
+### 2.4 sfdisk で一括作成する(上級者向け)
+
+スワップ無しの最小構成を一括で作る例です。スワップが必要なら `cfdisk` で
+追加するか、`sfdisk` の行を増やしてください。
+
+#### UEFI + GPT
 
 ```sh
 sfdisk <DISK> <<'EOF'
@@ -70,7 +189,6 @@ start=1050624, type=0FC63DAF-8483-4772-8E79-3D69D8477DE4, name="zignos-root"
 EOF
 partx -u <DISK>
 
-# NVMe は <DISK>p1 / <DISK>p2、SATA は <DISK>1 / <DISK>2
 mkfs.vfat -F32 -n ZIGNOSESP <DISK>p1
 mkfs.ext4 -L zignos-root <DISK>p2
 
@@ -79,7 +197,7 @@ mount <DISK>p2 /mnt/zignos
 mount <DISK>p1 /mnt/zignos/boot/efi
 ```
 
-### BIOS(MBR)の場合
+#### BIOS + MBR
 
 ```sh
 sfdisk <DISK> <<'EOF'
@@ -96,24 +214,38 @@ mount <DISK>1 /mnt/zignos
 
 ## 3. stage3 tarball を用意する
 
-stage3 は「カーネルと GRUB を除いた最小ベース」です。現在は公開準備中なので、
-開発者向けには build VM で生成します(公開後はダウンロードページの tarball を使えます)。
+stage3 は「カーネルと GRUB を除いた最小ベース」です。公開済みの最新は
+**2026.11.19-alpha / stage3 r12**、開発ツリーの最新は
+**2026.11.20-alpha / stage3 r13(55 パッケージ / 約 976 MiB)** です。
+r13 は `linux-pam` と WiFi 修正(`networkmanager-wifi`)を含みますが、このページの
+時点では公開準備中です。公開後はダウンロードページの tarball を使えます。
+
+開発者向けには build VM で生成します。
 
 ```sh
 # ビルドホストの作業ツリー内
-sudo OUT=/var/tmp/zignos-stage3.tar.xz ./make-stage3.sh
-sha256sum /var/tmp/zignos-stage3.tar.xz > /var/tmp/zignos-stage3.tar.xz.sha256
+sudo OUT=/var/tmp/zignos-stage3-20261120-r13-x86_64.tar.xz ./make-stage3.sh
+sha256sum /var/tmp/zignos-stage3-20261120-r13-x86_64.tar.xz \
+  > /var/tmp/zignos-stage3-20261120-r13-x86_64.tar.xz.sha256
 ```
 
 生成物を USB / SSH で実機へ運び、**展開前にチェックサムを検証**します。
 
 ```sh
-sha256sum --check zignos-stage3.tar.xz.sha256
+sha256sum --check zignos-stage3-20261120-r13-x86_64.tar.xz.sha256
 ```
 
-> {{build_date}} 時点の stage3 は **{{stage3.package_count}} パッケージ / 約 {{stage3.size_mib}} MiB** です。
+> **公開済み(r12)**: {{build_date}} 時点で **{{stage3.package_count}} パッケージ /
+> 約 {{stage3.size_mib}} MiB**。ファイル名は `{{stage3.filename}}`、SHA-256 は
+> `{{stage3.sha256}}` です。
+>
+> **開発ビルド(r13)**: 2026-11-20 / **55 パッケージ / 約 976 MiB**。
+> ファイル名は `zignos-stage3-20261120-r13-x86_64.tar.xz`、SHA-256 は
+> `4e505306f0feb29fedcc78dfdd110eec05b40349d4fba29ad635066405f010eb`。
+> r13 は `linux-pam` / `/etc/pam.d` と、WiFi 用の `networkmanager-wifi` レシピを
+> 同梱します。
+>
 > root はロック済み、SSH ホスト鍵・machine-id・ユーザーは含みません。
-> 現行のファイル名は `{{stage3.filename}}`、SHA-256 は `{{stage3.sha256}}` です。
 
 ---
 
@@ -200,11 +332,19 @@ rc-update add keymaps boot
 
 ### fstab
 
-UUID は `blkid` で確認します。UEFI では ESP も fstab に登録しておくと、
-`grub-install` やカーネル更新時に `/boot/efi` が使えます。
+stage3 には `/usr/sbin/zignos-fstab` が入っています。レスキュー環境から
+対象 root を `/mnt/zignos` にマウントした状態で実行すると、実際のマウント
+情報から `/` と(マウント済みなら)`/boot/efi` の行を生成します。
 
 ```sh
-blkid <DISK>p2     # root の UUID
+/mnt/zignos/usr/sbin/zignos-fstab /mnt/zignos
+```
+
+手で書く場合は UUID を `blkid` で確認します。UEFI では ESP も fstab に
+登録しておくと、`grub-install` やカーネル更新時に `/boot/efi` が使えます。
+
+```sh
+blkid <ROOT-PART>  # root の UUID(例: UEFI + スワップ有り = <DISK>p3)
 blkid <DISK>p1     # ESP の UUID(UEFI のみ)
 
 cat > /etc/fstab <<EOF
@@ -214,6 +354,12 @@ proc  /proc proc  defaults 0 0
 sysfs /sys  sysfs defaults 0 0
 EOF
 ```
+
+**重要**: `/` の行の UUID / デバイスが実際と違うと、起動時に `/` が
+**read-only のまま**になります。OpenRC の `root` サービスは fstab を
+使って remount するため、間違った UUID では remount に失敗します
+(サービス自体は `started` と表示されます)。手で書いた場合は
+`findmnt -no SOURCE /mnt/zignos` と `blkid` を必ず照合してください。
 
 BIOS の場合は ESP の行を削除します。`/boot/efi` を常時マウントしたくない場合は
 ESP の行をコメントアウトしても構いません(GRUB 導入時だけマウントします)。
@@ -410,9 +556,22 @@ rc-update add wpa_supplicant default
 パッケージなので stage3 には含まれません。
 
 ```sh
-zpkg install networkmanager wpa_supplicant
+zpkg install networkmanager-wifi
 rc-update add networkmanager default
 ```
+
+`networkmanager-wifi` は **NetworkManager + wpa_supplicant + iw +
+linux-firmware** をまとめて入れるメタパッケージです。ファームウェアを入れ忘れて
+WiFi が認識されない事故を避けるため、WiFi を使う場合はこちらを使ってください。
+有線専用なら `zpkg install networkmanager` だけでも構いません。
+
+> `networkmanager-wifi` は **stage3 r13 以降**に同梱されています。r12 の場合は
+> `zpkg install networkmanager wpa_supplicant iw linux-firmware` を使ってください。
+>
+> **WiFi しか使えない機体**では、この chroot の中で WiFi スタックまで入れてから
+> 再起動すると確実です。chroot は SystemRescue のネットワークをそのまま使えるため、
+> ここで linux-firmware(約 1 GiB のダウンロード / 約 2 GiB のインストール)を
+> 取得できます。
 
 `nmtui` と `nmcli` が入ります。まず TUI で接続する場合:
 
@@ -431,7 +590,19 @@ nmcli device wifi connect "<SSID>" password "<PASSWORD>"
 
 NetworkManager は内部 DHCP と wpa_supplicant 連携を使うため、**dhcpcd と
 wpa_supplicant のサービスは有効化しないでください**(A と B の併用は避ける)。
-WiFi を使う場合は `linux-firmware` も必要です。
+
+WiFi が見えないときは、まずデバイスとファームウェアを確認します。
+
+```sh
+ip link                     # wlan0 / wlp* があるか
+iw dev
+rfkill list                 # Soft blocked / Hard blocked
+dmesg | grep -i -E 'iwlwifi|firmware'
+```
+
+`Direct firmware load ... failed` が出る場合は `linux-firmware` が未導入です
+(`zpkg install networkmanager-wifi` で入ります)。Intel Wireless-AC 8260
+(`8086:24f3`)は `iwlwifi` + `iwlwifi-8000C-36.ucode` で動作します。
 
 ### chroot を抜けて再起動
 
@@ -505,8 +676,8 @@ resize2fs /dev/nvme0n1p2
 ### 代替 C: レスキューと保守
 
 ```sh
-mount <DISK>p2 /mnt/zignos
-mount <DISK>p1 /mnt/zignos/boot/efi   # UEFI
+mount <ROOT-PART> /mnt/zignos          # 例: /dev/nvme0n1p3
+mount <ESP-PART> /mnt/zignos/boot/efi  # UEFI(例: /dev/nvme0n1p1)
 
 # 設定確認
 cat /mnt/zignos/etc/fstab
@@ -527,11 +698,13 @@ chroot /mnt/zignos /bin/bash
 ## ネットワークと WiFi の補足
 
 - 有線: `dhcpcd` を入れて `rc-update add dhcpcd boot`
-- NetworkManager を使う場合は `zpkg install networkmanager wpa_supplicant` →
+- NetworkManager を使う場合は `zpkg install networkmanager-wifi` →
   `rc-update add networkmanager default`。`nmcli` / `nmtui` で設定する
-  (dhcpcd / wpa_supplicant のサービスは有効化しない)
-- WiFi: `wpa_supplicant` + `iw` + `linux-firmware`。`/etc/conf.d/wpa_supplicant` の
-  `WPA_IFACE`(既定 `wlan0`)を環境に合わせる
+  (dhcpcd / wpa_supplicant のサービスは有効化しない)。有線専用なら
+  `zpkg install networkmanager`
+- WiFi: `networkmanager-wifi` が `wpa_supplicant` + `iw` + `linux-firmware` を
+  まとめて入れる。単体構成では `wpa_supplicant` + `iw` + `linux-firmware`。
+  `/etc/conf.d/wpa_supplicant` の `WPA_IFACE`(既定 `wlan0`)を環境に合わせる
 - WiFi ドライバはカーネルモジュールです。起動時もホットプラグも **eudev + kmod** が
   uevent 経由で自動ロードします
 - 読み込まれない場合は `lspci -k` / `lsusb` でチップを確認し、`modprobe <driver>`
@@ -546,6 +719,26 @@ chroot /mnt/zignos /bin/bash
 - カーネル更新時は initramfs も同時に再生成されます
 
 ## トラブルシューティング
+
+### 起動後に `Read-only file system` になる
+
+`/etc/fstab` の `/` 行が実際の root と一致していません。コンソールで
+root として次を実行します。
+
+```sh
+mount -o remount,rw "$(findmnt -no SOURCE /)" /
+zignos-fstab /
+```
+
+`zignos-fstab` は実際のマウント情報から `/etc/fstab` を書き直します
+(initscripts r18 以降。古い stage3 には無いので、`findmnt -no SOURCE /` と
+`blkid` を見て手で `UUID=... / ...` 行を修正してください)。修正後は
+`rc-service root restart` または再起動で確認します。
+
+原因: OpenRC の `root` サービスは `mount -o remount,rw /` を実行しますが、
+これは fstab の `/` 行を参照するため、UUID / デバイスが間違っていると
+remount に失敗します。サービスは `started` と表示されるので気づきにくい
+点に注意してください。
 
 ### `grub-install` が EFI variables を読めない
 
@@ -582,7 +775,7 @@ stage3 に同梱された `/usr/share/zignos/recipes` は、その stage3 を作
 zpkg sync --from zignos-stage3-<new>.tar.xz
 
 # レシピだけの tarball / ディレクトリ / URL も可
-zpkg sync --from zignos-recipes-20261119-r12.tar.xz
+zpkg sync --from zignos-recipes-20261119-r13.tar.xz
 zpkg sync --from ./zignos-recipes
 zpkg sync --from https://example.invalid/zignos-recipes.tar.xz
 
@@ -602,7 +795,7 @@ zpkg search networkmanager
 使う場合はこの tarball を sync してから切り替えます。
 
 ```sh
-zpkg sync --from zignos-recipes-20261119-r12.tar.xz --allow-unsigned
+zpkg sync --from zignos-recipes-20261119-r13.tar.xz --allow-unsigned
 zpkg channel testing      # /etc/zpkg/make.conf の CHANNEL= を更新
 zpkg upgrade -p           # 変更一覧を確認
 zpkg upgrade              # 実行(確認プロンプトあり)
@@ -615,14 +808,14 @@ zpkg upgrade              # 実行(確認プロンプトあり)
 `--allow-unsigned` を付けてください(公式署名鍵の運用開始後は不要です)。
 
 ```sh
-zpkg sync --from zignos-recipes-20261119-r12.tar.xz --allow-unsigned
+zpkg sync --from zignos-recipes-20261119-r13.tar.xz --allow-unsigned
 ```
 
 署名済みツリーを検証する場合は、先に公開鍵を登録します。
 
 ```sh
 zpkg key import zignos-signing.pub
-zpkg sync --from zignos-recipes-20261119-r12.tar.xz
+zpkg sync --from zignos-recipes-20261119-r13.tar.xz
 ```
 
 詳細は [パッケージ署名と検証](/docs/signing/) を参照してください。
@@ -683,8 +876,10 @@ grep -E 'menuentry|linux /boot|initrd /boot' /boot/grub/grub.cfg
 
 - **Secure Boot 非対応**(GRUB/カーネルは未署名。無効化が必要)
 - **LUKS / TPM 非対応**
-- **GUI は未収録**(CLI の最小ベース。KDE Plasma 6 / Wayland を[設計中](/docs/desktop/))
-- **WiFi は firmware 導入後**。`linux-firmware` は約 2 GiB
+- **GUI は stage3 に未収録**(CLI の最小ベース)。KDE Plasma 6 / Wayland は
+  `desktop/` から任意導入(M44 で起動確認済み: [デスクトップ環境](/docs/desktop/))
+- **WiFi は firmware 導入後**。`networkmanager-wifi` または `linux-firmware`
+  (約 2 GiB)
 - **stage3 の公開は準備中**。現在は `make-stage3.sh` で生成
 - **x86_64 のみ**。BIOS/UEFI の両方に対応
 - root の初期パスワードは配布イメージの案内を参照し、**最初に変更**する
