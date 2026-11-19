@@ -12,7 +12,7 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 
 ## 現在のシステム(2026-11-19)
 
-- **GUI: 設計中** — KDE Plasma 6 (Wayland)。`desktop/` はまだ 0 パッケージ。`plasma-meta`(Plasma 本体)と `kde-applications`(KDE アプリ)に分離し、stable/testing は LTS、unstable は最新版を追従する。M43 以降で基盤から実装する
+- **GUI: 設計中** — KDE Plasma 6 (Wayland)。`desktop/` はまだ 0 パッケージ。`plasma-meta`(Plasma 本体)と `kde-applications`(KDE アプリ)に分離し、stable は Linux/KDE LTS、testing は最新安定版、unstable はさらに挑戦的な版を追従する。M43 以降で基盤から実装する
 - **base.list {{base.top_level}} トップレベル = 依存込み {{base.closure}} パッケージ**(唯一の定義)/ 12G ブータブルイメージ(BIOS/UEFI 版)。レシピツリーは各チャンネル {{recipes.per_channel}} 個(core 76 + main 86)× 3 = {{recipes.total}}
 - 起動: BIOS/MBR または UEFI/GPT → GRUB 2.14 → kernel 7.1.8 + initramfs(busybox) → OpenRC 0.64.1 → eudev 3.3.0 → serial/VGA ログイン(shadow)
 - カーネル: x86_64_defconfig + `x86_64-generic.config`(起動系は組み込み、GPU/WiFi/追加 NIC はモジュール)。root は initramfs が `root=UUID=` で解決
@@ -70,7 +70,7 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 | M39 | 再現可能なビルド(SOURCE_DATE_EPOCH / log / provenance / SBOM) | 完了(2026-11-19 実走行) | - |
 | M40 | リリースチャンネルと安全な upgrade(zpkg 0.2.0) | 完了(2026-11-19 実走行) | - |
 | M41 | リリース情報の一元管理(release.json / 配布物の自動生成) | 完了(2026-11-19 実走行) | - |
-| M42 | KDE Plasma 6 (Wayland) 設計(plasma-meta/kde-applications 分離・LTS チャンネル) | 設計完了(2026-11-19) | - |
+| M42 | KDE Plasma 6 (Wayland) 設計(plasma-meta/kde-applications 分離・3段階チャンネル) | 設計完了(2026-11-19) | - |
 
 次の候補: **KDE Plasma 6 (Wayland) 基盤(M43: PAM/elogind/Wayland/Mesa/Qt6)** / UEFI での起動確認と実機検証 / リリースマニフェストの CI 連携 / ストレージ系(LUKS/LVM/XFS/Btrfs) / 公式署名鍵の運用と binpkg リポジトリの公開 / 最小依存ビルドルート / 完全な固定ビルドルート / resource limit / SAT solver(複数バージョン・スロットを含む完全解)。
 
@@ -188,7 +188,7 @@ Portage(emerge)風のフェーズ行を入れた。
   イメージとも **BOOT CHECK PASSED**(7.1.8)
 
 
-## M42: KDE Plasma 6 (Wayland) デスクトップ設計(メタ分離・LTS チャンネル)(2026-11-19)
+## M42: KDE Plasma 6 (Wayland) デスクトップ設計(メタ分離・3段階チャンネル)(2026-11-19)
 
 最初のデスクトップ環境として KDE Plasma 6 を Wayland で導入するための設計調査。
 `desktop/` は 0 パッケージのまま、依存・OpenRC 統合・PoC 手順を確定した。
@@ -196,10 +196,12 @@ Portage(emerge)風のフェーズ行を入れた。
 - [x] **メタパッケージ分離** — `desktop/plasma-meta`(Plasma セッション)と
   `desktop/kde-applications`(KDE Gear アプリ)に分ける。`plasma-meta` は
   アプリを含めず、`kde-applications` は Plasma 本体に依存しない
-- [x] **チャンネル方針** — stable / testing は Plasma 6.6 LTS / Qt 6.8 LTS /
-  KF6 6.18 を固定し、unstable は最新版(Plasma 6.8 / Qt 6.11 / KF6 6.32)を
-  追従する。`core` / `main` は共有し、`desktop/` だけ系列を分岐させる。
-  KDE Gear は LTS が無いため、stable/testing は 25.04.3、unstable は 26.08 を固定
+- [x] **チャンネル方針** — stable は **Linux 6.18 LTS + Plasma 6.6 LTS**、
+  testing は **Linux 7.3 + Plasma 6.8 の最新安定版**、unstable は
+  **Linux 7.4-rc/mainline + Plasma 6.9 dev/beta** の挑戦的な構成にする。
+  `core/linux` と `desktop/` は系列が分岐し、その他の `core` / `main` は共有。
+  変更は必ず **Unstable → Testing → Stable** の順に検証し、Stable は LTS へ
+  バックポートする
 - [x] **設計方針** — Wayland 1.25 / Mesa 26.2 系 / elogind / Linux-PAM /
   polkit / PipeWire を基盤とする。Plasma 6.8 は Qt 6.11 + KF6 6.30 必須で
   Wayland 専用のため unstable 側に置く

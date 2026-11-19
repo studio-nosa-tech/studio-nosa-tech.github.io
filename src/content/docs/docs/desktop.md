@@ -19,33 +19,35 @@ ZIGNOS はコンソール主体の最小ベースとして育ってきました�
 
 ## チャンネル方針
 
-デスクトップは stable / testing と unstable でバージョン系列を分けます。
+チャンネルは **Stable = 安定/LTS、Testing = 最新安定版、Unstable = さらに挑戦的**
+の3段階です。変更は必ず **Unstable → Testing → Stable** の順に検証し、
+逆流させません。
 
-- **stable / testing**: KDE Plasma の **LTS 系(6.6)** を固定
-- **unstable**: 最新の Plasma(現在 6.8)を追従
+| コンポーネント | Stable(LTS/安定) | Testing(最新安定) | Unstable(挑戦的) |
+|---|---|---|---|
+| Linux kernel | 6.18 LTS | 7.3 最新安定 | 7.4-rc / mainline |
+| KDE Plasma | 6.6 LTS | 6.8 | 6.9 dev / beta |
+| Qt | 6.8 LTS | 6.11 | 6.12 dev / beta |
+| KDE Frameworks | 6.18 | 6.32 | 6.33 / master |
+| KDE Gear(アプリ) | 25.04.3 | 26.08 | 26.12 beta |
+| Wayland | 1.25 | 最新安定版 | git snapshot |
+| Mesa | 26.2 系 | 26.3 系 | 27.0 dev / git |
+| セッション | elogind + Linux-PAM + polkit | 同じ | 同じ |
+| 音声 | PipeWire + WirePlumber | 最新安定版 | git snapshot |
+| ログイン | Plasma Login Manager 6.6 | 6.8 | 6.9 dev / beta |
 
-`core/` と `main/` は従来どおりチャンネル間で同じ内容を基本とし、
-`desktop/` だけを系列ごとに分岐させます。
+- **Stable** は Linux LTS と KDE LTS を固定します
+- **Testing** は Linux / KDE の最新安定版(またはそれに準ずるもの)を採用します
+- **Unstable** は Testing よりさらに新しく、RC / beta / mainline / git snapshot を含みます
+- 新機能・新バージョンは Unstable → Testing → Stable の順に昇格します
+- Stable は LTS ブランチのため、Testing の最新版をそのまま入れるのではなく、
+  検証済みの修正を LTS へバックポートします
+- `core/linux` と `desktop/` はチャンネルで系列が分岐し、その他の
+  `core/` / `main/` は原則共有します
 
-| コンポーネント | stable / testing(LTS) | unstable(最新追従) |
-|---|---|---|
-| KDE Plasma | 6.6 LTS | 6.8(以降は最新安定版) |
-| Qt | 6.8 LTS | 6.11(以降は最新安定版) |
-| KDE Frameworks | 6.18 | 6.32(以降は最新安定版) |
-| KDE Gear(アプリ) | 25.04.3 | 26.08(以降は最新安定版) |
-| Wayland | 1.25 | 最新安定版 |
-| Mesa | 26.2 系 | 26.3 系(以降は最新安定版) |
-| セッション | elogind + Linux-PAM + polkit | 同じ |
-| 音声 | PipeWire + WirePlumber | 同じ |
-| ログイン | Plasma Login Manager 6.6 | Plasma Login Manager 6.8 |
-
-KDE Gear には Plasma のような LTS がありません。そのため stable / testing では
-Qt 6.8 LTS でビルドできる最新の Gear(25.04.3)を固定し、unstable は最新の
-Gear を追従します。
-
-LTS のポイントリリースは testing → stable の順に適用し、最新版は unstable
-だけに入れます。新しい LTS 系列に切り替えるときだけ、stable / testing の
-系列を更新します。
+KDE Gear には Plasma のような LTS がありません。そのため Stable では
+Qt 6.8 LTS でビルドできる最新の Gear(25.04.3)を固定し、Testing は最新安定版
+(26.08)、Unstable は次期版(26.12 beta)を追従します。
 
 ## パッケージ構成
 

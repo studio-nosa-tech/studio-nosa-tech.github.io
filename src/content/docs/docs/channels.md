@@ -33,24 +33,30 @@ stage3 とイメージには **stable だけ**が同梱されます。testing / 
 zpkg sync --from zignos-recipes-<date>-<revision>.tar.xz
 ```
 
-## デスクトップ(KDE)のチャンネル方針
+## カーネルとデスクトップ(KDE)のチャンネル方針
 
-KDE デスクトップ導入後は、`desktop/` だけチャンネルごとにバージョン系列を
-分けます。`core/` と `main/` は従来どおり同じ内容を基本とします。
+ZIGNOS のチャンネルは、ベースのカーネルと KDE デスクトップで性格を分けます。
+変更は必ず **Unstable → Testing → Stable** の順に検証し、逆流させません。
 
-| チャンネル | KDE の系列 |
-|---|---|
-| `stable` | KDE Plasma 6.6 LTS / Qt 6.8 LTS / KF6 6.18 / KDE Gear 25.04.3 |
-| `testing` | stable と同じ LTS 系列。LTS ポイントリリースを先に検証 |
-| `unstable` | 最新の Plasma / Qt / KF6 / KDE Gear を追従 |
+| チャンネル | Linux | KDE | 性格 |
+|---|---|---|---|
+| `stable` | **6.18 LTS** | Plasma 6.6 LTS / Qt 6.8 LTS / KF6 6.18 / Gear 25.04.3 | 安定・長期サポート |
+| `testing` | **7.3 最新安定** | Plasma 6.8 / Qt 6.11 / KF6 6.32 / Gear 26.08 | 最新安定版 |
+| `unstable` | **7.4-rc / mainline** | Plasma 6.9 dev/beta / Qt 6.12 dev/beta / KF6 master / Gear 26.12 beta | 挑戦的 |
 
-- LTS のポイントリリースは testing → stable の順に適用します
-- 最新版は unstable のみ。新しい LTS 系列に切り替えるときだけ
-  stable / testing へ反映します
-- KDE Gear には Plasma のような LTS が無いため、stable / testing では
-  Qt 6.8 LTS でビルドできる最新の Gear(25.04.3)を固定します
-- stable ↔ unstable の切り替えは Qt / KF6 / Plasma / Gear の大規模更新に
-  なります。`zpkg upgrade -p` で差分を確認してください
+- **Stable** は Linux LTS と KDE LTS を固定します。長期サポートと保守性を優先します
+- **Testing** は Linux / KDE の最新安定版(またはそれに準ずるもの)を採用します
+- **Unstable** は Testing よりさらに新しく、RC / beta / mainline / git snapshot を含みます
+- 新機能・新バージョンは Unstable → Testing → Stable の順に昇格します
+- Stable は LTS ブランチのため、Testing の最新版をそのまま入れるのではなく、
+  検証済みの修正を LTS へバックポートします
+- `core/linux` と `desktop/` はチャンネルで系列が分岐します。その他の
+  `core/` / `main/` は原則共有します
+- `stable ↔ unstable` の切り替えは大規模な更新になります。
+  `zpkg upgrade -p` で差分を確認してください
+
+> 現行ツリーは全チャンネル Linux 7.1.8 / KDE なし。この表は M43 以降の
+> 目標で、カーネルと KDE のレシピ分岐はこれから実装します。
 
 ## チャンネルの選択
 
