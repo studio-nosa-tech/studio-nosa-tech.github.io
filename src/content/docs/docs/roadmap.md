@@ -1,6 +1,6 @@
 ---
 title: ロードマップ
-description: M0–M41 のマイルストーン記録と現在の状況。
+description: M0–M42 のマイルストーン記録と現在の状況。
 ---
 
 マイルストーンごとに完了条件を明記する。進捗はこのファイルのチェックボックスで管理する。
@@ -8,10 +8,11 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 /about/ の「ステータス」も参照。
 
 > 各マイルストーン節の数値・構成は**その時点の記録**。パッケージ数やベース構成は
-> 以後のマイルストーンで変わっている(現在は M41 の節と下の「現在のシステム」が正)。
+> 以後のマイルストーンで変わっている(現在は M42 の節と下の「現在のシステム」が正)。
 
 ## 現在のシステム(2026-11-19)
 
+- **GUI: 設計中** — KDE Plasma 6 (Wayland)。`desktop/` はまだ 0 パッケージで、M43 以降で基盤から実装する
 - **base.list {{base.top_level}} トップレベル = 依存込み {{base.closure}} パッケージ**(唯一の定義)/ 12G ブータブルイメージ(BIOS/UEFI 版)。レシピツリーは各チャンネル {{recipes.per_channel}} 個(core 76 + main 86)× 3 = {{recipes.total}}
 - 起動: BIOS/MBR または UEFI/GPT → GRUB 2.14 → kernel 7.1.8 + initramfs(busybox) → OpenRC 0.64.1 → eudev 3.3.0 → serial/VGA ログイン(shadow)
 - カーネル: x86_64_defconfig + `x86_64-generic.config`(起動系は組み込み、GPU/WiFi/追加 NIC はモジュール)。root は initramfs が `root=UUID=` で解決
@@ -69,8 +70,9 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 | M39 | 再現可能なビルド(SOURCE_DATE_EPOCH / log / provenance / SBOM) | 完了(2026-11-19 実走行) | - |
 | M40 | リリースチャンネルと安全な upgrade(zpkg 0.2.0) | 完了(2026-11-19 実走行) | - |
 | M41 | リリース情報の一元管理(release.json / 配布物の自動生成) | 完了(2026-11-19 実走行) | - |
+| M42 | KDE Plasma 6 (Wayland) デスクトップ設計 | 設計完了(2026-11-19) | - |
 
-次の候補: **UEFI での起動確認と実機検証** / リリースマニフェストの CI 連携 / GUI 要素の調査 / ストレージ系(LUKS/LVM/XFS/Btrfs) / 公式署名鍵の運用と binpkg リポジトリの公開 / 最小依存ビルドルート / 完全な固定ビルドルート / resource limit / SAT solver(複数バージョン・スロットを含む完全解)。
+次の候補: **KDE Plasma 6 (Wayland) 基盤(M43: PAM/elogind/Wayland/Mesa/Qt6)** / UEFI での起動確認と実機検証 / リリースマニフェストの CI 連携 / ストレージ系(LUKS/LVM/XFS/Btrfs) / 公式署名鍵の運用と binpkg リポジトリの公開 / 最小依存ビルドルート / 完全な固定ビルドルート / resource limit / SAT solver(複数バージョン・スロットを含む完全解)。
 
 ## M25: stage3 tarball(2026-11-17 完走)
 
@@ -185,6 +187,30 @@ Portage(emerge)風のフェーズ行を入れた。
   owned ファイルが prune されることも確認。両プラットフォーム構成で BIOS/UEFI
   イメージとも **BOOT CHECK PASSED**(7.1.8)
 
+
+## M42: KDE Plasma 6 (Wayland) デスクトップ設計(2026-11-19)
+
+最初のデスクトップ環境として KDE Plasma 6 を Wayland で導入するための設計調査。
+`desktop/` は 0 パッケージのまま、依存・OpenRC 統合・PoC 手順を確定した。
+
+- [x] **設計方針** — Plasma 6.6 LTS / Qt 6.8 LTS / KF6 6.18 / Wayland 1.25 /
+  Mesa 26.2 系 / elogind / Linux-PAM / polkit / PipeWire を基盤とする。
+  現行の Plasma 6.8 は Qt 6.11 + KF6 6.30 必須で Wayland 専用のため、
+  最初の実装は LTS で固め、6.8 移行は後段に回す
+- [x] **KWin と seat** — KWin 6 は libseat/seatd を使わず logind API に依存する。
+  OpenRC では elogind が必須で、seatd との併用はしない
+- [x] **PAM の課題** — 現在の shadow / util-linux / openssh / sudo は PAM 無効。
+  PoC では PAM を `desktop/` に限定し、製品化時に `core` へ昇格して
+  認証系を再ビルドする
+- [x] **カーネル** — DRM/KMS と virtio-gpu、入力は既存。音声(`CONFIG_SND*`)が
+  未設定のため、PipeWire の前に HDA/USB/virtio-snd を追加する
+- [x] **QEMU 検証計画** — QEMU 10.0.13 の `virtio-vga-gl` / `egl-headless` /
+  virtio 入力を使い、elogind の PAM セッションから `startplasma-wayland` を
+  起動してスクリーンショットと入力で確認する
+- [ ] **M43: 基盤** — PAM / elogind / polkit / Wayland / Mesa / フォント / Qt6
+- [ ] **M44: KF6 + KWin + Plasma 最小** — QEMU でデスクトップ表示を確認
+- [ ] **M45: フル Plasma** — PLM / 音声 / NetworkManager / 電源 / 設定
+- [ ] **M46: 配布物** — デスクトップ入りイメージ/ISO、実機 GPU、6.8 移行
 
 ## M41: リリース情報の一元管理(2026-11-19 検証)
 

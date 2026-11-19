@@ -683,7 +683,7 @@ grep -E 'menuentry|linux /boot|initrd /boot' /boot/grub/grub.cfg
 
 - **Secure Boot 非対応**(GRUB/カーネルは未署名。無効化が必要)
 - **LUKS / TPM 非対応**
-- **GUI は未収録**(CLI の最小ベース。必要なものを自分で追加)
+- **GUI は未収録**(CLI の最小ベース。KDE Plasma 6 / Wayland を[設計中](/docs/desktop/))
 - **WiFi は firmware 導入後**。`linux-firmware` は約 2 GiB
 - **stage3 の公開は準備中**。現在は `make-stage3.sh` で生成
 - **x86_64 のみ**。BIOS/UEFI の両方に対応
