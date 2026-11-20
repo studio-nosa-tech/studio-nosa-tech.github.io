@@ -1,6 +1,6 @@
 ---
 title: ロードマップ
-description: M0–M46 のマイルストーン記録と現在の状況。
+description: M0–M47 のマイルストーン記録と現在の状況。
 ---
 
 マイルストーンごとに完了条件を明記する。進捗はこのファイルのチェックボックスで管理する。
@@ -8,12 +8,12 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 /about/ の「ステータス」も参照。
 
 > 各マイルストーン節の数値・構成は**その時点の記録**。パッケージ数やベース構成は
-> 以後のマイルストーンで変わっている(現在は M46 の節と下の「現在のシステム」が正)。
+> 以後のマイルストーンで変わっている(現在は M47 の節と下の「現在のシステム」が正)。
 
-## 現在のシステム(2026-11-20)
+## 現在のシステム(2026-11-21)
 
-- **GUI: M46 進行中** — M45 の Plasma 6.4.5 (Wayland) フルセットに、UDisks2 と Kate / Ark / Gwenview / Okular / KWalletManager を追加。UDisks2 は libblockdev(part/fs/loop/swap/mdraid/crypto/nvme)と cryptsetup / LVM2 / libnvme / json-c / keyutils / libbytesize を含み、chroot で D-Bus 起動と `udisksctl status` を確認。各アプリは `--version` で起動を確認。BIOS/MBR の検証イメージ 2 種(stage3 から入れたクリーンな 291 パッケージ版を含む)を QEMU で起動し、Plasma の壁紙・パネルとアプリ、Dolphin のファイル種別表示、IPAex フォントによる日本語表示を確認。ログインはコンソール PAM + `startplasma-wayland`(PLM は Plasma 6.6 以降の次の増分)。stable は Qt 6.8 LTS に合わせ Plasma 6.4.5、testing は最新安定版、unstable はさらに挑戦的な版を追従する
-- **base.list {{base.top_level}} トップレベル = 依存込み {{base.closure}} パッケージ**(唯一の定義)/ 12G ブータブルイメージ(BIOS/UEFI 版)。レシピツリーは各チャンネル {{recipes.per_channel}} 個(core 76 + main 86)× 3 = {{recipes.total}}(r12 時点)。**M46 の開発ツリーは core 77 + main 98 + desktop 205 = 380 / チャンネル**
+- **GUI: M47 完了** — Stable / Testing / Unstable の系列を実際に分岐。Stable は Linux 6.18.64 LTS / Qt 6.8.5 LTS / KF6 6.18 / Plasma 6.4.5 / Gear 25.04.3 / Mesa 26.2.7、Testing は Linux 7.3.5 / Qt 6.11.3 / KF6 6.32 / Plasma 6.8.3 / Gear 26.08.3 / Mesa 26.3.1、Unstable は Linux 7.4-rc3 / Gear 26.11.80 beta(Qt 6.12・KF6 6.33・Plasma 6.9 は Plasma 6.9 と同時に移行)。Testing のデスクトップは QEMU でパネル・壁紙・KRunner・Dolphin・Kate・UDisks2 まで確認し、未解決 soname 0。Union / libkexiv2 / libssh / qtkeychain / kholidays / knighttime / Vulkan を追加し、Plasma 6.8 の SOVERSION 移行・空 plasmoid ディレクトリ・DRM グループ・`unix_chkpwd` の権限を修正した。unstable の KWin は QEMU の softpipe で segfault するため、デスクトップ目視は Testing 側で実施
+- **base.list {{base.top_level}} トップレベル = 依存込み {{base.closure}} パッケージ**(唯一の定義)/ 12G ブータブルイメージ(BIOS/UEFI 版)。レシピツリーは **stable 382(core 77 + main 100 + desktop 205)/ testing・unstable 388(core 77 + main 102 + desktop 209)**(M47 時点)
 - 起動: BIOS/MBR または UEFI/GPT → GRUB 2.14 → kernel 7.1.8 + initramfs(busybox) → OpenRC 0.64.1 → eudev 3.3.0 → serial/VGA ログイン(shadow / PAM)
 - カーネル: x86_64_defconfig + `x86_64-generic.config`(起動系は組み込み、GPU/WiFi/追加 NIC はモジュール)。root は initramfs が `root=UUID=` で解決
 - ネットワーク: **ベースには含まない**(Gentoo 流の opt-in)。`zpkg install dhcpcd openssh` の後 `rc-update add dhcpcd boot` / `rc-update add sshd default`
@@ -74,9 +74,10 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 | M43 | デスクトップ基盤(PAM / elogind / Wayland / Mesa / フォント / Qt6) | 完了(2026-11-19 実走行) | - |
 | M44 | KF6 + KWin + Plasma 最小(Xwayland / kactivitymanagerd / PAM login) | 完了(2026-11-20 QEMU 実走行) | - |
 | M45 | フル Plasma(音声 / NetworkManager / 電源 / アプリ / GLX) | 完了(2026-11-20 QEMU 実走行) | - |
-| M46 | 配布物(イメージ/ISO/実機/LTS 移行)+ UDisks2 / KDE アプリ | 進行中(2026-11-20 UDisks2・アプリ・BIOS 検証イメージ 2 種まで) | - |
+| M46 | 配布物(イメージ/ISO/実機/LTS 移行)+ UDisks2 / KDE アプリ | 完了(2026-11-20 UDisks2・アプリ・BIOS 検証イメージ 2 種まで) | - |
+| M47 | Stable / Testing / Unstable のパッケージ系列分岐 | 完了(2026-11-21 Testing デスクトップ QEMU 確認、stage3 r17) | Qt 6.12 / Plasma 6.9 は次期 |
 
-次の候補: **M46 の残り(配布用 ISO・実機 GPU・Plasma 6.6 LTS/PLM・Spectacle/kio-extras)** / UEFI での起動確認と実機検証 / リリースマニフェストの CI 連携 / ストレージ系(LUKS/LVM/XFS/Btrfs) / 公式署名鍵の運用と binpkg リポジトリの公開 / 最小依存ビルドルート / 完全な固定ビルドルート / resource limit / SAT solver(複数バージョン・スロットを含む完全解)。
+次の候補: **M47 の残り(実 GPU での Unstable 検証・Qt 6.12 / Plasma 6.9 移行・Mesa main)** / 配布用 ISO・UEFI / 実機 GPU・WiFi / Spectacle / kio-extras / リリースマニフェストの CI 連携 / ストレージ系(LUKS/LVM/XFS/Btrfs) / 公式署名鍵の運用と binpkg リポジトリの公開 / 最小依存ビルドルート / 完全な固定ビルドルート / resource limit / SAT solver(複数バージョン・スロットを含む完全解)。
 
 ## M25: stage3 tarball(2026-11-17 完走)
 

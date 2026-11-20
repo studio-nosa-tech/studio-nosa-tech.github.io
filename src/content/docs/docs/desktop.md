@@ -6,10 +6,11 @@ description: ZIGNOS のデスクトップ環境として KDE Plasma 6 を Waylan
 ZIGNOS はコンソール主体の最小ベースとして育ってきましたが、最初のデスクトップ
 環境として **KDE Plasma 6 (Wayland)** を導入しています。
 
-**M46 で UDisks2 と KDE アプリまで実装しました。`desktop/` には 205 レシピがあり、
-Qt 6.8.5 / KF6 6.18.0 / Plasma 6.4.5 / Xwayland 24.1.9 / PipeWire 1.6.7 /
-plasma-nm / powerdevil / UDisks2 / Konsole・Dolphin・KCalc・Filelight・Kate・
-Ark・Gwenview・Okular・KWalletManager を含みます。
+**M47 で Stable / Testing / Unstable のデスクトップ系列を実際に分岐しました。
+`desktop/` は stable 205 / testing・unstable 209 レシピです。Stable は
+Qt 6.8.5 / KF6 6.18.0 / Plasma 6.4.5 / Gear 25.04.3、Testing は
+Qt 6.11.3 / KF6 6.32 / Plasma 6.8.3 / Gear 26.08.3、Unstable は
+Linux 7.4-rc3 と Gear 26.11.80 beta を採用しています。
 stage3 と既定のイメージは CLI の最小ベースのままです。**
 
 ## 目標
@@ -28,16 +29,16 @@ stage3 と既定のイメージは CLI の最小ベースのままです。**
 
 | コンポーネント | Stable(LTS/安定) | Testing(最新安定) | Unstable(挑戦的) |
 |---|---|---|---|
-| Linux kernel | 6.18 LTS | 7.3 最新安定 | 7.4-rc / mainline |
-| KDE Plasma | 6.4.5(Qt 6.8 LTS 対応) | 6.8 | 6.9 dev / beta |
-| Qt | 6.8 LTS | 6.11 | 6.12 dev / beta |
-| KDE Frameworks | 6.18 | 6.32 | 6.33 / master |
-| KDE Gear(アプリ) | 25.04.3 | 26.08 | 26.12 beta |
-| Wayland | 1.25 | 最新安定版 | git snapshot |
-| Mesa | 26.2 系 | 26.3 系 | 27.0 dev / git |
+| Linux kernel | 6.18.64 LTS | 7.3.5 最新安定 | 7.4-rc3 mainline |
+| KDE Plasma | 6.4.5(Qt 6.8 LTS 対応) | 6.8.3 | 6.8.3(6.9 公開待ち) |
+| Qt | 6.8.5 LTS | 6.11.3 | 6.11.3(Plasma 6.9 と同時に 6.12) |
+| KDE Frameworks | 6.18 | 6.32 | 6.32(6.33 は Plasma 6.9 と同時) |
+| KDE Gear(アプリ) | 25.04.3 | 26.08.3 | 26.11.80 beta |
+| Wayland | 1.25 | 1.26 | 1.26 |
+| Mesa | 26.2.7 | 26.3.1 | 26.3.1(main は実 GPU 検証待ち) |
 | セッション | elogind + Linux-PAM + polkit | 同じ | 同じ |
-| 音声 | PipeWire + WirePlumber | 最新安定版 | git snapshot |
-| ログイン | コンソール PAM(M45)/ PLM は 6.6 以降 | 6.8 | 6.9 dev / beta |
+| 音声 | PipeWire + WirePlumber | 最新安定版 | 最新安定版 |
+| ログイン | コンソール PAM(M45)/ PLM は 6.6 以降 | 6.8 | 6.8 |
 
 - **Stable** は Linux LTS と KDE LTS を固定します
 - **Testing** は Linux / KDE の最新安定版(またはそれに準ずるもの)を採用します
@@ -81,9 +82,9 @@ PAM が必要です。M44 で **Linux-PAM を `core` に移し、shadow を PAM 
 しました。コンソールログインが elogind の seat0 セッションを作り、KWin が
 DRM を取得できます。
 
-## 実装状況(M43–M46)
+## 実装状況(M43–M47)
 
-2026-11-20 時点で、`desktop/` に次のスタックを追加し、build VM の chroot と
+2026-11-21 時点で、`desktop/` に次のスタックを追加し、build VM の chroot と
 BIOS/MBR の検証イメージ(QEMU)でビルド・起動を確認しています。
 
 - **セッション**: Linux-PAM 1.7.3(core)/ elogind 257.16 / polkit 128。
@@ -149,6 +150,27 @@ BIOS/MBR の検証イメージ(QEMU)でビルド・起動を確認していま�
   Mincho を `ipaex-fonts` として追加し、Kate で日本語が正しく表示されることを
   確認しました
 
+### M47 で分岐したもの
+
+- **Stable**: Linux 6.18.64 LTS / Qt 6.8.5 / KF6 6.18 / Plasma 6.4.5 /
+  Gear 25.04.3 / Mesa 26.2.7。既存の安定系列を維持
+- **Testing**: Linux 7.3.5 / Qt 6.11.3 / KF6 6.32 / Plasma 6.8.3 /
+  Gear 26.08.3 / Mesa 26.3.1。QEMU でパネル・壁紙・KRunner・Dolphin・Kate・
+  UDisks2(vda / sr0)まで確認し、未解決 soname 0
+- **Unstable**: Linux 7.4-rc3 / Gear 26.11.80 beta。Qt 6.12・KF6 6.33・
+  Plasma 6.9 は Plasma 6.9 と同時に移行するため、現時点では Testing と同じ
+  Qt 6.11.3 / KF6 6.32 / Plasma 6.8.3 / Mesa 26.3.1 を使用
+- **新規依存**: Union(libplasma のスタイルエンジン)、libkexiv2(壁紙の EXIF)、
+  libssh(Konsole)、qtkeychain(plasma-nm)、kholidays / knighttime、
+  vulkan-headers / vulkan-loader(KWin)、QCoro 0.13
+- **移行修正**: Plasma 6.8 の SOVERSION 変更に合わせた再ビルド、6.4 の空
+  plasmoid ディレクトリ掃除、DRM 用 `video` / `render` グループ、
+  `unix_chkpwd` の setgid と `/etc/shadow` の `root:shadow 0640` 化
+- **Unstable の QEMU 検証**: Linux 7.4-rc3 の起動、Qt / KF6 / Plasma /
+  Gear 26.11.80 のビルド、未解決 soname 0 を確認。KWin は QEMU の softpipe
+  (`sp_find_cached_tile`)で segfault するため、デスクトップの目視確認は
+  Testing 側で行いました。実 GPU または Plasma 6.9 投入時に再検証します
+
 Spectacle(OpenCV 必須)と kio-extras、UEFI 版/ISO は次の増分です。
 
 Plasma Login Manager は Plasma 6.6 以降(Qt 6.10 / KF6 6.22)でのみ提供される
@@ -177,6 +199,7 @@ dbus-run-session -- startplasma-wayland
 | M44 | KF6 + KWin + Plasma 最小 + `plasma-meta`(完了。QEMU でパネル/デスクトップ表示) |
 | M45 | フル Plasma(音声 / ネットワーク / 電源 / 設定 / アプリ)+ `kde-applications`(完了。QEMU で確認) |
 | M46 | UDisks2 / KDE アプリ拡張 / 検証イメージ(第1増分完了)。クリーンな配布用イメージ / UEFI / 実機検証 / Plasma 6.6・PLM / Spectacle・kio-extras は次の増分 |
+| M47 | Stable / Testing / Unstable の系列分岐(完了)。Testing は Qt 6.11 / Plasma 6.8 / Gear 26.08、Unstable は Linux 7.4-rc3 と Gear 26.11.80 beta。Qt 6.12 / Plasma 6.9 は次期 |
 
 各フェーズの完了条件と依存関係は [ロードマップ](/docs/roadmap/) に記録します。
 
