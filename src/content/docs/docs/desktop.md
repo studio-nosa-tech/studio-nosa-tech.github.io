@@ -6,9 +6,10 @@ description: ZIGNOS のデスクトップ環境として KDE Plasma 6 を Waylan
 ZIGNOS はコンソール主体の最小ベースとして育ってきましたが、最初のデスクトップ
 環境として **KDE Plasma 6 (Wayland)** を導入しています。
 
-**M47 で Stable / Testing / Unstable のデスクトップ系列を実際に分岐しました。
-`desktop/` は stable 205 / testing・unstable 209 レシピです。Stable は
-Qt 6.8.5 / KF6 6.18.0 / Plasma 6.4.5 / Gear 25.04.3、Testing は
+**M47 で Stable / Testing / Unstable のデスクトップ系列を実際に分岐し、
+M48 で SDDM を全チャンネル、Plasma Login Manager を Testing / Unstable に
+追加しました。`desktop/` は stable 205 / testing・unstable 209 レシピです。
+Stable は Qt 6.8.5 / KF6 6.18.0 / Plasma 6.4.5 / Gear 25.04.3、Testing は
 Qt 6.11.3 / KF6 6.32 / Plasma 6.8.3 / Gear 26.08.3、Unstable は
 Linux 7.4-rc3 と Gear 26.11.80 beta を採用しています。
 stage3 と既定のイメージは CLI の最小ベースのままです。**
@@ -38,7 +39,7 @@ stage3 と既定のイメージは CLI の最小ベースのままです。**
 | Mesa | 26.2.7 | 26.3.1 | 26.3.1(main は実 GPU 検証待ち) |
 | セッション | elogind + Linux-PAM + polkit | 同じ | 同じ |
 | 音声 | PipeWire + WirePlumber | 最新安定版 | 最新安定版 |
-| ログイン | コンソール PAM(M45)/ PLM は 6.6 以降 | 6.8 | 6.8 |
+| ログイン | SDDM 0.21 | SDDM 0.21 / PLM 6.8.3 | SDDM 0.21 / PLM 6.8.3 |
 
 - **Stable** は Linux LTS と KDE LTS を固定します
 - **Testing** は Linux / KDE の最新安定版(またはそれに準ずるもの)を採用します
@@ -82,7 +83,7 @@ PAM が必要です。M44 で **Linux-PAM を `core` に移し、shadow を PAM 
 しました。コンソールログインが elogind の seat0 セッションを作り、KWin が
 DRM を取得できます。
 
-## 実装状況(M43–M47)
+## 実装状況(M43–M48)
 
 2026-11-21 時点で、`desktop/` に次のスタックを追加し、build VM の chroot と
 BIOS/MBR の検証イメージ(QEMU)でビルド・起動を確認しています。
@@ -173,9 +174,35 @@ BIOS/MBR の検証イメージ(QEMU)でビルド・起動を確認していま�
 
 Spectacle(OpenCV 必須)と kio-extras、UEFI 版/ISO は次の増分です。
 
-Plasma Login Manager は Plasma 6.6 以降(Qt 6.10 / KF6 6.22)でのみ提供される
-ため、現在はコンソール PAM ログイン + `startplasma-wayland` を使います。
-グラフィカルログインは 6.6 移行時に PLM で再検証します。
+### M48 で追加したもの
+
+- **SDDM 0.21.0-r6** — 全チャンネルの `plasma-meta` に追加。Stable は
+  Qt 6.8.5、Testing / Unstable は Qt 6.11.3 でビルド。Wayland greeter は
+  `kwin_wayland --drm`、`sddm` ユーザー(620)と `/var/lib/sddm` は
+  initscripts と post_install が用意します
+- **Plasma Login Manager 6.8.3-r1** — Testing / Unstable に追加。上流の
+  systemd user unit を使わず、`dbus-run-session` の下で `kwin_wayland` と
+  `plasma-login-greeter` を起動する OpenRC wrapper に置き換えています。
+  PAM、`plasmalogin` ユーザー(621)、VT7 を使います
+- **共通 D-Bus ポリシー** — SDDM と PLM が同じ
+  `org.freedesktop.DisplayManager.conf` を所有して衝突していたため、
+  initscripts r25 に移しました
+- **補助グループの修正** — SDDM / PLM の helper が root の ambient groups を
+  セッションへ渡し、greeter とユーザーに gid 0(root)が混入する問題を
+  パッチで修正しました。`video` / `render` は `/etc/group` から付与されます
+- **カーソル** — `XCURSOR_THEME=breeze_cursors` を既定にしました。ZIGNOS には
+  汎用の `default` カーソルテーマがないため、未設定だと KWin が警告を出します
+- **VT** — SDDM 0.21 は `MinimumVT` を廃止し、最初の空き VT を使います。
+  `console` getty が tty1 を掴んで `HELPER_TTY_ERROR` になる場合は
+  `rc-update del console default` で tty1 を空けます。PLM は VT7 です
+
+SDDM / PLM とも、daemon 起動、PAM による greeter セッション作成、KWin の
+DRM 起動までを QEMU で確認しました。ただし QEMU の `virtio-vga` +
+`kms_swrast` では、透過ウィンドウの合成時に Mesa softpipe の
+`sp_find_cached_tile` で KWin が segfault します(Mesa 26.2.7 / 26.3.1 の
+両方)。greeter の表示とログインの目視確認は実 GPU、または softpipe 修正後の
+QEMU で行います。通常の Plasma ユーザーセッション(不透明なデスクトップ)は
+同じ Mesa でも動作します。
 
 ## 導入
 
@@ -186,8 +213,9 @@ stage3 からデスクトップを入れる例です。サービスは opt-in �
 zpkg install plasma-meta kde-applications
 rc-update add networkmanager default
 rc-update add upower default
-# tty1 で一般ユーザーとしてログインしてから
-dbus-run-session -- startplasma-wayland
+# グラフィカルログイン。どちらか一方だけを有効にする
+rc-update add sddm default          # SDDM (全チャンネル)
+# rc-update add plasmalogin default # PLM (testing / unstable)
 ```
 
 ## フェーズ
@@ -200,6 +228,7 @@ dbus-run-session -- startplasma-wayland
 | M45 | フル Plasma(音声 / ネットワーク / 電源 / 設定 / アプリ)+ `kde-applications`(完了。QEMU で確認) |
 | M46 | UDisks2 / KDE アプリ拡張 / 検証イメージ(第1増分完了)。クリーンな配布用イメージ / UEFI / 実機検証 / Plasma 6.6・PLM / Spectacle・kio-extras は次の増分 |
 | M47 | Stable / Testing / Unstable の系列分岐(完了)。Testing は Qt 6.11 / Plasma 6.8 / Gear 26.08、Unstable は Linux 7.4-rc3 と Gear 26.11.80 beta。Qt 6.12 / Plasma 6.9 は次期 |
+| M48 | SDDM を全チャンネル、PLM を Testing / Unstable に追加(完了)。helper の root グループ混入と共通 D-Bus ポリシーを修正。greeter の目視は QEMU softpipe のため実 GPU 待ち |
 
 各フェーズの完了条件と依存関係は [ロードマップ](/docs/roadmap/) に記録します。
 
@@ -222,10 +251,11 @@ QEMU の virtio-gpu と Wayland を使い、DRM/seat を含む実際のセッシ
 - Spectacle(OpenCV 必須)と kio-extras は次の増分で追加する
 - 日本語表示は IPAex Gothic / Mincho で対応済み(UI の翻訳は英語のまま。
   日本語ロケールの UI 翻訳は次の増分)
-- Plasma Login Manager は Plasma 6.6 以降のため未導入。ログインはコンソールの
-  PAM ログインから `startplasma-wayland` を起動する
-- SDDM 0.21 はレシピのみ(experimental)。Wayland greeter は QEMU で
-  画面を出せなかった
+- SDDM 0.21 は全チャンネル、PLM 6.8.3 は Testing / Unstable に導入済み。
+  両方とも QEMU の Mesa softpipe で greeter の KWin が落ちるため、
+  画面表示とログインの目視確認は実 GPU 待ち
+- SDDM と PLM は同時に有効化しない。SDDM が tty1 を取れない場合は
+  `rc-update del console default` で console getty を止める
 - Xwayland の GLX は有効(Mesa の `libGL` / `libGLX_mesa`)。実機 GPU の
   検証は次の増分
 - PipeWire の Bluetooth / RTKit 連携は未導入
