@@ -6,7 +6,7 @@ description: ZIGNOS のデスクトップ環境として KDE Plasma 6 を Waylan
 ZIGNOS はコンソール主体の最小ベースとして育ってきましたが、最初のデスクトップ
 環境として **KDE Plasma 6 (Wayland)** を導入しています。
 
-**M46 で UDisks2 と KDE アプリまで実装しました。`desktop/` には 204 レシピがあり、
+**M46 で UDisks2 と KDE アプリまで実装しました。`desktop/` には 205 レシピがあり、
 Qt 6.8.5 / KF6 6.18.0 / Plasma 6.4.5 / Xwayland 24.1.9 / PipeWire 1.6.7 /
 plasma-nm / powerdevil / UDisks2 / Konsole・Dolphin・KCalc・Filelight・Kate・
 Ark・Gwenview・Okular・KWalletManager を含みます。
@@ -139,16 +139,17 @@ BIOS/MBR の検証イメージ(QEMU)でビルド・起動を確認していま�
   壁紙・パネルを確認。Kate / Ark / Gwenview / Okular / KWalletManager の
   ウィンドウと `udisksctl status`(vda / sr0)も動作。開発ツールを含む検証用です
 - **クリーンな検証イメージ**: stage3 の root に `plasma-meta` /
-  `kde-applications` を binpkg から入れた 290 パッケージの
+  `kde-applications` を binpkg から入れた 291 パッケージの
   `zignos-m46-clean.img`(BIOS/MBR、10 GiB sparse / 実使用 6.4 GiB)も生成。
   QEMU で壁紙・パネル・時計、Kate / Ark / Dolphin、UDisks2 を確認しました。
   クリーン root で見つかった実行時依存の欠落(libltdl、Xwayland、xkbcomp、
   DejaVu フォント、breeze-icons、frameworkintegration ほか)はレシピに反映済みです。
   MIME データベース用に `shared-mime-info 2.4` も追加し、Dolphin の
-  ファイル種別/アイコン表示が直りました
+  ファイル種別/アイコン表示が直りました。日本語フォントは IPAex Gothic /
+  Mincho を `ipaex-fonts` として追加し、Kate で日本語が正しく表示されることを
+  確認しました
 
-Spectacle(OpenCV 必須)と kio-extras、日本語フォント、UEFI 版/ISO は
-次の増分です。
+Spectacle(OpenCV 必須)と kio-extras、UEFI 版/ISO は次の増分です。
 
 Plasma Login Manager は Plasma 6.6 以降(Qt 6.10 / KF6 6.22)でのみ提供される
 ため、現在はコンソール PAM ログイン + `startplasma-wayland` を使います。
@@ -193,11 +194,11 @@ QEMU の virtio-gpu と Wayland を使い、DRM/seat を含む実際のセッシ
 
 ## 現在の制限
 
-- `desktop/` は 204 レシピ。`kde-applications` は Konsole / Dolphin / KCalc /
+- `desktop/` は 205 レシピ。`kde-applications` は Konsole / Dolphin / KCalc /
   Filelight / Kate / Ark / Gwenview / Okular / KWalletManager の 9 アプリ
 - Spectacle(OpenCV 必須)と kio-extras は次の増分で追加する
-- 日本語フォントは未導入。DejaVu は CJK を持たないため、日本語表示は
-  次の増分で追加する(MIME データベースは shared-mime-info で対応済み)
+- 日本語表示は IPAex Gothic / Mincho で対応済み(UI の翻訳は英語のまま。
+  日本語ロケールの UI 翻訳は次の増分)
 - Plasma Login Manager は Plasma 6.6 以降のため未導入。ログインはコンソールの
   PAM ログインから `startplasma-wayland` を起動する
 - SDDM 0.21 はレシピのみ(experimental)。Wayland greeter は QEMU で
@@ -206,7 +207,7 @@ QEMU の virtio-gpu と Wayland を使い、DRM/seat を含む実際のセッシ
   検証は次の増分
 - PipeWire の Bluetooth / RTKit 連携は未導入
 - デスクトップ入りイメージは BIOS/MBR の検証用 2 種のみ(開発ツール入りと、
-  stage3 から入れたクリーンな 290 パッケージ版)。配布用 ISO と UEFI 版、
+  stage3 から入れたクリーンな 291 パッケージ版)。配布用 ISO と UEFI 版、
   初回セットアップは次の増分
 
 設計・実装の詳細は、リポジトリ内の `zignos/docs/desktop-kde.md` にあります。
