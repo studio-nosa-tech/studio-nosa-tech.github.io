@@ -12,7 +12,7 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 
 ## 現在のシステム(2026-11-20)
 
-- **GUI: M46 進行中** — M45 の Plasma 6.4.5 (Wayland) フルセットに、UDisks2 と Kate / Ark / Gwenview / Okular / KWalletManager を追加。UDisks2 は libblockdev(part/fs/loop/swap/mdraid/crypto/nvme)と cryptsetup / LVM2 / libnvme / json-c / keyutils / libbytesize を含み、chroot で D-Bus 起動と `udisksctl status` を確認。各アプリは `--version` で起動を確認。ログインはコンソール PAM + `startplasma-wayland`(PLM は Plasma 6.6 以降の次の増分)。stable は Qt 6.8 LTS に合わせ Plasma 6.4.5、testing は最新安定版、unstable はさらに挑戦的な版を追従する
+- **GUI: M46 進行中** — M45 の Plasma 6.4.5 (Wayland) フルセットに、UDisks2 と Kate / Ark / Gwenview / Okular / KWalletManager を追加。UDisks2 は libblockdev(part/fs/loop/swap/mdraid/crypto/nvme)と cryptsetup / LVM2 / libnvme / json-c / keyutils / libbytesize を含み、chroot で D-Bus 起動と `udisksctl status` を確認。各アプリは `--version` で起動を確認。BIOS/MBR の検証イメージ 2 種(stage3 から入れたクリーンな 289 パッケージ版を含む)を QEMU で起動し、Plasma の壁紙・パネルとアプリを確認。ログインはコンソール PAM + `startplasma-wayland`(PLM は Plasma 6.6 以降の次の増分)。stable は Qt 6.8 LTS に合わせ Plasma 6.4.5、testing は最新安定版、unstable はさらに挑戦的な版を追従する
 - **base.list {{base.top_level}} トップレベル = 依存込み {{base.closure}} パッケージ**(唯一の定義)/ 12G ブータブルイメージ(BIOS/UEFI 版)。レシピツリーは各チャンネル {{recipes.per_channel}} 個(core 76 + main 86)× 3 = {{recipes.total}}(r12 時点)。**M46 の開発ツリーは core 77 + main 98 + desktop 203 = 378 / チャンネル**
 - 起動: BIOS/MBR または UEFI/GPT → GRUB 2.14 → kernel 7.1.8 + initramfs(busybox) → OpenRC 0.64.1 → eudev 3.3.0 → serial/VGA ログイン(shadow / PAM)
 - カーネル: x86_64_defconfig + `x86_64-generic.config`(起動系は組み込み、GPU/WiFi/追加 NIC はモジュール)。root は initramfs が `root=UUID=` で解決
@@ -74,9 +74,9 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 | M43 | デスクトップ基盤(PAM / elogind / Wayland / Mesa / フォント / Qt6) | 完了(2026-11-19 実走行) | - |
 | M44 | KF6 + KWin + Plasma 最小(Xwayland / kactivitymanagerd / PAM login) | 完了(2026-11-20 QEMU 実走行) | - |
 | M45 | フル Plasma(音声 / NetworkManager / 電源 / アプリ / GLX) | 完了(2026-11-20 QEMU 実走行) | - |
-| M46 | 配布物(イメージ/ISO/実機/LTS 移行)+ UDisks2 / KDE アプリ | 進行中(2026-11-20 UDisks2・アプリ・検証イメージまで) | - |
+| M46 | 配布物(イメージ/ISO/実機/LTS 移行)+ UDisks2 / KDE アプリ | 進行中(2026-11-20 UDisks2・アプリ・BIOS 検証イメージ 2 種まで) | - |
 
-次の候補: **M46 の残り(デスクトップ入りイメージ/ISO・実機 GPU・Plasma 6.6 LTS/PLM・Spectacle/kio-extras)** / UEFI での起動確認と実機検証 / リリースマニフェストの CI 連携 / ストレージ系(LUKS/LVM/XFS/Btrfs) / 公式署名鍵の運用と binpkg リポジトリの公開 / 最小依存ビルドルート / 完全な固定ビルドルート / resource limit / SAT solver(複数バージョン・スロットを含む完全解)。
+次の候補: **M46 の残り(配布用 ISO・実機 GPU・Plasma 6.6 LTS/PLM・Spectacle/kio-extras・shared-mime-info・日本語フォント)** / UEFI での起動確認と実機検証 / リリースマニフェストの CI 連携 / ストレージ系(LUKS/LVM/XFS/Btrfs) / 公式署名鍵の運用と binpkg リポジトリの公開 / 最小依存ビルドルート / 完全な固定ビルドルート / resource limit / SAT solver(複数バージョン・スロットを含む完全解)。
 
 ## M25: stage3 tarball(2026-11-17 完走)
 
@@ -255,8 +255,8 @@ M42 時点の `desktop/` は 0 パッケージで、依存・OpenRC 統合・PoC
 - [x] **M43: 基盤** — 完了(2026-11-19)。PAM / elogind / polkit、Wayland / 入力、フォント、Mesa 26.2.7、Qt 6.8.5 を追加し、EGL 1.5 + OpenGL ES 3.1 と QML offscreen(`QML_OK 6.8.5`)を確認。`plasma-meta` / `kde-applications` は骨格のみ。あわせて initscripts r18 に `zignos-fstab` と `root-rw` を追加し、fstab の UUID 不一致で `/` が read-only になる問題を修正・自動復旧
 - [x] **M44: KF6 + KWin + Plasma 最小** — 完了(2026-11-20 QEMU 実走行)。Qt 6.8.5 / KF6 6.18.0 / Plasma 6.4.5 / Xwayland 24.1.9 / xkbcomp 1.4.7 / kactivitymanagerd を追加。`linux-pam` を core へ移して shadow を PAM 対応にし、tty1 のログインが elogind の seat0 セッションになることを確認。virtio-gpu + TCG で `startplasma-wayland` → KWin(DRM)→ Xwayland → ksmserver → plasmashell を起動し、パネルとデスクトップをスクリーンショットで確認。kickoff(kirigami-addons)・音量(plasma-pa)・壁紙・UDisks2・PLM・PipeWire・Xwayland GLX は M45
 - [x] **M45: フル Plasma** — 完了(2026-11-20 QEMU 実走行)。PipeWire / WirePlumber / plasma-pa、NetworkManager の polkit 化 + plasma-nm、UPower + powerdevil、kirigami-addons / 壁紙 / polkit-kde-agent、Konsole / Dolphin / KCalc / Filelight、Xwayland GLX 1.4、kcm_style の xrdb 修正を実装。PLM は Plasma 6.6 以降のため M46 へ
-- [x] **M46: UDisks2 / KDE アプリ** — 進行中(2026-11-20)。libatasmart / libblockdev(part/fs/loop/swap/mdraid/crypto/nvme)/ udisks2 と、cryptsetup / LVM2 / libnvme / json-c / keyutils / libbytesize を追加。chroot で UDisks2 の D-Bus 起動と `udisksctl status` を確認。libarchive + Ark、Kate、Gwenview(Exiv2 / LCMS2 / kImageAnnotator / kColorPicker)、Okular(Poppler 25.04.0)、KWalletManager を追加し、`kde-applications` を 9 アプリに更新。main 98 / desktop 203 / 各チャンネル 378。BIOS/MBR の検証イメージ `zignos-m46.img`(16 GiB sparse / 実使用 8.8 GiB)を QEMU で起動し、Plasma の壁紙・パネル、5 アプリ、`udisksctl status` を確認
-- [ ] **M46: 配布物** — クリーンな配布用イメージ/ISO(BIOS/UEFI)、実機 GPU、Plasma 6.6 LTS/PLM 移行、Spectacle / kio-extras
+- [x] **M46: UDisks2 / KDE アプリ** — 進行中(2026-11-20)。libatasmart / libblockdev(part/fs/loop/swap/mdraid/crypto/nvme)/ udisks2 と、cryptsetup / LVM2 / libnvme / json-c / keyutils / libbytesize を追加。chroot で UDisks2 の D-Bus 起動と `udisksctl status` を確認。libarchive + Ark、Kate、Gwenview(Exiv2 / LCMS2 / kImageAnnotator / kColorPicker)、Okular(Poppler 25.04.0)、KWalletManager を追加し、`kde-applications` を 9 アプリに更新。main 98 / desktop 203 / 各チャンネル 378。BIOS/MBR の検証イメージ `zignos-m46.img`(16 GiB sparse / 実使用 8.8 GiB)を QEMU で起動し、Plasma の壁紙・パネル、5 アプリ、`udisksctl status` を確認。さらに stage3 から入れた **クリーンな 289 パッケージの BIOS イメージ** `zignos-m46-clean.img`(10 GiB sparse / 実使用 6.4 GiB)で壁紙・パネル・時計、Kate / Ark、UDisks2 を確認し、クリーン root で見つかった libltdl / Xwayland / xkbcomp / DejaVu などの欠落依存をレシピに反映
+- [ ] **M46: 配布物** — 配布用 ISO(BIOS/UEFI)、実機 GPU、Plasma 6.6 LTS/PLM 移行、Spectacle / kio-extras、shared-mime-info、日本語フォント
 
 ## M41: リリース情報の一元管理(2026-11-19 検証)
 

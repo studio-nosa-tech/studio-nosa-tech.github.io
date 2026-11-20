@@ -137,10 +137,16 @@ BIOS/MBR の検証イメージ(QEMU)でビルド・起動を確認していま�
 - **検証イメージ**: `zignos-m46.img`(BIOS/MBR、16 GiB sparse / 実使用 8.8 GiB)を
   QEMU で起動し、tty1 の PAM ログイン → `startplasma-wayland`(kms_swrast)で
   壁紙・パネルを確認。Kate / Ark / Gwenview / Okular / KWalletManager の
-  ウィンドウと `udisksctl status`(vda / sr0)も動作。開発ツールを含む検証用で、
-  クリーンな配布用イメージ/ISO と UEFI 版は次の増分です
+  ウィンドウと `udisksctl status`(vda / sr0)も動作。開発ツールを含む検証用です
+- **クリーンな検証イメージ**: stage3 の root に `plasma-meta` /
+  `kde-applications` を binpkg から入れた 289 パッケージの
+  `zignos-m46-clean.img`(BIOS/MBR、10 GiB sparse / 実使用 6.4 GiB)も生成。
+  QEMU で壁紙・パネル・時計、Kate / Ark、UDisks2 を確認しました。
+  クリーン root で見つかった実行時依存の欠落(libltdl、Xwayland、xkbcomp、
+  DejaVu フォント、breeze-icons、frameworkintegration ほか)はレシピに反映済みです
 
-Spectacle(OpenCV 必須)と kio-extras、配布用イメージ/ISO は次の増分です。
+Spectacle(OpenCV 必須)と kio-extras、shared-mime-info、日本語フォント、
+UEFI 版/ISO は次の増分です。
 
 Plasma Login Manager は Plasma 6.6 以降(Qt 6.10 / KF6 6.22)でのみ提供される
 ため、現在はコンソール PAM ログイン + `startplasma-wayland` を使います。
@@ -188,6 +194,8 @@ QEMU の virtio-gpu と Wayland を使い、DRM/seat を含む実際のセッシ
 - `desktop/` は 203 レシピ。`kde-applications` は Konsole / Dolphin / KCalc /
   Filelight / Kate / Ark / Gwenview / Okular / KWalletManager の 9 アプリ
 - Spectacle(OpenCV 必須)と kio-extras は次の増分で追加する
+- shared-mime-info と日本語フォントは未導入。MIME の関連付けと CJK 表示は
+  次の増分で追加する(現状の UI フォントは DejaVu)
 - Plasma Login Manager は Plasma 6.6 以降のため未導入。ログインはコンソールの
   PAM ログインから `startplasma-wayland` を起動する
 - SDDM 0.21 はレシピのみ(experimental)。Wayland greeter は QEMU で
@@ -195,7 +203,8 @@ QEMU の virtio-gpu と Wayland を使い、DRM/seat を含む実際のセッシ
 - Xwayland の GLX は有効(Mesa の `libGL` / `libGLX_mesa`)。実機 GPU の
   検証は次の増分
 - PipeWire の Bluetooth / RTKit 連携は未導入
-- デスクトップ入りイメージ/ISO はまだ無い(BIOS/MBR の検証イメージは QEMU で
-  確認済み。クリーンな配布用と UEFI 版は次の増分)
+- デスクトップ入りイメージは BIOS/MBR の検証用 2 種のみ(開発ツール入りと、
+  stage3 から入れたクリーンな 289 パッケージ版)。配布用 ISO と UEFI 版、
+  初回セットアップは次の増分
 
 設計・実装の詳細は、リポジトリ内の `zignos/docs/desktop-kde.md` にあります。
