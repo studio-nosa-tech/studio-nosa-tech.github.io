@@ -28,7 +28,7 @@ description: ZIGNOS のパッケージマネージャ zpkg の設定ファイル
 | `package.use` | パッケージ単位の USE 上書き | 1 行 `<package> flag -flag ...` |
 | `make.conf` | チャンネルとビルドフラグ | `CHANNEL=stable|testing|unstable` / `CFLAGS=...` / `MAKEOPTS=...` |
 | `binrepo.conf` | binpkg リポジトリ | `BINREPO=<URL またはパス>` |
-| `sync.conf` | レシピ同期の既定ソース | `RECIPEURL=<URL またはパス>` |
+| `sync.conf` | レシピ同期の既定ソース | `RECIPEURL=` / `RECIPEGIT=` / `RECIPEBRANCH=` / `RECIPEALLOWUNSIGNED=` |
 | `security.conf` | 署名検証ポリシー | `TRUSTED_KEYS=...` / `ALLOW_UNSIGNED=0|1` / `ALLOW_EXPIRED=0|1` |
 | `sandbox.conf` | ビルドサンドボックス | `SANDBOX=auto|require|off` / `BUILD_NET=0|1` / `BWRAP=...` |
 | `build.conf` | 再現性と記録 | `SOURCE_DATE_EPOCH=<unix>` / `BUILD_LOG=0|1` / `SBOM=0|1` |
@@ -160,21 +160,29 @@ ZPKG_NO_BINPKG=1 zpkg install <pkg>
 
 ```sh
 # /etc/zpkg/sync.conf
-RECIPEURL=https://example.com/zignos-recipes.tar.xz
+RECIPEURL=https://github.com/studio-nosa-tech/zignos-recipes
+RECIPEGIT=1
+RECIPEBRANCH=main
+RECIPEALLOWUNSIGNED=1
 ```
 
 `zpkg sync` の既定ソースです。`--from` を指定した場合はそちらが優先されます。
+git モードでは置換先の `.zpkg-git` に commit を記録し、`git ls-remote` の
+リモート HEAD と比較します。同じなら取得せず、変更時だけ shallow clone して
+検証後に置き換えます。
 
 ```sh
 zpkg sync                    # sync.conf / ZPKG_RECIPE_URL を使う
-zpkg sync --from ./zignos-recipes
+zpkg sync --git --from https://github.com/studio-nosa-tech/zignos-recipes
+zpkg sync --from ./zignos-recipes          # tar.xz / ディレクトリも可
 zpkg sync --from zignos-stage3.tar.xz
-zpkg sync --from ./zignos-recipes -n   # 検証だけ
+zpkg sync --from ./zignos-recipes -n       # 検証だけ
 ```
 
-`ZPKG_RECIPE_URL` 環境変数は `sync.conf` より優先されます。`sync` は
-レシピツリーを置き換えるだけで、インストール済みパッケージは更新しません。
-必要なら続けて `zpkg upgrade` を実行します。
+`ZPKG_RECIPE_URL` / `ZPKG_RECIPE_GIT` / `ZPKG_RECIPE_BRANCH` 環境変数は
+`sync.conf` より優先されます。private リポジトリは git の credential helper
+か SSH 鍵が必要です。`sync` はレシピツリーを置き換えるだけで、インストール済み
+パッケージは更新しません。必要なら続けて `zpkg upgrade` を実行します。
 
 `sync` はツリーの `recipes.manifest` を trusted key で検証します。署名が
 ないツリーは既定で拒否されます。開発用の未署名ツリーだけ `--allow-unsigned`
@@ -255,6 +263,8 @@ SBOM=1
 | `ZPKG_NO_BINPKG` | なし | `1` でローカル/リポジトリの binpkg を無視 |
 | `ZPKG_BINREPO` | なし | binpkg リポジトリ(`binrepo.conf` より優先) |
 | `ZPKG_RECIPE_URL` | なし | `zpkg sync` の既定ソース(`sync.conf` より優先) |
+| `ZPKG_RECIPE_GIT` | `0` | `1` で git リポジトリとして取得 |
+| `ZPKG_RECIPE_BRANCH` | `main` | git のブランチ |
 | `ZPKG_TRUSTED_KEYS` | `$ZPKG_ROOT/etc/zpkg/trusted.d` | 信頼する `*.pub` のディレクトリ |
 | `ZPKG_ALLOW_UNSIGNED` | なし | `1` で署名のない index/レシピツリーを許可(開発用) |
 | `ZPKG_ALLOW_EXPIRED` | なし | `1` で署名の期限切れだけ許可(復旧用) |

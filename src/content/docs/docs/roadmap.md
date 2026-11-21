@@ -1,6 +1,6 @@
 ---
 title: ロードマップ
-description: M0–M48 のマイルストーン記録と現在の状況。
+description: M0–M49 のマイルストーン記録と現在の状況。
 ---
 
 マイルストーンごとに完了条件を明記する。進捗はこのファイルのチェックボックスで管理する。
@@ -8,7 +8,7 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 /about/ の「ステータス」も参照。
 
 > 各マイルストーン節の数値・構成は**その時点の記録**。パッケージ数やベース構成は
-> 以後のマイルストーンで変わっている(現在は下の M48 の行と「現在のシステム」が正)。
+> 以後のマイルストーンで変わっている(現在は下の M49 の行と「現在のシステム」が正)。
 
 ## 現在のシステム(2026-11-21)
 
@@ -77,8 +77,9 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 | M46 | 配布物(イメージ/ISO/実機/LTS 移行)+ UDisks2 / KDE アプリ | 完了(2026-11-20 UDisks2・アプリ・BIOS 検証イメージ 2 種まで) | - |
 | M47 | Stable / Testing / Unstable のパッケージ系列分岐 | 完了(2026-11-21 Testing デスクトップ QEMU 確認、stage3 r17) | Qt 6.12 / Plasma 6.9 は次期 |
 | M48 | SDDM 全チャンネル + Plasma Login Manager | 完了(2026-11-21 パッケージ・PAM・グループ修正。greeter 目視は実 GPU 待ち) | QEMU softpipe の修正待ち |
+| M49 | レシピ同期の git 化 | 完了(2026-11-21 zpkg 0.3.1 / initscripts r26 / stage3 r20) | private リポジトリの取得方法 |
 
-次の候補: **M48 の残り(実 GPU での greeter 目視)** / M47 の残り(実 GPU での Unstable 検証・Qt 6.12 / Plasma 6.9 移行・Mesa main) / 配布用 ISO・UEFI / 実機 GPU・WiFi / Spectacle / kio-extras / リリースマニフェストの CI 連携 / ストレージ系(LUKS/LVM/XFS/Btrfs) / 公式署名鍵の運用と binpkg リポジトリの公開 / 最小依存ビルドルート / 完全な固定ビルドルート / resource limit / SAT solver(複数バージョン・スロットを含む完全解)。
+次の候補: **private リポジトリの公開または read-only トークン配布** / M48 の残り(実 GPU での greeter 目視) / M47 の残り(実 GPU での Unstable 検証・Qt 6.12 / Plasma 6.9 移行・Mesa main) / 配布用 ISO・UEFI / 実機 GPU・WiFi / Spectacle / kio-extras / リリースマニフェストの CI 連携 / ストレージ系(LUKS/LVM/XFS/Btrfs) / 公式署名鍵の運用と binpkg リポジトリの公開 / 最小依存ビルドルート / 完全な固定ビルドルート / resource limit / SAT solver(複数バージョン・スロットを含む完全解)。
 
 ## M25: stage3 tarball(2026-11-17 完走)
 

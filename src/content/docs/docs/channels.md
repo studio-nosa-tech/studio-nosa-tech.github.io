@@ -27,11 +27,17 @@ zpkg は `ZPKG_REPOS` が未設定のとき、選択チャンネルの
 `recipes/{core,main,desktop}` は **stable として** 引き続き動作します。
 
 stage3 とイメージには **stable だけ**が同梱されます。testing / unstable を
-使うには、全チャンネルを含むレシピ tarball を `zpkg sync` で取り込みます。
+使うには、`zpkg sync` で全チャンネルを取得します。stage3 の
+`/etc/zpkg/sync.conf` は既定で GitHub のレシピリポジトリを git モードで
+参照し、`.zpkg-git` の commit とリモート HEAD を比較して変更時だけ取得します。
 
 ```sh
-zpkg sync --from zignos-recipes-<date>-<revision>.tar.xz
+zpkg sync
+# 明示する場合
+zpkg sync --git --from https://github.com/studio-nosa-tech/zignos-recipes
 ```
+
+private リポジトリの場合は git の credential helper か SSH 鍵が必要です。
 
 ## カーネルとデスクトップ(KDE)のチャンネル方針
 
