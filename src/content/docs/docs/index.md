@@ -33,21 +33,39 @@ ZIGNOS は、ゼロから組み立てるソースベースの Linux ディスト
 - [パッケージの管理](/docs/system/packages/)
 - [チャンネルとアップグレード](/docs/system/channels/)
 - [サービス (OpenRC)](/docs/system/services/)
-- [デスクトップ (KDE)](/docs/system/desktop/)
+
+### デスクトップ
+
+- [デスクトップ概要](/docs/desktops/)
+- [KDE Plasma 6](/docs/system/desktop/)
+- [Wayland と Xwayland](/docs/desktops/wayland/)
+- [デスクトップ環境(詳細)](/docs/desktop/)
+
+## パッケージング
+
+- [パッケージング概要](/docs/packaging/) — zignos-recipes の構成
+- [ワークフロー](/docs/packaging/workflow/) — 追加・更新・ビルド・PR
+- [レシピ](/docs/packaging/recipes/) — ファイル構成とビルド契約
+- [ビルドパターン](/docs/packaging/patterns/) — autotools / CMake / Meson / Cargo / Go など
+- [システムアカウント](/docs/packaging/accounts/) — グループとサービスユーザー
+
+## 開発
+
+- [開発者向け概要](/docs/developers/) — 層、リポジトリ、リリースの流れ
+- [zpkg 設計](/docs/design-pkg/) — レシピ、DB、依存解決、USE、トランザクション
+- [zpkg 設定](/docs/zpkg-config/) — make.conf、USE、binpkg、レシピ同期
+- [署名と検証](/docs/signing/) — Ed25519、信頼済み鍵
+- [ビルド隔離](/docs/build-sandbox/) — bubblewrap
+- [再現可能ビルド](/docs/reproducibility/) — provenance、SPDX SBOM
+- [リリースマニフェスト](/docs/release-manifest/)
+- [ロードマップ](/docs/roadmap/) — M0–M51 の記録
 
 ## リファレンス
 
 - [インストールガイド(詳細)](/docs/install/) — コマンド完全版
 - [stage3 リファレンス](/docs/stage3/) — 中身・ビルド・配布
-- [zpkg 設計](/docs/design-pkg/) — レシピ、DB、依存解決、USE、トランザクション
-- [zpkg 設定](/docs/zpkg-config/) — make.conf、USE、binpkg、レシピ同期
 - [リリースチャンネル](/docs/channels/) — チャンネル運用と upgrade の詳細
-- [署名と検証](/docs/signing/) — Ed25519、信頼済み鍵
-- [ビルド隔離](/docs/build-sandbox/) — bubblewrap
-- [再現可能ビルド](/docs/reproducibility/) — provenance、SPDX SBOM
 - [システム設計](/docs/design-system/) — init、サービス、カーネル方針
-- [リリースマニフェスト](/docs/release-manifest/)
-- [ロードマップ](/docs/roadmap/) — M0–M51 の記録
 
 ## プロジェクト
 
