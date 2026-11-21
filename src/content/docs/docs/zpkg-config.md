@@ -146,7 +146,8 @@ zpkg key import /path/to/binrepo/keys/<keyid>.pub
 ```
 
 一致条件は **名前・アーキテクチャ・version+revision・実効 USE/ビルドフラグの
-ハッシュ**です。`ZPKG_BINREPO` 環境変数はこのファイルより優先されます。
+ハッシュ・チャンネル・レシピ digest** です。`ZPKG_BINREPO` 環境変数はこの
+ファイルより優先されます。
 署名・期限・generation・sha256 の検証に失敗した場合はエラーになり、
 ソースビルドへはフォールバックしません。
 

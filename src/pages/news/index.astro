@@ -21,9 +21,18 @@ const newsSlug = release.release.replace(/\./g, '-');
         <time datetime={release.build_date}>{release.build_date}</time>
         <h2>ZIGNOS {release.release}</h2>
         <p>
-          リリースマニフェストの導入。stage3 {release.stage3.revision} は
+          stage3 {release.stage3.revision} は
           {release.stage3.package_count} パッケージ / {release.stage3.size_mib} MiB、
-          zpkg {release.zpkg.version}。
+          zpkg {release.zpkg.version}。PAM・git・レシピ同期・SDDM / PLM の修正を
+          まとめました。
+        </p>
+      </a>
+      <a class="post-card" href="/news/2026-11-19-alpha/">
+        <time datetime="2026-11-19">2026-11-19</time>
+        <h2>ZIGNOS 2026.11.19-alpha</h2>
+        <p>
+          リリースマニフェストの導入。stage3 r12 は 54 パッケージ / 977 MiB、
+          zpkg 0.2.0。
         </p>
       </a>
       <a class="post-card" href="/news/2026-11-17-alpha/">

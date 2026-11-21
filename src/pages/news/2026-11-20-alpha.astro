@@ -1,0 +1,126 @@
+---
+import PageLayout from '../../layouts/PageLayout.astro';
+import release from '../../data/release.json';
+
+const available = release.availability === 'available';
+const recipeCount = (c: { core: number; main: number; desktop: number }) =>
+  c.core + c.main + c.desktop;
+const perChannel = Object.entries(release.recipes.channels)
+  .map(([name, c]) => `${name} ${recipeCount(c)}`)
+  .join(' / ');
+---
+
+<PageLayout
+  title={`ZIGNOS ${release.release} — ZIGNOS`}
+  description={`ZIGNOS ${release.release} のリリースノート。stage3 ${release.stage3.revision}、${release.stage3.package_count} パッケージ、zpkg ${release.zpkg.version}。`}
+>
+  <div class="wrap">
+    <section class="page-hero">
+      <span class="eyebrow">RELEASE · ALPHA</span>
+      <h1>ZIGNOS {release.release}</h1>
+      <p>{release.build_date}</p>
+    </section>
+
+    <div class="prose">
+      <div class="notice">
+        <strong>stage3 のダウンロードは{available ? '公開中です。' : '準備中です。'}</strong>
+        {' '}配布物のファイル名・サイズ・SHA-256 は
+        <a href="/releases/current/">現在のリリース</a> と
+        <a href="/releases.json">release.json</a> にまとめています。
+      </div>
+
+      <h2>今回のリリース</h2>
+      <p>
+        {release.release} は、PAM と git を含む最小ベース、全チャンネル対応の
+        レシピ同期、WiFi と SDDM / Plasma Login Manager の修正をまとめた
+        stage3 です。開発ツリーではさらに Spectacle / kio-extras と
+        zpkg 0.3.2 の更新システムを追加しています。
+      </p>
+      <div class="stats">
+        <div class="stat">
+          <strong>{release.stage3.package_count}</strong>
+          <span>stage3 のパッケージ数</span>
+        </div>
+        <div class="stat">
+          <strong>{release.stage3.size_mib} MiB</strong>
+          <span>stage3 のサイズ</span>
+        </div>
+        <div class="stat">
+          <strong>{release.stage3.revision}</strong>
+          <span>stage3 リビジョン</span>
+        </div>
+        <div class="stat">
+          <strong>zpkg {release.zpkg.version}</strong>
+          <span>パッケージマネージャ</span>
+        </div>
+      </div>
+
+      <h2>ハイライト</h2>
+      <ul>
+        <li>
+          <strong>stage3 {release.stage3.revision}</strong> — PAM、git 2.56.1、
+          initscripts r26(<code>/etc/zpkg/sync.conf</code> と base-accounts)、
+          zpkg 0.3.1 の git sync を同梱
+        </li>
+        <li>
+          <strong>レシピ同期の git 化</strong> — <code>zpkg sync</code> が
+          <code>.zpkg-git</code> の commit とリモート HEAD を比較し、変更時だけ
+          shallow clone。レシピ tarball を手動で作る必要がなくなります
+        </li>
+        <li>
+          <strong>SDDM / Plasma Login Manager</strong> — SDDM は全チャンネル、
+          PLM は Testing / Unstable に追加。共通 D-Bus ポリシーと補助グループの
+          混入を修正
+        </li>
+        <li>
+          <strong>WiFi</strong> — Intel 8260 の実機検証で見つかった
+          firmware / wpa_supplicant の不足を
+          <code>networkmanager-wifi</code> メタで解消
+        </li>
+      </ul>
+
+      <h2>stage3</h2>
+      <table>
+        <tbody>
+          <tr><th>ファイル</th><td><code>{release.stage3.filename}</code></td></tr>
+          <tr><th>サイズ</th><td>{release.stage3.size.toLocaleString('en-US')} バイト ({release.stage3.size_mib} MiB)</td></tr>
+          <tr><th>SHA-256</th><td><code class="hash">{release.stage3.sha256}</code></td></tr>
+          <tr><th>チャンネル</th><td>{release.channel}</td></tr>
+        </tbody>
+      </table>
+
+      <h2>レシピとツールチェーン</h2>
+      <table>
+        <tbody>
+          <tr><th>レシピ</th><td>{release.recipes.total} ({perChannel})</td></tr>
+          <tr><th>レシピ tarball</th><td><code>{release.recipes.filename}</code></td></tr>
+          <tr><th>Linux kernel</th><td>{release.kernel.version}-r{release.kernel.revision}</td></tr>
+          <tr><th>GRUB</th><td>{release.bootloader.version}-r{release.bootloader.revision}</td></tr>
+          <tr><th>ベース</th><td>トップレベル {release.base.top_level} / 依存込み {release.base.closure}</td></tr>
+        </tbody>
+      </table>
+
+      <h2>アップグレード</h2>
+      <p>
+        stage3 {release.stage3.revision} 以降のシステムは、レシピを同期してから
+        更新します。開発ツリーでは zpkg 0.3.2 と initscripts r27 が利用できます。
+      </p>
+      <pre><code>zpkg sync
+zpkg channel
+zpkg upgrade -p
+zpkg upgrade</code></pre>
+      <p>
+        zpkg 0.2.0 からの自動更新は既知の非対応経路です。0.3.x 以降のシステムで
+        <code>zpkg upgrade</code> を使ってください。
+      </p>
+
+      <h2>リンク</h2>
+      <ul>
+        <li><a href="/releases/current/">現在のリリース</a></li>
+        <li><a href="/docs/stage3/">stage3 ガイド</a></li>
+        <li><a href="/docs/channels/">リリースチャンネル</a></li>
+        <li><a href="/download/">ダウンロード</a></li>
+      </ul>
+    </div>
+  </div>
+</PageLayout>

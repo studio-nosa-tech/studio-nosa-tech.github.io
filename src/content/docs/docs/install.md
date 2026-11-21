@@ -214,37 +214,36 @@ mount <DISK>1 /mnt/zignos
 
 ## 3. stage3 tarball を用意する
 
-stage3 は「カーネルと GRUB を除いた最小ベース」です。公開済みの最新は
-**2026.11.19-alpha / stage3 r12**、開発ツリーの最新は
-**2026.11.20-alpha / stage3 r15(55 パッケージ / 約 976 MiB)** です。
-r15 は `linux-pam` r3(`system-login` / `system-local-login` を含む)、
-initscripts r20、WiFi 修正(`networkmanager-wifi`)を含みますが、このページの
-時点では公開準備中です。公開後はダウンロードページの tarball を使えます。
+stage3 は「カーネルと GRUB を除いた最小ベース」です。現行マニフェストは
+**{{release}} / stage3 {{stage3.revision}}({{stage3.package_count}} パッケージ /
+約 {{stage3.size_mib}} MiB)** です。r20 は `linux-pam` r3
+(`system-login` / `system-local-login` を含む)、initscripts r26
+(`/etc/zpkg/sync.conf` と base-accounts)、zpkg 0.3.1 の git sync、
+WiFi 修正(`networkmanager-wifi`)を含みます。stage3 の一般配布は準備中で、
+公開後はダウンロードページの tarball を使えます。
 
 開発者向けには build VM で生成します。
 
 ```sh
 # ビルドホストの作業ツリー内
-sudo OUT=/var/tmp/zignos-stage3-20261120-r15-x86_64.tar.xz ./make-stage3.sh
-sha256sum /var/tmp/zignos-stage3-20261120-r15-x86_64.tar.xz \
-  > /var/tmp/zignos-stage3-20261120-r15-x86_64.tar.xz.sha256
+sudo OUT=/var/tmp/zignos-stage3-20261121-r20-x86_64.tar.xz ./make-stage3.sh
+sha256sum /var/tmp/zignos-stage3-20261121-r20-x86_64.tar.xz \
+  > /var/tmp/zignos-stage3-20261121-r20-x86_64.tar.xz.sha256
 ```
 
 生成物を USB / SSH で実機へ運び、**展開前にチェックサムを検証**します。
 
 ```sh
-sha256sum --check zignos-stage3-20261120-r15-x86_64.tar.xz.sha256
+sha256sum --check zignos-stage3-20261121-r20-x86_64.tar.xz.sha256
 ```
 
-> **公開済み(r12)**: {{build_date}} 時点で **{{stage3.package_count}} パッケージ /
+> **現行マニフェスト(r20)**: {{build_date}} 時点で **{{stage3.package_count}} パッケージ /
 > 約 {{stage3.size_mib}} MiB**。ファイル名は `{{stage3.filename}}`、SHA-256 は
 > `{{stage3.sha256}}` です。
 >
-> **開発ビルド(r15)**: 2026-11-20 / **55 パッケージ / 約 976 MiB**。
-> ファイル名は `zignos-stage3-20261120-r15-x86_64.tar.xz`、SHA-256 は
-> `0f54ff44cae3491b77282583bbf326667d1f603bc24116c8283895723feeaac0`。
-> r15 は `linux-pam` r3(`system-login` / `system-local-login` を含む)と、
-> WiFi 用の `networkmanager-wifi` レシピを同梱します。
+> r20 は `linux-pam` r3、initscripts r26、zpkg 0.3.1、git 2.56.1 を同梱します。
+> 起動後に `zpkg sync && zpkg upgrade` で zpkg 0.3.2 と initscripts r27 に
+> 更新できます。
 >
 > root はロック済み、SSH ホスト鍵・machine-id・ユーザーは含みません。
 
@@ -374,7 +373,7 @@ zpkg install linux
 ```
 
 - `x86_64-generic.config` でビルドされ、`/boot/vmlinuz`、`/boot/initramfs.img`、
-  `/usr/lib/modules/7.1.8` が入ります
+  `/usr/lib/modules/6.18.64` が入ります
 - 初回はソースをダウンロードしてビルドするため **数分〜十数分**かかります
 - 設定を変える場合は
   `/usr/share/zignos/recipes/stable/core/linux/x86_64-generic.config` を編集し、
@@ -435,7 +434,7 @@ mountpoint /boot/efi || mount <DISK>p1 /boot/efi
 /usr/sbin/grub-mkconfig -o /boot/grub/grub.cfg
 ```
 
-> `grub-mkconfig` が `Found linux image: /boot/vmlinuz-7.1.8` を表示することを
+> `grub-mkconfig` が `Found linux image: /boot/vmlinuz-6.18.64` を表示することを
 > 確認してください。出ない場合は「GRUB のメニューに ZIGNOS が出ない」を参照。
 
 `grub-install` は efibootmgr が使える環境なら **NVRAM エントリまで自動で作ります**。
@@ -566,7 +565,7 @@ linux-firmware** をまとめて入れるメタパッケージです。ファー
 WiFi が認識されない事故を避けるため、WiFi を使う場合はこちらを使ってください。
 有線専用なら `zpkg install networkmanager` だけでも構いません。
 
-> `networkmanager-wifi` は **stage3 r13 以降**に同梱されています(現行の開発ビルドは r15)。r12 の場合は
+> `networkmanager-wifi` は **stage3 r13 以降**に同梱されています(現行ビルドは r20)。r12 の場合は
 > `zpkg install networkmanager wpa_supplicant iw linux-firmware` を使ってください。
 >
 > **WiFi しか使えない機体**では、この chroot の中で WiFi スタックまで入れてから
@@ -629,7 +628,7 @@ reboot
 ## 10. 初回起動後
 
 ```sh
-uname -r                 # 7.1.8
+uname -r                 # 6.18.64
 rc-status                # udev / console / console-vga が started
 ip addr                  # 有線 DHCP を入れた場合
 ```
@@ -770,18 +769,25 @@ chroot 内でネットワークを使うには `/etc/resolv.conf` と NIC の設
 
 stage3 に同梱された `/usr/share/zignos/recipes` は、その stage3 を作った時点の
 スナップショットです。`zpkg sync` で新しいレシピツリーに置き換えられます。
+stage3 の `/etc/zpkg/sync.conf` は既定で GitHub の `zignos-recipes` を
+git モード(`RECIPEGIT=1`)で参照し、`.zpkg-git` の commit とリモート HEAD を
+比較して変更時だけ shallow clone します。
 
 ```sh
-# 新しい stage3 tarball から(レシピ部分だけを展開)
-zpkg sync --from zignos-stage3-<new>.tar.xz
+# 既定の git リポジトリから同期
+zpkg sync
 
-# レシピだけの tarball / ディレクトリ / URL も可
-zpkg sync --from zignos-recipes-20261119-r15.tar.xz
+# 明示する場合
+zpkg sync --git --from https://github.com/studio-nosa-tech/zignos-recipes
+
+# 新しい stage3 tarball / レシピ tarball / ディレクトリ / URL も可
+zpkg sync --from zignos-stage3-<new>.tar.xz
+zpkg sync --from zignos-recipes-20261120-r20.tar.xz
 zpkg sync --from ./zignos-recipes
 zpkg sync --from https://example.invalid/zignos-recipes.tar.xz
 
 # 検証だけ
-zpkg sync --from ./zignos-recipes -n
+zpkg sync --git -n
 
 # 確認
 zpkg search networkmanager
@@ -789,14 +795,14 @@ zpkg search networkmanager
 
 `sync` は新しいツリーを一時領域で検証してから原子的に置き換えるため、
 失敗しても旧ツリーは残ります。`--from` を省略した場合は
-`ZPKG_RECIPE_URL` または `/etc/zpkg/sync.conf` の `RECIPEURL=` を使います。
+`/etc/zpkg/sync.conf` の `RECIPEURL=`(と `RECIPEGIT` / `RECIPEBRANCH`)を
+使います。`ZPKG_RECIPE_URL` 環境変数でも上書きできます。
 
 配布用レシピ tarball は **stable / testing / unstable の3チャンネル**を
-含みます。stage3 は stable だけを同梱しているため、testing / unstable を
-使う場合はこの tarball を sync してから切り替えます。
+含みます。git を使わない場合はこの tarball を sync してから切り替えます。
 
 ```sh
-zpkg sync --from zignos-recipes-20261119-r15.tar.xz --allow-unsigned
+zpkg sync --from zignos-recipes-20261120-r20.tar.xz --allow-unsigned
 zpkg channel testing      # /etc/zpkg/make.conf の CHANNEL= を更新
 zpkg upgrade -p           # 変更一覧を確認
 zpkg upgrade              # 実行(確認プロンプトあり)
@@ -809,14 +815,14 @@ zpkg upgrade              # 実行(確認プロンプトあり)
 `--allow-unsigned` を付けてください(公式署名鍵の運用開始後は不要です)。
 
 ```sh
-zpkg sync --from zignos-recipes-20261119-r15.tar.xz --allow-unsigned
+zpkg sync --from zignos-recipes-20261120-r20.tar.xz --allow-unsigned
 ```
 
 署名済みツリーを検証する場合は、先に公開鍵を登録します。
 
 ```sh
 zpkg key import zignos-signing.pub
-zpkg sync --from zignos-recipes-20261119-r15.tar.xz
+zpkg sync --from zignos-recipes-20261120-r20.tar.xz
 ```
 
 詳細は [パッケージ署名と検証](/docs/signing/) を参照してください。
@@ -837,7 +843,7 @@ zpkg sync --from zignos-recipes-20261119-r15.tar.xz
 ### `certs/extract-cert.c: openssl/bio.h: No such file or directory`
 
 古い stage3 では linux のビルド依存に openssl が含まれていませんでした。
-カーネル 7.1.8 は `certs/extract-cert` のビルドに OpenSSL のヘッダーを要求します。
+カーネル 6.18.64 は `certs/extract-cert` のビルドに OpenSSL のヘッダーを要求します。
 
 ```sh
 zpkg install openssl
@@ -870,7 +876,7 @@ grub-mkconfig -o /boot/grub/grub.cfg
 grep -E 'menuentry|linux /boot|initrd /boot' /boot/grub/grub.cfg
 ```
 
-`menuentry "ZIGNOS ..."` と `/boot/vmlinuz-7.1.8`、`/boot/initramfs-7.1.8.img`
+`menuentry "ZIGNOS ..."` と `/boot/vmlinuz-6.18.64`、`/boot/initramfs-6.18.64.img`
 が出ていれば、再起動後に GRUB から ZIGNOS を選べます。
 
 ## 既知の制約
@@ -878,7 +884,7 @@ grep -E 'menuentry|linux /boot|initrd /boot' /boot/grub/grub.cfg
 - **Secure Boot 非対応**(GRUB/カーネルは未署名。無効化が必要)
 - **LUKS / TPM 非対応**
 - **GUI は stage3 に未収録**(CLI の最小ベース)。KDE Plasma 6 / Wayland は
-  `desktop/` から任意導入(M46 で UDisks2・KDE アプリまで確認済み:
+  `desktop/` から任意導入(M50 で Spectacle・kio-extras まで確認済み:
   [デスクトップ環境](/docs/desktop/))
 - **WiFi は firmware 導入後**。`networkmanager-wifi` または `linux-firmware`
   (約 2 GiB)

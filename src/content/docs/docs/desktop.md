@@ -1,6 +1,6 @@
 ---
 title: デスクトップ環境(KDE Plasma 6)
-description: ZIGNOS のデスクトップ環境として KDE Plasma 6 を Wayland で導入するための設計方針。
+description: ZIGNOS のデスクトップ環境として KDE Plasma 6 を Wayland で導入するための構成・チャンネル方針・実装状況。
 ---
 
 ZIGNOS はコンソール主体の最小ベースとして育ってきましたが、最初のデスクトップ
@@ -8,7 +8,9 @@ ZIGNOS はコンソール主体の最小ベースとして育ってきました�
 
 **M47 で Stable / Testing / Unstable のデスクトップ系列を実際に分岐し、
 M48 で SDDM を全チャンネル、Plasma Login Manager を Testing / Unstable に
-追加しました。`desktop/` は stable 212 / testing・unstable 220 レシピです。
+追加しました。M50 で Spectacle と kio-extras を加え、M51 で zpkg 0.3.2 の
+自己更新と新規依存の自動導入を追加しています。`desktop/` は stable 212 /
+testing・unstable 220 レシピ、`kde-applications` は 11 アプリです。
 Stable は Qt 6.8.5 / KF6 6.18.0 / Plasma 6.4.5 / Gear 25.04.3、Testing は
 Qt 6.11.3 / KF6 6.32 / Plasma 6.8.3 / Gear 26.08.3、Unstable は
 Linux 7.4-rc3 と Gear 26.11.80 beta を採用しています。
@@ -41,7 +43,8 @@ stage3 と既定のイメージは CLI の最小ベースのままです。**
 | 音声 | PipeWire + WirePlumber | 最新安定版 | 最新安定版 |
 | ログイン | SDDM 0.21 | SDDM 0.21 / PLM 6.8.3 | SDDM 0.21 / PLM 6.8.3 |
 
-- **Stable** は Linux LTS と KDE LTS を固定します
+- **Stable** は Linux と Qt の LTS を固定し、Plasma / Gear も検証済みの
+  安定系列に留めます。長期サポートと保守性を優先します
 - **Testing** は Linux / KDE の最新安定版(またはそれに準ずるもの)を採用します
 - **Unstable** は Testing よりさらに新しく、RC / beta / mainline / git snapshot を含みます
 - 新機能・新バージョンは Unstable → Testing → Stable の順に昇格します
@@ -52,7 +55,7 @@ stage3 と既定のイメージは CLI の最小ベースのままです。**
 
 KDE Gear には Plasma のような LTS がありません。そのため Stable では
 Qt 6.8 LTS でビルドできる最新の Gear(25.04.3)を固定し、Testing は最新安定版
-(26.08)、Unstable は次期版(26.12 beta)を追従します。
+(26.08.3)、Unstable は次期版(26.11.80 beta)を追従します。
 
 ## パッケージ構成
 
@@ -83,7 +86,7 @@ PAM が必要です。M44 で **Linux-PAM を `core` に移し、shadow を PAM 
 しました。コンソールログインが elogind の seat0 セッションを作り、KWin が
 DRM を取得できます。
 
-## 実装状況(M43–M48)
+## 実装状況(M43–M51)
 
 2026-11-21 時点で、`desktop/` に次のスタックを追加し、build VM の chroot と
 BIOS/MBR の検証イメージ(QEMU)でビルド・起動を確認しています。
@@ -172,15 +175,13 @@ BIOS/MBR の検証イメージ(QEMU)でビルド・起動を確認していま�
   (`sp_find_cached_tile`)で segfault するため、デスクトップの目視確認は
   Testing 側で行いました。実 GPU または Plasma 6.9 投入時に再検証します
 
-Spectacle と kio-extras は M50 で追加しました。UEFI 版/ISO は次の増分です。
-
 ### M48 で追加したもの
 
-- **SDDM 0.21.0-r6** — 全チャンネルの `plasma-meta` に追加。Stable は
+- **SDDM 0.21.0-r7** — 全チャンネルの `plasma-meta` に追加。Stable は
   Qt 6.8.5、Testing / Unstable は Qt 6.11.3 でビルド。Wayland greeter は
   `kwin_wayland --drm`、`sddm` ユーザー(620)と `/var/lib/sddm` は
   initscripts と post_install が用意します
-- **Plasma Login Manager 6.8.3-r1** — Testing / Unstable に追加。上流の
+- **Plasma Login Manager 6.8.3-r2** — Testing / Unstable に追加。上流の
   systemd user unit を使わず、`dbus-run-session` の下で `kwin_wayland` と
   `plasma-login-greeter` を起動する OpenRC wrapper に置き換えています。
   PAM、`plasmalogin` ユーザー(621)、VT7 を使います
@@ -204,6 +205,23 @@ DRM 起動までを QEMU で確認しました。ただし QEMU の `virtio-vga`
 QEMU で行います。通常の Plasma ユーザーセッション(不透明なデスクトップ)は
 同じ Mesa でも動作します。
 
+### M49–M51 で追加したもの
+
+- **M49: レシピ同期** — `zpkg sync --git` が `.zpkg-git` の commit と
+  リモート HEAD を比較し、変更時だけ shallow clone します。stage3 の
+  `/etc/zpkg/sync.conf` は既定で GitHub の `zignos-recipes` を参照します
+- **M50: Spectacle / kio-extras** — stable は Spectacle 6.4.5 + OpenCV
+  4.14.0(core/imgproc)、Testing / Unstable は Spectacle 6.8.3 +
+  KQuickImageEditor 0.7.0.1 / Tesseract 5.5.4。OCR 用に eng / jpn /
+  jpn_vert / osd の tessdata を同梱します。kio-extras は stable 25.04.3 /
+  Testing 26.08.3 / Unstable 26.11.80 で、archive / fish / info / man /
+  thumbnail / recentlyused / 検索などの worker を提供します。録画用に
+  FFmpeg 8.0.1 と libva 2.24.1 を KPipeWire に追加しました
+- **M51: 更新システム** — zpkg 0.3.2 はソースアーカイブをレシピに同梱し、
+  通常システムでも自己更新できます。`zpkg upgrade` は新しく必要になった
+  依存を先にインストールしてから、既存パッケージを更新します。initscripts
+  r27 は既定の git モード sync.conf に必要な `git` を依存に追加しました
+
 ## 導入
 
 stage3 からデスクトップを入れる例です。サービスは opt-in なので、必要なものを
@@ -226,11 +244,12 @@ rc-update add sddm default          # SDDM (全チャンネル)
 | M43 | 基盤(PAM / elogind / polkit / Wayland / Mesa / フォント / Qt6)+ メタレシピ骨格(完了) |
 | M44 | KF6 + KWin + Plasma 最小 + `plasma-meta`(完了。QEMU でパネル/デスクトップ表示) |
 | M45 | フル Plasma(音声 / ネットワーク / 電源 / 設定 / アプリ)+ `kde-applications`(完了。QEMU で確認) |
-| M46 | UDisks2 / KDE アプリ拡張 / 検証イメージ(第1増分完了)。クリーンな配布用イメージ / UEFI / 実機検証 / Plasma 6.6・PLM は次の増分 |
+| M46 | UDisks2 / KDE アプリ拡張 / 検証イメージ(第1増分完了)。配布用 ISO・UEFI / 実機 GPU は次の増分 |
 | M47 | Stable / Testing / Unstable の系列分岐(完了)。Testing は Qt 6.11 / Plasma 6.8 / Gear 26.08、Unstable は Linux 7.4-rc3 と Gear 26.11.80 beta。Qt 6.12 / Plasma 6.9 は次期 |
 | M48 | SDDM を全チャンネル、PLM を Testing / Unstable に追加(完了)。helper の root グループ混入と共通 D-Bus ポリシーを修正。greeter の目視は QEMU softpipe のため実 GPU 待ち |
 | M49 | レシピ同期の git 化(完了)。`zpkg sync --git` と `/etc/zpkg/sync.conf` の既定 GitHub リポジトリ、stage3 r20 |
 | M50 | Spectacle / kio-extras を全チャンネルに追加(完了)。stable は Spectacle 6.4.5 + OpenCV、Testing / Unstable は 6.8.3 + KQuickImageEditor / Tesseract。KPipeWire 用に FFmpeg / libva を追加 |
+| M51 | zpkg の自己更新と新規依存の自動導入(完了)。zpkg 0.3.2 / initscripts r27 |
 
 各フェーズの完了条件と依存関係は [ロードマップ](/docs/roadmap/) に記録します。
 
@@ -259,14 +278,14 @@ QEMU の virtio-gpu と Wayland を使い、DRM/seat を含む実際のセッシ
 - kio-extras は archive / fish / info / man / thumbnail / recentlyused /
   検索などの worker を提供する。Samba / MTP / AFC / NFS は未導入のため無効
 - 日本語表示は IPAex Gothic / Mincho で対応済み(UI の翻訳は英語のまま。
-  日本語ロケールの UI 翻訳は次の増分)
+  日本語ロケールの UI 翻訳は未対応)
 - SDDM 0.21 は全チャンネル、PLM 6.8.3 は Testing / Unstable に導入済み。
   両方とも QEMU の Mesa softpipe で greeter の KWin が落ちるため、
   画面表示とログインの目視確認は実 GPU 待ち
 - SDDM と PLM は同時に有効化しない。SDDM が tty1 を取れない場合は
   `rc-update del console default` で console getty を止める
-- Xwayland の GLX は有効(Mesa の `libGL` / `libGLX_mesa`)。実機 GPU の
-  検証は次の増分
+- Xwayland の GLX は有効(Mesa の `libGL` / `libGLX_mesa`)。実機 GPU での
+  確認は残っています
 - PipeWire の Bluetooth / RTKit 連携は未導入
 - デスクトップ入りイメージは BIOS/MBR の検証用 2 種のみ(開発ツール入りと、
   stage3 から入れたクリーンな 291 パッケージ版)。配布用 ISO と UEFI 版、

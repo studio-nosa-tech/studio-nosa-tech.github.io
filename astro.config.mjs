@@ -55,7 +55,7 @@ export default defineConfig({
             { label: 'ビルド隔離', slug: 'docs/build-sandbox' },
             { label: '再現可能ビルド', slug: 'docs/reproducibility' },
             { label: 'システム', slug: 'docs/design-system' },
-            { label: 'デスクトップ(KDE 設計中)', slug: 'docs/desktop' },
+            { label: 'デスクトップ(KDE Plasma 6)', slug: 'docs/desktop' },
           ],
         },
         {

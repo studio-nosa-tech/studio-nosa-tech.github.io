@@ -1,0 +1,483 @@
+{
+  "schema": 1,
+  "release": "2026.11.19-alpha",
+  "channel": "stable",
+  "availability": "coming-soon",
+  "generated": "2026-11-19T03:19:08Z",
+  "build_date": "2026-11-19",
+  "stage3": {
+    "revision": "r12",
+    "filename": "zignos-stage3-20261119-r12-x86_64.tar.xz",
+    "size": 1023609792,
+    "sha256": "785b222244a09370fee7bd173dd08caaba6de9fd17364028fd326a7f819827ac",
+    "size_mib": 977,
+    "package_count": 54,
+    "packages": [
+      {
+        "name": "bash",
+        "version": "5.3",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "binutils",
+        "version": "2.47",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "bubblewrap",
+        "version": "0.13.1",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "busybox",
+        "version": "1.37.0",
+        "revision": 1,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "bzip2",
+        "version": "1.0.8",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "ca-certificates",
+        "version": "2026-11-16",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "coreutils",
+        "version": "9.11",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "diffutils",
+        "version": "3.12",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "dosfstools",
+        "version": "4.2",
+        "revision": 0,
+        "slot": "0",
+        "category": "main"
+      },
+      {
+        "name": "e2fsprogs",
+        "version": "1.47.4",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "eudev",
+        "version": "3.3.0",
+        "revision": 1,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "expat",
+        "version": "2.10.0",
+        "revision": 0,
+        "slot": "0",
+        "category": "main"
+      },
+      {
+        "name": "file",
+        "version": "5.48",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "findutils",
+        "version": "4.11.0",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "flex",
+        "version": "2.6.4",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "gawk",
+        "version": "5.4.1",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "gcc",
+        "version": "16.2.0",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "glibc",
+        "version": "2.44",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "gmp",
+        "version": "6.3.0",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "go",
+        "version": "1.27.4",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "gperf",
+        "version": "3.3",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "grep",
+        "version": "3.12",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "gzip",
+        "version": "1.14",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "inetutils",
+        "version": "2.8",
+        "revision": 1,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "initscripts",
+        "version": "1.0.0",
+        "revision": 15,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "kbd",
+        "version": "2.10.0",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "kmod",
+        "version": "34.3",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "libcap",
+        "version": "2.78",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "libffi",
+        "version": "3.5.2",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "libxcrypt",
+        "version": "4.5.2",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "linux-headers",
+        "version": "7.1.8",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "m4",
+        "version": "1.4.21",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "make",
+        "version": "4.4.1",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "meson",
+        "version": "1.12.0",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "mpc",
+        "version": "1.4.1",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "mpfr",
+        "version": "4.2.2",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "ncurses",
+        "version": "6.6",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "ninja",
+        "version": "1.13.2",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "openrc",
+        "version": "0.64.1",
+        "revision": 1,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "patch",
+        "version": "2.8",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "pcre2",
+        "version": "10.47",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "pkgconf",
+        "version": "3.0.5",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "procps",
+        "version": "4.0.7",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "python3",
+        "version": "3.14.10",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "readline",
+        "version": "8.3",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "sed",
+        "version": "4.10",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "shadow",
+        "version": "4.20.2",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "tar",
+        "version": "1.35",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "tzdata",
+        "version": "2026f",
+        "revision": 1,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "util-linux",
+        "version": "2.42.2",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "xz",
+        "version": "5.8.3",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "zlib",
+        "version": "1.3.2",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "zpkg",
+        "version": "0.2.0",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "zstd",
+        "version": "1.5.7",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      }
+    ]
+  },
+  "zpkg": {
+    "version": "0.2.0"
+  },
+  "kernel": {
+    "package": "linux",
+    "version": "7.1.8",
+    "revision": 4,
+    "in_stage3": false
+  },
+  "bootloader": {
+    "package": "grub",
+    "version": "2.14",
+    "revision": 2,
+    "in_stage3": false
+  },
+  "base": {
+    "top_level": 37,
+    "closure": 64
+  },
+  "recipes": {
+    "filename": "zignos-recipes-20261119-r12.tar.xz",
+    "size": 699180,
+    "sha256": "78755800ca70555042ceb44afe76f5ee8038f013d8a6d3bb15188c9a9820c6e9",
+    "per_channel": 162,
+    "total": 486,
+    "channels": {
+      "stable": {
+        "core": 76,
+        "main": 86,
+        "desktop": 0
+      },
+      "testing": {
+        "core": 76,
+        "main": 86,
+        "desktop": 0
+      },
+      "unstable": {
+        "core": 76,
+        "main": 86,
+        "desktop": 0
+      }
+    }
+  },
+  "boot": {
+    "bios": "not-tested",
+    "uefi": "not-tested",
+    "hardware": "not-tested",
+    "checked": null
+  },
+  "source": {
+    "zignos": {
+      "commit": "769a4bfe4fb3120a59bbad7a76a6e12fbbb73e57",
+      "dirty": false
+    },
+    "zpkg": {
+      "commit": "5f45d88",
+      "dirty": false
+    },
+    "recipes": {
+      "commit": "a006fcd60fb6bfeede1d281dbbdbd51ed3cd00c2",
+      "dirty": false
+    },
+    "build": {
+      "commit": "72e531381263d8f6e23aa51bcb08396a5f649b00",
+      "dirty": false
+    }
+  },
+  "artifacts": [
+    {
+      "name": "stage3",
+      "filename": "zignos-stage3-20261119-r12-x86_64.tar.xz",
+      "size": 1023609792,
+      "sha256": "785b222244a09370fee7bd173dd08caaba6de9fd17364028fd326a7f819827ac"
+    },
+    {
+      "name": "recipes",
+      "filename": "zignos-recipes-20261119-r12.tar.xz",
+      "size": 699180,
+      "sha256": "78755800ca70555042ceb44afe76f5ee8038f013d8a6d3bb15188c9a9820c6e9"
+    },
+    {
+      "name": "zpkg",
+      "filename": "zpkg-0.2.0-x86_64",
+      "size": 11651815,
+      "sha256": "4b9f569fe7d73fbf5f177c4fd4e7c0d792639731195974df8917e08c20ad384a"
+    }
+  ]
+}

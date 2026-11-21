@@ -46,11 +46,11 @@ ZIGNOS のチャンネルは、ベースのカーネルと KDE デスクトッ�
 
 | チャンネル | Linux | KDE | 性格 |
 |---|---|---|---|
-| `stable` | **6.18 LTS** | Plasma 6.6 LTS / Qt 6.8 LTS / KF6 6.18 / Gear 25.04.3 | 安定・長期サポート |
-| `testing` | **7.3 最新安定** | Plasma 6.8 / Qt 6.11 / KF6 6.32 / Gear 26.08 | 最新安定版 |
-| `unstable` | **7.4-rc / mainline** | Plasma 6.9 dev/beta / Qt 6.12 dev/beta / KF6 master / Gear 26.12 beta | 挑戦的 |
+| `stable` | **6.18.64 LTS** | Qt 6.8.5 LTS / KF6 6.18 / Plasma 6.4.5 / Gear 25.04.3 / Mesa 26.2.7 | 安定・長期サポート |
+| `testing` | **7.3.5 最新安定** | Qt 6.11.3 / KF6 6.32 / Plasma 6.8.3 / Gear 26.08.3 / Mesa 26.3.1 | 最新安定版 |
+| `unstable` | **7.4-rc3 mainline** | Qt 6.11.3 / KF6 6.32 / Plasma 6.8.3 / Gear 26.11.80 beta / Mesa 26.3.1 | 挑戦的 |
 
-- **Stable** は Linux LTS と KDE LTS を固定します。長期サポートと保守性を優先します
+- **Stable** は Linux と Qt の LTS を固定し、Plasma / Gear も検証済みの安定系列に留めます
 - **Testing** は Linux / KDE の最新安定版(またはそれに準ずるもの)を採用します
 - **Unstable** は Testing よりさらに新しく、RC / beta / mainline / git snapshot を含みます
 - 新機能・新バージョンは Unstable → Testing → Stable の順に昇格します
@@ -61,8 +61,11 @@ ZIGNOS のチャンネルは、ベースのカーネルと KDE デスクトッ�
 - `stable ↔ unstable` の切り替えは大規模な更新になります。
   `zpkg upgrade -p` で差分を確認してください
 
-> 現行ツリーは全チャンネル Linux 7.1.8 / KDE なし。この表は M43 以降の
-> 目標で、カーネルと KDE のレシピ分岐はこれから実装します。
+> Unstable の Qt 6.12 / KF6 6.33 / Plasma 6.9 は Plasma 6.9 の公開後に
+> まとめて移行するため、現時点では Testing と同じ Qt 6.11.3 / KF6 6.32 /
+> Plasma 6.8.3 を使います。Mesa main snapshot も、QEMU の softpipe で
+> KWin が `sp_find_cached_tile` で落ちたため 26.3.1 に据え置いています
+> (実 GPU での再検証待ち)。
 
 ## チャンネルの選択
 
@@ -182,11 +185,13 @@ makedepends を必要とするパッケージをビルドできるようにす�
 ## 運用ルール(チャンネル間)
 
 - 変更は **unstable → testing → stable** の順に昇格させる
-- **同じ version+revision のまま内容を変えない**。binpkg のキーは
-  name / version / revision / 実効 USE で決まるため、内容だけ変えると
-  キャッシュが衝突する。内容を変えたら必ず revision を上げる
-- チャンネル間で版が同じパッケージは `zpkg upgrade` では再インストール
-  されない。強制する場合は `zpkg install -f <pkg>`
+- binpkg は name / version / revision / 実効 USE に加えて **チャンネルと
+  レシピ digest** で照合する。同じ版数でもレシピ内容が違えばキャッシュを
+  使わず再ビルドする。それでも識別と配布順序のため、内容を変えたら
+  revision を上げる
+- チャンネル間で版数とレシピ内容が同じパッケージは `zpkg upgrade` では
+  再インストールされない。版数が同じでもレシピ digest が違えば
+  `KindRebuild` として再ビルドされる
 - 破壊的変更にはレシピの `upgrade_warning` を書く。主要パッケージ
   (glibc/gcc/binutils/linux/openrc/initscripts/eudev/busybox/shadow/util-linux 等)
   のメジャー版本変更は自動で警告される

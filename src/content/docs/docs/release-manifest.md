@@ -26,36 +26,36 @@ tarball の隣に置く sidecar です。
 ```json
 {
   "schema": 1,
-  "release": "2026.11.19-alpha",
+  "release": "2026.11.20-alpha",
   "channel": "stable",
   "availability": "coming-soon",
-  "generated": "2026-11-19T03:19:08Z",
-  "build_date": "2026-11-19",
+  "generated": "2026-11-20T21:43:30Z",
+  "build_date": "2026-11-20",
   "stage3": {
-    "revision": "r12",
-    "filename": "zignos-stage3-20261119-r12-x86_64.tar.xz",
-    "size": 1023609792,
-    "size_mib": 977,
-    "sha256": "785b2222...",
-    "package_count": 54,
+    "revision": "r20",
+    "filename": "zignos-stage3-20261121-r20-x86_64.tar.xz",
+    "size": 1114279740,
+    "size_mib": 1063,
+    "sha256": "9409ff19...",
+    "package_count": 67,
     "packages": [
       {"name": "glibc", "version": "2.44", "revision": 0, "slot": "0", "category": "core"}
     ]
   },
-  "zpkg": {"version": "0.2.0"},
-  "kernel": {"package": "linux", "version": "7.1.8", "revision": 4, "in_stage3": false},
+  "zpkg": {"version": "0.3.1"},
+  "kernel": {"package": "linux", "version": "6.18.64", "revision": 7, "in_stage3": false},
   "bootloader": {"package": "grub", "version": "2.14", "revision": 2, "in_stage3": false},
-  "base": {"top_level": 37, "closure": 64},
+  "base": {"top_level": 38, "closure": 69},
   "recipes": {
-    "filename": "zignos-recipes-20261119-r12.tar.xz",
-    "size": 699180,
-    "sha256": "78755800...",
-    "per_channel": 162,
-    "total": 486,
+    "filename": "zignos-recipes-20261120-r20.tar.xz",
+    "size": 813948,
+    "sha256": "5f3f7577...",
+    "per_channel": 382,
+    "total": 1160,
     "channels": {
-      "stable": {"core": 76, "main": 86, "desktop": 0},
-      "testing": {"core": 76, "main": 86, "desktop": 0},
-      "unstable": {"core": 76, "main": 86, "desktop": 0}
+      "stable": {"core": 77, "main": 100, "desktop": 205},
+      "testing": {"core": 77, "main": 102, "desktop": 210},
+      "unstable": {"core": 77, "main": 102, "desktop": 210}
     }
   },
   "boot": {"bios": "not-tested", "uefi": "not-tested", "hardware": "not-tested", "checked": null},
@@ -66,12 +66,20 @@ tarball の隣に置く sidecar です。
     "build": {"commit": "...", "dirty": false}
   },
   "artifacts": [
-    {"name": "stage3", "filename": "...", "size": 1023609792, "sha256": "..."},
-    {"name": "recipes", "filename": "...", "size": 699180, "sha256": "..."},
-    {"name": "zpkg", "filename": "zpkg-0.2.0-x86_64", "size": 11651815, "sha256": "..."}
+    {"name": "stage3", "filename": "...", "size": 1114279740, "sha256": "..."},
+    {"name": "recipes", "filename": "...", "size": 813948, "sha256": "..."},
+    {"name": "zpkg", "filename": "zpkg-0.3.1-x86_64", "size": 12000000, "sha256": "..."}
   ]
 }
 ```
+
+> 上の値は r20 ビルドの値をもとにした抜粋です(packages / artifacts は省略)。
+> 開発ツリーはこれより新しく、
+> zpkg 0.3.2 / stable 389 / testing・unstable 399 レシピです。実際に配布する
+> manifest は `make-stage3.sh` / `release-manifest.py` がビルドごとに生成します。
+>
+> `recipes.per_channel` はビルドしたチャンネル(stage3 なら stable)の数です。
+> チャンネルごとの内訳は `recipes.channels` を使います。
 
 `stage3.packages` は、stage3 の `/var/lib/zpkg` にあるインストール済み
 レコードから生成します。schema 2 以前の `version` しか持たないレコードは、
@@ -88,14 +96,14 @@ makedepends を含みます。
 
 ```sh
 python3 release-manifest.py generate \
-  --release 2026.11.19-alpha --revision r12 --channel stable \
-  --stage3 /var/tmp/zignos-stage3-20261119-r12-x86_64.tar.xz \
+  --release 2026.11.20-alpha --revision r20 --channel stable \
+  --stage3 /var/tmp/zignos-stage3-20261121-r20-x86_64.tar.xz \
   --db-root /var/tmp/stage3-db/var/lib/zpkg \
   --recipes /mnt/sources/zignos-recipes \
-  --base-list base.list --base-closure 64 \
+  --base-list base.list --base-closure 69 \
   --boot-tests /var/tmp/zignos-boot-tests.json \
-  --artifact recipes=/var/tmp/zignos-recipes-20261119-r12.tar.xz \
-  --artifact zpkg=/var/tmp/zpkg-0.2.0-x86_64 \
+  --artifact recipes=/var/tmp/zignos-recipes-20261120-r20.tar.xz \
+  --artifact zpkg=/var/tmp/zpkg-0.3.1-x86_64 \
   --commit zignos=<sha> --commit zpkg=<sha> \
   --commit recipes=<sha> --commit build=<sha> \
   --out /var/tmp/<stage3>.release.json
@@ -110,7 +118,7 @@ python3 release-manifest.py generate \
 ```sh
 python3 release-manifest.py record-boot \
   --file /var/tmp/zignos-boot-tests.json \
-  --mode bios --result passed --kernel 7.1.8 --image zignos.img
+  --mode bios --result passed --kernel 6.18.64 --image zignos.img
 ```
 
 `--mode` は `bios` / `uefi` / `hardware`、`--result` は `passed` / `failed` /
@@ -144,7 +152,7 @@ Markdown では `{{...}}` トークンを書くと、ビルド時に `release.js
 {{bootloader.full}}         GRUB の version-revision
 {{base.top_level}}          base.list のトップレベル数
 {{base.closure}}            依存込みのベースパッケージ数
-{{recipes.per_channel}}     チャンネルあたりのレシピ数
+{{recipes.per_channel}}     ビルドチャンネル(stable)のレシピ数
 {{recipes.total}}           全チャンネルのレシピ数
 {{recipes.filename}}        レシピ tarball のファイル名
 {{boot.bios}}               BIOS の起動検証結果

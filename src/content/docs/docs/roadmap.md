@@ -1,6 +1,6 @@
 ---
 title: ロードマップ
-description: M0–M49 のマイルストーン記録と現在の状況。
+description: M0–M51 のマイルストーン記録と現在の状況。
 ---
 
 マイルストーンごとに完了条件を明記する。進捗はこのファイルのチェックボックスで管理する。
@@ -8,19 +8,19 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 /about/ の「ステータス」も参照。
 
 > 各マイルストーン節の数値・構成は**その時点の記録**。パッケージ数やベース構成は
-> 以後のマイルストーンで変わっている(現在は下の M49 の行と「現在のシステム」が正)。
+> 以後のマイルストーンで変わっている(現在は下の M51 の行と「現在のシステム」が正)。
 
 ## 現在のシステム(2026-11-21)
 
-- **GUI: M48 完了** — Stable / Testing / Unstable の系列分岐に加え、SDDM を全チャンネル、Plasma Login Manager を Testing / Unstable に追加した。Stable は Linux 6.18.64 LTS / Qt 6.8.5 LTS / KF6 6.18 / Plasma 6.4.5 / Gear 25.04.3 / Mesa 26.2.7、Testing は Linux 7.3.5 / Qt 6.11.3 / KF6 6.32 / Plasma 6.8.3 / Gear 26.08.3 / Mesa 26.3.1、Unstable は Linux 7.4-rc3 / Gear 26.11.80 beta。Testing のデスクトップは QEMU でパネル・壁紙・KRunner・Dolphin・Kate・UDisks2 まで確認し、未解決 soname 0。SDDM / PLM は daemon・PAM セッション・KWin 起動まで確認したが、QEMU の Mesa softpipe (`sp_find_cached_tile`) が greeter の透過合成で落ちるため、画面表示は実 GPU 待ち。SDDM / PLM の helper が root の ambient groups をセッションへ渡す問題と、共通 D-Bus ポリシーの衝突も修正した
-- **base.list {{base.top_level}} トップレベル = 依存込み {{base.closure}} パッケージ**(唯一の定義)/ 12G ブータブルイメージ(BIOS/UEFI 版)。レシピツリーは **stable 389(core 77 + main 100 + desktop 212)/ testing・unstable 399(core 77 + main 102 + desktop 220)**
-- 起動: BIOS/MBR または UEFI/GPT → GRUB 2.14 → kernel 7.1.8 + initramfs(busybox) → OpenRC 0.64.1 → eudev 3.3.0 → serial/VGA ログイン(shadow / PAM)
+- **GUI: M51 完了** — Stable / Testing / Unstable の系列分岐、SDDM / Plasma Login Manager、Spectacle / kio-extras、zpkg 0.3.2 の自己更新と新規依存の先行導入まで実装した。Stable は Linux 6.18.64 LTS / Qt 6.8.5 LTS / KF6 6.18 / Plasma 6.4.5 / Gear 25.04.3 / Mesa 26.2.7、Testing は Linux 7.3.5 / Qt 6.11.3 / KF6 6.32 / Plasma 6.8.3 / Gear 26.08.3 / Mesa 26.3.1、Unstable は Linux 7.4-rc3 / Gear 26.11.80 beta。Testing のデスクトップは QEMU でパネル・壁紙・KRunner・Dolphin・Kate・UDisks2 まで確認し、未解決 soname 0。SDDM / PLM は daemon・PAM セッション・KWin 起動まで確認したが、QEMU の Mesa softpipe (`sp_find_cached_tile`) が greeter の透過合成で落ちるため、画面表示は実 GPU 待ち
+- **base.list 38 トップレベル = 依存込み 69 パッケージ**(linux / grub を含む)。そこからカーネルとブートローダーを除いた **stage3 r20 は 67 パッケージ / 約 1.1 GiB**(配布準備中)。レシピツリーは **stable 389(core 77 + main 100 + desktop 212)/ testing・unstable 399(core 77 + main 102 + desktop 220)**
+- 起動: BIOS/MBR または UEFI/GPT → GRUB 2.14 → kernel 6.18.64(stable)+ initramfs(busybox) → OpenRC 0.64.1 → eudev 3.3.0 → serial/VGA ログイン(shadow / PAM)
 - カーネル: x86_64_defconfig + `x86_64-generic.config`(起動系は組み込み、GPU/WiFi/追加 NIC はモジュール)。root は initramfs が `root=UUID=` で解決
-- ネットワーク: **ベースには含まない**(Gentoo 流の opt-in)。`zpkg install dhcpcd openssh` の後 `rc-update add dhcpcd boot` / `rc-update add sshd default`
+- ネットワーク: **ベースには含まない**(opt-in)。`zpkg install dhcpcd openssh` の後 `rc-update add dhcpcd boot` / `rc-update add sshd default`
 - NetworkManager 1.58.1 は main から任意導入。polkit 認証を有効化し、`zpkg install plasma-nm` で KDE のトレイ/KCM から操作できる。WiFi は `networkmanager-wifi`
 - 無線: wpa_supplicant 2.12 + iw(libnl、D-Bus 制御 IF)を main/ から任意インストール。WiFi ドライバはカーネルモジュール、firmware は `main/linux-firmware`
 - サービス: ベースが有効化するのは udev(eudev)/ console(ttyS0)/ console-vga(tty1) のみ。mdev はフォールバックとして同梱するが無効。dhcpcd/dbus/sshd/chronyd/wpa_supplicant/crond/nftables は入れてから自分で有効化。デスクトップでは dbus/elogind/polkit を default で有効化し、UPower は専用の OpenRC サービス、PipeWire/WirePlumber は Plasma の XDG autostart から起動する
-- 運用: ベースは toolchain + coreutils + zpkg + tzdata + eudev + inetutils/procps。main/ には 87 パッケージ(エディタ / SSH / man / git / curl / wget / doas、M30 のネットワーク診断・ビルド・圧縮・監視、M34 の NetworkManager/nmtui)があり、任意インストール
+- 運用: ベースは toolchain + coreutils + zpkg + tzdata + eudev + inetutils/procps。main/ には 100–102 パッケージ(エディタ / SSH / man / git / curl / wget / doas、M30 のネットワーク診断・ビルド・圧縮・監視、M34 の NetworkManager/nmtui、M46 のストレージ/グラフィックスライブラリ)があり、任意インストール
 - zpkg: DB schema 2・world/upgrade・USE フラグ(package.use/IUSE)・フック(ldconfig 自動)・トランザクション・slots・binpkg リポジトリ・レシピ同期(`zpkg sync`)・依存アトム解決(バージョン制約 / provides / conflicts / 逆依存 / USE 制約)・Ed25519 署名(index / レシピ manifest / ロールバック・期限)・bubblewrap ビルド隔離(ro root / namespace / capability / network)・再現可能ビルド(SOURCE_DATE_EPOCH / ログ / provenance / SBOM)・リリースチャンネル(stable/testing/unstable)・upgrade の差分表示/新規依存の先行導入/全ビルド後インストール/整合性チェック・リリースマニフェスト(ビルドごとの release.json)
 - bootstrap: stage0/1(cross toolchain、メンテナ専用)→ stage2 フェーズ1(bootstrap core)→ **フェーズ2(base.list 全量)**。/usr は完全に zpkg 管理
 - リリースモデル: **ローリングリリース**(ブートストラップ設計)。更新は `zpkg upgrade` と `build-system.sh`
@@ -53,7 +53,7 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 | M22 | WiFi スタック(libnl/wpa_supplicant/iw)+ D-Bus + HW 情報ツール | 完了(2026-11-17 実走行) | - |
 | M23 | 実機インストール準備(install.md・NVMe/PARTUUID・VGA) | 完了(2026-11-17) | - |
 | M24 | initramfs + UEFI + 汎用カーネル(モジュール/kmod) | 完了(2026-11-17 実走行) | - |
-| M25 | stage3 tarball(Gentoo 流の chroot ベース) | 完了(2026-11-17 実走行) | - |
+| M25 | stage3 tarball(chroot 可能な最小ベース) | 完了(2026-11-17 実走行) | - |
 | M26 | fastfetch ブランディング + CMake + zpkg ジャーナル高速化 | 完了(2026-11-18 実走行) | - |
 | M27 | zpkg の emerge 風フェーズ表示(Building/Installing) | 完了(2026-11-18 実走行) | - |
 | M28 | 最小ベース(base.list 32/依存込み 54)+ efibootmgr | 完了(2026-11-18 実走行) | - |
@@ -74,7 +74,7 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 | M43 | デスクトップ基盤(PAM / elogind / Wayland / Mesa / フォント / Qt6) | 完了(2026-11-19 実走行) | - |
 | M44 | KF6 + KWin + Plasma 最小(Xwayland / kactivitymanagerd / PAM login) | 完了(2026-11-20 QEMU 実走行) | - |
 | M45 | フル Plasma(音声 / NetworkManager / 電源 / アプリ / GLX) | 完了(2026-11-20 QEMU 実走行) | - |
-| M46 | 配布物(イメージ/ISO/実機/LTS 移行)+ UDisks2 / KDE アプリ | 完了(2026-11-20 UDisks2・アプリ・BIOS 検証イメージ 2 種まで) | - |
+| M46 | 配布物(イメージ/ISO/実機/LTS 移行)+ UDisks2 / KDE アプリ | UDisks2・アプリ・BIOS 検証イメージ完了(2026-11-20)。配布用 ISO / 実機 / LTS 移行は継続 | 配布用 ISO・実機 GPU |
 | M47 | Stable / Testing / Unstable のパッケージ系列分岐 | 完了(2026-11-21 Testing デスクトップ QEMU 確認、stage3 r17) | Qt 6.12 / Plasma 6.9 は次期 |
 | M48 | SDDM 全チャンネル + Plasma Login Manager | 完了(2026-11-21 パッケージ・PAM・グループ修正。greeter 目視は実 GPU 待ち) | QEMU softpipe の修正待ち |
 | M49 | レシピ同期の git 化 | 完了(2026-11-21 zpkg 0.3.1 / initscripts r26 / stage3 r20) | - |
@@ -97,7 +97,7 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 - [x] **検証(2026-11-17)** — 2.1 GiB tarball を展開 → `zignos-enter.sh` で chroot →
   `zpkg list` 86 → `zpkg install linux grub`(binpkg から 1m38s)→ **88 パッケージ、
   `/boot/vmlinuz` 13MB + `initramfs.img` 1.3MB、EFI モジュール 601、grub-mkstandalone 動作**
-- [x] **`docs/stage3.md`** — Gentoo 流の手順(ディスク準備 → 展開 → chroot → zpkg →
+- [x] **`docs/stage3.md`** — 標準的な手順(ディスク準備 → 展開 → chroot → zpkg →
   fstab(UUID)→ GRUB(BIOS/UEFI)→ 初回設定)。seed/イメージ/installer との違いも記載
 - [x] **GitHub Release `ZIGNOS-2026.11.17-alpha` 公開** — `studio-nosa-tech/zignos` に
   stage3 を公開。GitHub の 1 ファイル 2 GiB 制限のため
@@ -129,7 +129,7 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 ## M27: zpkg の emerge 風フェーズ表示(2026-11-18 完走)
 
 ビルド/インストールが「どのパッケージの何の最中か」分からないという指摘を受け、
-Portage(emerge)風のフェーズ行を入れた。
+`>>>` 付きのフェーズ行を入れた。
 
 - [x] **事前サマリ** — 処理前に「These are the packages that will be installed, in order:」として
   `[i] name-version` + `(dependency)` + `USE="flags"` を並べ、最後に
@@ -152,10 +152,10 @@ Portage(emerge)風のフェーズ行を入れた。
 
 ## M28: 最小ベース + efibootmgr(2026-11-18 完走)
 
-「base.list に無駄なソフトが多すぎる。Gentoo のように最低限だけ入れ、大半は手動で」
+「base.list に無駄なソフトが多すぎる。最低限だけ入れ、大半は手動で」
 という方針に合わせてベースを組み直した。
 
-- [x] **base.list を Gentoo の @system 相当へ** — トップレベル 32 個 / 依存込み 54 パッケージ。
+- [x] **base.list を最小システム相当へ** — トップレベル 32 個 / 依存込み 54 パッケージ。
   残したのは toolchain(glibc/gcc/binutils/make/linux-headers)、POSIX ツール
   (bash/coreutils/sed/grep/gawk/diffutils/findutils/tar/gzip/xz/bzip2/m4/patch/file/pkgconf)、
   起動とログイン(busybox/openrc/initscripts/util-linux/shadow/e2fsprogs/kbd/linux/grub)、
@@ -260,8 +260,8 @@ M42 時点の `desktop/` は 0 パッケージで、依存・OpenRC 統合・PoC
 - [x] **M43: 基盤** — 完了(2026-11-19)。PAM / elogind / polkit、Wayland / 入力、フォント、Mesa 26.2.7、Qt 6.8.5 を追加し、EGL 1.5 + OpenGL ES 3.1 と QML offscreen(`QML_OK 6.8.5`)を確認。`plasma-meta` / `kde-applications` は骨格のみ。あわせて initscripts r18 に `zignos-fstab` と `root-rw` を追加し、fstab の UUID 不一致で `/` が read-only になる問題を修正・自動復旧
 - [x] **M44: KF6 + KWin + Plasma 最小** — 完了(2026-11-20 QEMU 実走行)。Qt 6.8.5 / KF6 6.18.0 / Plasma 6.4.5 / Xwayland 24.1.9 / xkbcomp 1.4.7 / kactivitymanagerd を追加。`linux-pam` を core へ移して shadow を PAM 対応にし、tty1 のログインが elogind の seat0 セッションになることを確認。virtio-gpu + TCG で `startplasma-wayland` → KWin(DRM)→ Xwayland → ksmserver → plasmashell を起動し、パネルとデスクトップをスクリーンショットで確認。kickoff(kirigami-addons)・音量(plasma-pa)・壁紙・UDisks2・PLM・PipeWire・Xwayland GLX は M45
 - [x] **M45: フル Plasma** — 完了(2026-11-20 QEMU 実走行)。PipeWire / WirePlumber / plasma-pa、NetworkManager の polkit 化 + plasma-nm、UPower + powerdevil、kirigami-addons / 壁紙 / polkit-kde-agent、Konsole / Dolphin / KCalc / Filelight、Xwayland GLX 1.4、kcm_style の xrdb 修正を実装。PLM は Plasma 6.6 以降のため M46 へ
-- [x] **M46: UDisks2 / KDE アプリ** — 進行中(2026-11-20)。libatasmart / libblockdev(part/fs/loop/swap/mdraid/crypto/nvme)/ udisks2 と、cryptsetup / LVM2 / libnvme / json-c / keyutils / libbytesize を追加。chroot で UDisks2 の D-Bus 起動と `udisksctl status` を確認。libarchive + Ark、Kate、Gwenview(Exiv2 / LCMS2 / kImageAnnotator / kColorPicker)、Okular(Poppler 25.04.0)、KWalletManager を追加し、`kde-applications` を 9 アプリに更新。main 98 / desktop 205 / 各チャンネル 380。BIOS/MBR の検証イメージ `zignos-m46.img`(16 GiB sparse / 実使用 8.8 GiB)を QEMU で起動し、Plasma の壁紙・パネル、5 アプリ、`udisksctl status` を確認。さらに stage3 から入れた **クリーンな 291 パッケージの BIOS イメージ** `zignos-m46-clean.img`(10 GiB sparse / 実使用 6.5 GiB)で壁紙・パネル・時計、Kate / Ark / Dolphin・日本語表示、UDisks2 を確認し、クリーン root で見つかった libltdl / Xwayland / xkbcomp / DejaVu などの欠落依存をレシピに反映。`shared-mime-info 2.4` も追加し、MIME の関連付けと Dolphin のファイル種別表示を確認。`ipaex-fonts` を追加し、Kate で日本語表示を確認
-- [ ] **M46: 配布物** — 配布用 ISO(BIOS/UEFI)、実機 GPU、Plasma 6.6 LTS/PLM 移行
+- [x] **M46: UDisks2 / KDE アプリ** — 完了(2026-11-20)。libatasmart / libblockdev(part/fs/loop/swap/mdraid/crypto/nvme)/ udisks2 と、cryptsetup / LVM2 / libnvme / json-c / keyutils / libbytesize を追加。chroot で UDisks2 の D-Bus 起動と `udisksctl status` を確認。libarchive + Ark、Kate、Gwenview(Exiv2 / LCMS2 / kImageAnnotator / kColorPicker)、Okular(Poppler 25.04.0)、KWalletManager を追加し、`kde-applications` を 9 アプリに更新。main 98 / desktop 205 / 各チャンネル 380。BIOS/MBR の検証イメージ `zignos-m46.img`(16 GiB sparse / 実使用 8.8 GiB)を QEMU で起動し、Plasma の壁紙・パネル、5 アプリ、`udisksctl status` を確認。さらに stage3 から入れた **クリーンな 291 パッケージの BIOS イメージ** `zignos-m46-clean.img`(10 GiB sparse / 実使用 6.5 GiB)で壁紙・パネル・時計、Kate / Ark / Dolphin・日本語表示、UDisks2 を確認し、クリーン root で見つかった libltdl / Xwayland / xkbcomp / DejaVu などの欠落依存をレシピに反映。`shared-mime-info 2.4` も追加し、MIME の関連付けと Dolphin のファイル種別表示を確認。`ipaex-fonts` を追加し、Kate で日本語表示を確認
+- [ ] **M46: 配布物** — 配布用 ISO(BIOS/UEFI)、実機 GPU、Plasma 次期 LTS への移行
 - [x] **M50: Spectacle / kio-extras** — 完了(2026-11-21)。stable は
   Spectacle 6.4.5 + OpenCV 4.14.0、Testing / Unstable は Spectacle 6.8.3 +
   KQuickImageEditor 0.7.0.1 / Tesseract 5.5.4 / Leptonica 1.87.0。
@@ -303,8 +303,8 @@ stage3 のパッケージ数・サイズ・バージョン・チェックサム�
 - [x] **initscripts r15** — `/etc/os-release` を `ZIGNOS 2026.11.19-alpha` に更新
 - [x] **テスト** — manifest の生成・旧 DB レコード・record-boot・validate の
   4 unittest。シェルスクリプトの構文と shellcheck を確認
-- [x] **stage3 r12** — {{stage3.package_count}} パッケージ / {{stage3.size_mib}} MiB、
-  zpkg {{zpkg.version}}、kernel {{kernel.full}}、GRUB {{bootloader.full}}。
+- [x] **stage3 r12** — 54 パッケージ / 977 MiB、zpkg 0.2.0、
+  kernel 7.1.8-r4、GRUB 2.14-r2。
   同梱レシピは stable のみで、チャンネルの二重コピーも修正
 - [ ] **起動検証の実測** — 今回は BIOS / UEFI / 実機とも `not-tested`。
   次回のイメージビルドで `qemu-test.sh check` の結果を manifest に反映する
@@ -365,8 +365,9 @@ unstable** の3チャンネルに分け、`zpkg upgrade` を「何が変わる�
   仕組みは将来
 - [ ] **チャンネル単位の sync** — 現状はツリー全体を置換する。1チャンネルだけを
   追加・更新するコマンドは将来
-- [ ] **同一版数のチャンネル切替** — 内容が同じ version+revision のままなら
-  upgrade では再インストールされない(revision 運用で回避)
+- [x] **同一版数のチャンネル切替** — M47 で binpkg のチャンネル照合と
+  レシピ digest 比較を追加。版数が同じでもレシピ内容が違えば `KindRebuild`
+  として再ビルドする
 
 ## M39: 再現可能なビルド(2026-11-19 検証)
 
@@ -713,7 +714,7 @@ v0 のコマンド: `zpkg build|install|remove|list|search|depends`
 
 - [x] **GRUB 2.14 レシピ + パーティション済みブータブルイメージ** — make-image.sh が MBR パーティション + システムコピー + GRUB core.img 手動導入(prefix `(hd0,msdos1)/boot/grub` を grub-mkimage で明示)+ serial grub.cfg
 - [x] **QEMU GRUB ブート — 2026-11-15 `BOOT CHECK PASSED`**(BIOS → GRUB → kernel → OpenRC → agetty)
-- [x] **zpkg バイナリキャッシュ**(Portage buildpkg 相当): ビルド成功時に destroot を `$ZPKG_CACHE/binpkgs/<name>-<version>.pkg.tar.gz` に pack、install は一致する binpkg を再利用(`ZPKG_NO_BINPKG=1` で強制ソースビルド)。grub で実走行確認
+- [x] **zpkg バイナリキャッシュ**(binpkg): ビルド成功時に destroot を `$ZPKG_CACHE/binpkgs/<name>-<version>.pkg.tar.gz` に pack、install は一致する binpkg を再利用(`ZPKG_NO_BINPKG=1` で強制ソースビルド)。grub で実走行確認
 - [x] **installer(実ディスク版)** — `zignos-install [--yes] /dev/sdX`: MBR 1パーティション + 実行中システムのコピー + GRUB 導入 + PARTUUID の fstab/grub.cfg。**2026-11-16 実走行合格**: ゲスト内で空白 8G ディスクへインストール → そのディスクを GRUB 単体起動して `TARGET-BOOT-OK 7.1.8`(ログイン込み)。イメージには `/usr/sbin/zignos-install` として同梱
 - [x] initscripts の本格化 — **shadow 導入済み(2026-11-16)**: login/passwd/su/chpasswd がシリアルコンソールで動作(root/zignos で自動ログインテスト合格)、自動ログイン廃止。ca-certificates・openssh は完了(M5)
 - [x] stock OpenRC サービスの依存整備 — **2026-11-15 完走: boot runlevel 16 サービス中 15 が [ ok]**(残 1: hwclock の RTC 認識 — カーネル設定は適用済み、要調査)
@@ -797,7 +798,7 @@ v0 のコマンド: `zpkg build|install|remove|list|search|depends`
 - [x] **インストールガイド** — SystemRescue 13.03 を推奨 Live ISO とし、入手/検証/USB
   書き込み、方法 A(ZIGNOS USB → `zignos-install`)、方法 B(イメージ直書き + 拡張)、
   方法 C(レスキュー/chroot)、初回設定・WiFi・トラブルシューティングを記載。
-  カーネル設定の参考として Gentoo ハンドブック(Configuring the Linux kernel)を紹介
+  カーネル設定の一般的な考え方も紹介
 - [x] **`zignos-install` の実機対応** — NVMe/eMMC のパーティション名(`nvme0n1p1`)に対応。
   grub.cfg を `console=tty0 console=ttyS0` に(timeout 5 秒)
 - [x] **イメージの root=PARTUUID 化** — `make-image.sh` が MBR の disk id から PARTUUID を
@@ -878,7 +879,7 @@ v0 のコマンド: `zpkg build|install|remove|list|search|depends`
   - **unzip 6.0**: `unxcfg.h` の古式 `gmtime()/localtime()` 宣言パッチ + **`linux_noasm`**(linux ターゲットは 32bit CRC asm を x86_64 でアセンブルしてしまう)
   - **socat**: OpenSSL 4 で `ASN1_OCTET_STRING` 非透明化 → `--disable-openssl`(リレー機能には不要)
   - **strace**: kernel 7.1 で io_uring 構造体の予約フィールド名が変わった → パッチではなく **`--enable-bundled=yes`**(strace 同梱ヘッダを使う。エラーメッセージ自体が指示してくれた)
-  - pciutils: pci.ids の全ミラーが VM から到達不能だったため、Debian スナップショットを**レシピ資産として同梱**(実機では `update-pciids` で更新)
+  - pciutils: pci.ids の全ミラーが VM から到達不能だったため、公開スナップショットを**レシピ資産として同梱**(実機では `update-pciids` で更新)
 - [x] 実走行検証: 13 パッケージ全ビルド・インストール(`zpkg list` 94)。tree/jq/zip/unzip/ncdu/socat/lsof/strace/tcpdump+libpcap/mkfs.vfat/**lspci(pci.ids でデコード表示)**/iostat すべて動作
 - [ ] 次: 実機ブート検証、GUI 調査、binpkg リポジトリの署名(配布開始時)
 
@@ -1050,7 +1051,7 @@ v0 のコマンド: `zpkg build|install|remove|list|search|depends`
 - [x] **doas 6.8.2(core、デフォルト)** — OpenDoas。`--without-pam`(shadow 認証)+ `--with-timestamp`(persist は `/run/doas` を使用)。4755 root:root、`/etc/doas.conf` は `permit persist :wheel`
 - [x] **sudo 1.9.17p2(main、リポジトリのみ)** — configure 既定の shadow 認証。`--disable-log-client --disable-log-server` で **OpenSSL を使わない**: 1.9.17p2 の `hostcheck.c` は `ASN1_STRING` の内部構造に触れており OpenSSL 4.0 でコンパイルできない。ログ/TLS は使わないので sudo 内蔵 SHA-2 で十分。wheel 用 sudoers を同梱
 - [x] **zpkg の setuid 保持** — `open(2)` は setuid/setgid を無視するため install で明示的に chmod、binpkg は `tar.FileInfoHeader` でモードを保存。これが無いと doas/sudo がただの実行ファイルになる
-- [x] **レシピツリーの同梱** — イメージの `/usr/share/zignos/recipes/{core,main,desktop}` にレシピを収録し、`ZPKG_REPOS` 未設定時は zpkg が自動で検索(gentoo の `/var/db/repos` 相当)。ゲストで `zpkg search sudo` → `main sudo 1.9.17p2`、`zpkg install sudo` がレシピ同梱だけで解決することを確認
+- [x] **レシピツリーの同梱** — イメージの `/usr/share/zignos/recipes/{core,main,desktop}` にレシピを収録し、`ZPKG_REPOS` 未設定時は zpkg が自動で検索(一般的なパッケージツリーの配置に相当)。ゲストで `zpkg search sudo` → `main sudo 1.9.17p2`、`zpkg install sudo` がレシピ同梱だけで解決することを確認
 - [x] 実走行検証(2026-11-16): doas はコンソールで zuser(wheel)→`doas id`→`uid=0(root)`、sudo は chroot 内で `sudo -S id`→`uid=0(root)`(その後 sudo はイメージから除去)。清浄イメージはコピーを起動して doas 4755・テストユーザー不在を確認。ゲスト内 sudo のフルビルドは TCG で時間切れ(ビルド自体は chroot で実証済み)
 - [ ] ベースシステムのパッケージ一覧が `stage2.sh` + 手動インストールに分散している → `base.list` に一本化する(再現性の課題)
 

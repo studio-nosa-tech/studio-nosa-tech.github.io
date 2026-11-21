@@ -18,7 +18,7 @@ description: init、コンソール、サービス、特権昇格、カーネル
 
 **2026-11-15 決定**(ユーザー方針: systemd は使わない — 重厚であるため):
 
-- **本命: OpenRC**(導入済み 0.64.1)。依存順のサービス管理が実用的で、Gentoo 系の資産と素地が合い、将来の s6 併用(監督機能)も視野に取れる
+- **本命: OpenRC**(導入済み 0.64.1)。依存順のサービス管理が実用的で、既存の init スクリプト資産と相性が良く、将来の s6 併用(監督機能)も視野に取れる
 - **デバイス管理: eudev**(2026-11-18、M32 で mdev から移行)。比較結果:
 
   | 観点 | mdev(busybox) | eudev |
@@ -60,7 +60,7 @@ description: init、コンソール、サービス、特権昇格、カーネル
 
 ## D-Bus と WiFi(M22 で確定)
 
-- **D-Bus は system bus のみ**(core/dbus 1.16.4)。セッションバスは GUI を入れるまで作らない。`messagebus` アカウント(uid/gid 25)は initscripts が所有し、machine-id は初回起動時に `dbus-uuidgen --ensure`(initscripts の `init.d/dbus` の `start_pre`)が生成する。**dbus-daemon は既定で fork するため `--nofork` が必須**(無いと supervise-daemon が親の終了を crash と見なし、再起動のたびにデーモンが増える — M22 の起動試験で 11 個になった)
+- **ベースが起動するのは system bus のみ**(core/dbus 1.16.4)。セッションバスはデスクトップセッション側(dbus-run-session / Plasma)が起動する。`messagebus` アカウント(uid/gid 25)は initscripts が所有し、machine-id は初回起動時に `dbus-uuidgen --ensure`(initscripts の `init.d/dbus` の `start_pre`)が生成する。**dbus-daemon は既定で fork するため `--nofork` が必須**(無いと supervise-daemon が親の終了を crash と見なし、再起動のたびにデーモンが増える — M22 の起動試験で 11 個になった)
 - **サービス構成の原則**: デーモンは initscripts に OpenRC スクリプトを置き、パッケージ側はバイナリと設定だけを出す。runlevel も initscripts が決める
   **M32 以降、runlevel リンクは udev と console/console-vga だけ**。以下は
   `zpkg install <pkg>` の後に `rc-update add <service> <runlevel>` で有効化する。
@@ -84,14 +84,15 @@ description: init、コンソール、サービス、特権昇格、カーネル
 ## 特権昇格(M7 で確定)
 
 - **ベースは `su` のみ**(M28 の最小化以降)。doas(core/doas、OpenDoas 6.8.2)は
-  `zpkg install doas` で追加する任意パッケージ。`/etc/doas.conf` は `permit persist :wheel`。PAM は無いので shadow 認証(`--without-pam`)、persist は `/run/doas` のタイムスタンプ
+  `zpkg install doas` で追加する任意パッケージ。`/etc/doas.conf` は `permit persist :wheel`。doas は PAM を使わず shadow 認証(`--without-pam`)、persist は `/run/doas` のタイムスタンプ
 - **sudo は main/sudo に置く**(1.9.17p2、インストールは任意)。sudo を使いたい層向けで、イメージには含めない。sudoers は `%wheel ALL=(ALL:ALL) ALL`、`env_reset` + `secure_path` + 5 分のタイムスタンプ
 - sudo は **OpenSSL 無し**でビルドする(`--disable-log-client --disable-log-server`)。1.9.17p2 の hostcheck.c が OpenSSL 4 の不透明化した `ASN1_STRING` に非対応のため。TLS/logsrvd を使わない構成では sudo 内蔵 SHA-2 で問題ない
 - **zpkg は setuid/setgid/sticky を保存する**(install 時の明示 chmod + binpkg の tar モード)。`open(2)` は setuid を無視するので、これが無いと昇格ツールが機能しない
 
 ## カーネル方針
 
-- vanilla kernel(kernel.org)。LFS の本のバージョンに合わせる(現在 7.1.8)
+- vanilla kernel(kernel.org)。チャンネルごとに系列を分け、stable は 6.18.64 LTS、
+  testing は 7.3.5、unstable は 7.4-rc3 mainline を使う
 - **x86_64_defconfig をベース**に `core/linux/x86_64-generic.config` を
   `merge_config.sh` でマージする(「基本はどの端末でも起動、細部は個人で弄る」方針)
 - **起動に必要なドライバは組み込み(=y)**: ACPI/APIC、SATA AHCI、NVMe、USB

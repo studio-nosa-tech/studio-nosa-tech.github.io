@@ -10,6 +10,11 @@ const bootLabel: Record<string, string> = {
 const availabilityLabel =
   release.availability === 'available' ? '公開中' : '公開準備中';
 const short = (sha: string) => sha.slice(0, 12);
+const recipeCount = (c: { core: number; main: number; desktop: number }) =>
+  c.core + c.main + c.desktop;
+const perChannel = Object.entries(release.recipes.channels)
+  .map(([name, c]) => `${name} ${recipeCount(c)}`)
+  .join(' / ');
 const generated = release.generated.replace('T', ' ').replace('Z', ' UTC');
 const newsSlug = release.release.replace(/\./g, '-');
 ---
@@ -83,7 +88,7 @@ const newsSlug = release.release.replace(/\./g, '-');
           </tr>
           <tr>
             <th>レシピ</th>
-            <td>{release.recipes.total} (各チャンネル {release.recipes.per_channel})</td>
+            <td>{release.recipes.total} ({perChannel})</td>
           </tr>
         </tbody>
       </table>

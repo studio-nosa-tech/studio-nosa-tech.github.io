@@ -23,11 +23,11 @@ ZIGNOS は、ゼロからビルドするソースベースの Linux ディスト
 - [ビルド環境の隔離](/docs/build-sandbox/) — bubblewrap、読み取り専用 root、ネットワーク分離
 - [再現可能なビルド](/docs/reproducibility/) — SOURCE_DATE_EPOCH、ビルドログ、provenance、SPDX SBOM
 - [システム設計](/docs/design-system/) — init、サービス、特権昇格、カーネル方針
-- [デスクトップ環境](/docs/desktop/) — KDE Plasma 6 (Wayland) の設計方針と M43 基盤の実装状況
+- [デスクトップ環境](/docs/desktop/) — KDE Plasma 6 (Wayland) の構成・導入手順と M43–M51 の実装状況
 
 ## プロジェクト
 
 - [現在のリリース](/releases/current/) — {{release}} の stage3・バージョン・チェックサム・パッケージ一覧
 - [リリースマニフェスト](/docs/release-manifest/) — release.json のスキーマと生成・参照方法
-- [ロードマップ](/docs/roadmap/) — M0–M42 の記録と現在の状況
+- [ロードマップ](/docs/roadmap/) — M0–M51 の記録と現在の状況
 - [プロジェクト概要](/about/)

@@ -96,7 +96,7 @@ source build では、その時点でインストールされているパッケ�
 
 ```sh
 zpkg info <pkg>
-# build: bwrap, network on, env 54 packages (....)
+# build: bwrap, network on, env 69 packages (....)
 ```
 
 サンドボックス内に見えるのはインストール済みシステム全体(読み取り専用)で、

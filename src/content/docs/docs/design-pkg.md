@@ -3,19 +3,20 @@ title: zpkg 設計
 description: zpkg の設計。レシピ形式、DB schema 2、USE フラグ、トランザクション、binpkg。
 ---
 
-ステータス: v0.2.0 設計(実装と合わせて更新する。DB schema 2・world/upgrade・USE
-フラグ・フック・トランザクション・依存アトム解決は実装済み — 後述の各節参照)
+ステータス: v0.3.2 設計(実装と合わせて更新する。DB schema 2・world/upgrade・USE
+フラグ・フック・トランザクション・依存アトム解決・レシピ同期・reproducible build
+は実装済み — 後述の各節参照)
 
 > 実際の設定ファイル(`use.conf` / `package.use` / `make.conf` / `binrepo.conf` /
 > `sync.conf`)と環境変数は [zpkg 設定](/docs/zpkg-config/) にまとめています。
 
 ## 目標
 
-- ソースベースのパッケージマネージャ。KISS Linux の `kiss` を最小構成の参考にする
-- 最初は数百行〜1500 行程度のシンプルな実装。長期的に Gentoo Portage / Exherbo Paludis 相当へ進化させる
+- ソースベースのパッケージマネージャ。軽量なパッケージマネージャの最小構成を参考にする
+- 最初は数百行〜1500 行程度のシンプルな実装。長期的に本格的なパッケージマネージャ相当へ進化させる
 - **Go で書く**: 単一静的バイナリとして chroot 内でも動かせる。将来の USE フラグ・ソルバー拡張も同じコードベースで行う
 
-## まだ無いもの(v0.2.0 時点)
+## まだ無いもの(v0.3.2 時点)
 
 - 公開バイナリリポジトリの配布・運用(署名の仕組みと `keys/` 出力は実装済み)
 
@@ -41,7 +42,7 @@ install(競合検出 + DB 記録) / remove(internal/install, internal/pkgdb)
 パッケージ DB: `$ZPKG_DB`(既定 `$ZPKG_ROOT/var/lib/zpkg`)
 キャッシュ: `$ZPKG_CACHE`(既定 `$ZPKG_ROOT/var/cache/zpkg`)
 
-## レシピ形式(ディレクトリ型・KISS 式)
+## レシピ形式(ディレクトリ型・ミニマル)
 
 ```
 recipes/<channel>/core/<pkg>/
@@ -65,7 +66,7 @@ recipes/<channel>/core/<pkg>/
 
 ## build スクリプト契約
 
-`build` は**恒久的に shell**(Portage の ebuild、Arch の PKGBUILD と同じ発想)。書き換え対象は zpkg コアのみで、レシピの build スクリプト契約は温存する。
+`build` は**恒久的に shell**(一般的なソースビルドレシピと同じ発想)。書き換え対象は zpkg コアのみで、レシピの build スクリプト契約は温存する。
 
 実行環境:
 
@@ -175,9 +176,10 @@ linux-firmware に実在する空白入りファイル名がきっかけ(M22)。
 - 制限: レシピは名前ごとに 1 バージョン(複数バージョン/スロットは解決対象外)。
   **SAT solver は未実装**で、候補選択は将来差し替えられるよう `internal/resolve` に分離している
 - 既にインストール済みのパッケージは build/install の対象からスキップ(`-f` で強制)
-- **`-f` は binpkg キャッシュを無視しない**: 同一 version+revision+実効 USE の
-  binpkg があればそれを使う。レシピの内容を変えたときは revision を上げること
-  (binpkg キーが変わり、ソースから再ビルドされる)
+- **`-f` は binpkg キャッシュを無視しない**: 同一チャンネル・同一レシピ digest・
+  同一 version+revision+実効 USE の binpkg があればそれを使う。レシピ内容が
+  変われば digest 不一致でキャッシュミスになり、ソースから再ビルドされる。
+  revision は配布順序と識別のため、内容変更時に上げるのが原則
 
 ## ビルド環境の隔離(M38)
 
@@ -307,8 +309,9 @@ binrepo/
   `keys/<keyid>.pub` も書く
 - **消費**: `ZPKG_BINREPO`(env)または `/etc/zpkg/binrepo.conf` の `BINREPO=` を設定すると、
   install はローカル binpkg キャッシュがミスした後にリポジトリを試す
-- **一致条件**: name・arch・version+revision・**実効 USE フラグのハッシュ**が全部一致。
-  一致するパッケージがない場合だけソースビルドへフォールバックする
+- **一致条件**: name・arch・version+revision・**実効 USE フラグのハッシュ**に加え、
+  **チャンネルとレシピ digest** が一致。一致するパッケージがない場合だけ
+  ソースビルドへフォールバックする
 - **検証**: index の署名、期限、generation、各エントリの `sha256` と
   `manifest_sha256` を検証する。改ざん・期限切れ・ロールバック・sha256 不一致は
   **ハードエラー**で、ソースビルドへ黙って逃げない
@@ -374,9 +377,9 @@ binrepo/
 - 初回の信頼は公開鍵 fingerprint の out-of-band 確認に依存する
 - GPG/OpenPGP は未対応。署名 envelope の `algorithm` を拡張して将来追加する
 
-## リリースチャンネルと upgrade(M40)
+## リリースチャンネルと upgrade(M40 / M51)
 
-zpkg 0.2.0 から、レシピツリーは `stable` / `testing` / `unstable` の3チャンネルを
+zpkg 0.3.2 では、レシピツリーは `stable` / `testing` / `unstable` の3チャンネルを
 持つ。選択は `/etc/zpkg/make.conf` の `CHANNEL=`(既定 stable)、
 `ZPKG_CHANNEL` 環境変数、`--channel` の順で上書きできる。
 
@@ -388,23 +391,29 @@ zpkg 0.2.0 から、レシピツリーは `stable` / `testing` / `unstable` の3
   new dependency)、依存と makedepends の差分、警告(`upgrade_warning`、主要
   パッケージのメジャー版本変更、新 conflict、slot 変更、チャンネル変更)、
   孤立パッケージを計画する
-- 実行は **全パッケージのビルド → インストール**。ビルド失敗時はシステムを
-  変更しない。インストール失敗はパッケージ単位でロールバックし、再実行で
-  再開、クラッシュは `zpkg recover`
+- **新規依存は先にインストールする**。計画の `KindInstall` を先にビルド・
+  インストールしてから、Upgrade / Rebuild / Downgrade を全ビルド→インストール
+  する。新しい makedepends を必要とするビルドが依存未導入で失敗しない。
+  既存パッケージは全ビルド成功後にだけ置き換える
+- 新規依存のビルド失敗時は既存パッケージを変更しない。アップグレードの
+  ビルド失敗時も既存版は置き換わらない(先に追加した新規依存は残る)。
+  インストール失敗はパッケージ単位でロールバックし、再実行で再開、
+  クラッシュは `zpkg recover`
 - 完了後に world / ターゲットを再解決し、closure の manifest を検証する。
   `--verify` は全ファイルの sha256 も照合する
-- 制限: セット全体の自動ロールバックはしない。同じ version+revision のまま
-  内容を変えると binpkg が衝突するため、変更時は revision を上げる
+- 制限: セット全体の自動ロールバックはしない。同じ version+revision でも
+  レシピ digest が変われば再ビルド対象になるが、識別と配布順序のため
+  内容変更時は revision を上げる
 
 詳細は [リリースチャンネル](/docs/channels/) を参照。
 
-## コマンド(v0.2.0)
+## コマンド(v0.3.2)
 
 | コマンド | 内容 |
 |---|---|
 | `build [-f] [--no-sandbox] [--clean] [--repro-check] <pkg>...` | fetch → 検証 → destroot まで(インストールしない)。`--clean` は work を削除、`--repro-check` は 2 回ビルドして manifest 比較 |
 | `install [-f] [-p] [--asdeps] [--no-sandbox] [--clean] [--repro-check] <pkg>...` | build/install。`-p` は pretend、`--asdeps` は world に追加しない。`--clean` / `--repro-check` はキャッシュを使わずソースビルド |
-| `upgrade [-p] [-y] [--newuse] [--prune] [--allow-downgrade] [--channel <ch>] [--verify] [pkg...]` | world(または指定 pkg)を選択チャンネルの版へ。変更一覧・依存差分・警告を表示し、全ビルド成功後にインストール。`--newuse` は USE 変更時の再ビルド、`--prune` は孤立依存の削除、`--allow-downgrade` はダウングレード許可、`--verify` は全ファイルの sha256 検証 |
+| `upgrade [-p] [-y] [--newuse] [--prune] [--allow-downgrade] [--channel <ch>] [--verify] [pkg...]` | world(または指定 pkg)を選択チャンネルの版へ。変更一覧・依存差分・警告を表示し、新規依存を先にインストールしてから、全ビルド成功後にアップグレードをインストール。`--newuse` は USE 変更時の再ビルド、`--prune` は孤立依存の削除、`--allow-downgrade` はダウングレード許可、`--verify` は全ファイルの sha256 検証 |
 | `remove [-f] <pkg>...` | 削除 + world から除去。逆依存があると停止(`-f` で強制) |
 | `info <pkg>...` | インストール済みメタデータと利用可能レシピ |
 | `owner <path>...` | パスの所有パッケージ |
@@ -414,7 +423,7 @@ zpkg 0.2.0 から、レシピツリーは `stable` / `testing` / `unstable` の3
 | `channel [stable\|testing\|unstable]` | 実効チャンネルと利用可能ツリーの表示、`make.conf` の `CHANNEL=` 更新 |
 | `recover` | 中断されたトランザクションの修復(install はロールバック、remove は完了) |
 | `mkindex [--key <private>] [--generation N] [--expires ...] [dir]` | binpkg リポジトリ用の `index.json` を生成。`--key` で署名し `keys/<keyid>.pub` も出力 |
-| `sync [--from <src>] [--dest <dir>] [-n] [--allow-unsigned]` | レシピツリーを stage3/レシピ tarball・ディレクトリ・URL から原子的に置換。`recipes.manifest` を検証 |
+| `sync [--from <src>] [--dest <dir>] [--git] [--branch <name>] [-n] [--allow-unsigned]` | レシピツリーを stage3/レシピ tarball・ディレクトリ・URL・git リポジトリから原子的に置換。git では `.zpkg-git` の commit とリモート HEAD を比較し、変更時だけ shallow clone。`recipes.manifest` を検証 |
 | `key generate --private <path> [--public <path>]` | Ed25519 鍵ペアを生成(秘密鍵 0600) |
 | `key import <pubkey>...` / `key list` / `key remove <keyid>` | trusted.d の鍵管理 |
 | `sign --key <private> <file>...` / `verify <file>...` | detached 署名の生成・検証 |
@@ -427,10 +436,10 @@ zpkg 0.2.0 から、レシピツリーは `stable` / `testing` / `unstable` の3
 
 binpkg のキャッシュ名は `<name>-<version>[-rN][-<opts8>].pkg.tar.gz`。revision や実効オプションが変わると別ファイルになる。
 
-### 出力(emerge 風のフェーズ表示)
+### 出力(フェーズ表示)
 
-ビルドの前に、これから処理するパッケージと実効 USE フラグの一覧を出す
-(Portage の "These are the packages that would be merged" 相当)。その下に件数が入る:
+ビルドの前に、これから処理するパッケージと実効 USE フラグの一覧を出す。
+その下に件数が入る:
 
 ```
 These are the packages that will be installed, in order:
@@ -440,7 +449,7 @@ These are the packages that will be installed, in order:
 Total: 2 packages (1 target, 1 dependency)
 ```
 
-ビルドとインストールは `>>>` 付きのフェーズ行で区切る(Portage 風)。ビルドスクリプトの
+ビルドとインストールは `>>>` 付きのフェーズ行で区切る。ビルドスクリプトの
 出力はそのまま流れるので、どこからどこまでが 1 パッケージなのかが分かる:
 
 ```
@@ -509,7 +518,7 @@ ZPKG_NAME ZPKG_VERSION ZPKG_ROOT ZPKG_USE
 
 ## パッケージリポジトリ(zignos-recipes)
 
-専用の git リポジトリ(zignos-recipes)をパッケージツリーとする(Gentoo の gentoo/gentoo リポジトリと同じ発想):
+専用の git リポジトリ(zignos-recipes)をパッケージツリーとする(パッケージツリーを専用リポジトリで管理するのと同じ発想):
 
 ```
 zignos-recipes/
@@ -521,7 +530,7 @@ zignos-recipes/
 
 zpkg はカテゴリディレクトリを `ZPKG_REPOS` に指定して使う。複数リポジトリ(overlay、例: 個人用フォーク)は `ZPKG_REPOS` の複数指定で自然にサポート(先頭優先)。
 
-インストール済みシステムでは **レシピツリーを `/usr/share/zignos/recipes/<channel>/{core,main,desktop}` に同梱**し、`ZPKG_REPOS` 未設定時は `/etc/zpkg/make.conf` の `CHANNEL=`(既定 stable)に対応する3カテゴリを自動で検索する(gentoo の `/var/db/repos` 相当)。M39 以前のフラットな `recipes/{core,main,desktop}` は stable として受理する。したがってビルド済みイメージでも `zpkg search` / `zpkg install <pkg>` がそのまま動く。`ZPKG_REPOS` を明示すれば上書きできる(開発時のソースツリー、overlay など)。
+インストール済みシステムでは **レシピツリーを `/usr/share/zignos/recipes/<channel>/{core,main,desktop}` に同梱**し、`ZPKG_REPOS` 未設定時は `/etc/zpkg/make.conf` の `CHANNEL=`(既定 stable)に対応する3カテゴリを自動で検索する(一般的なパッケージツリーの配置に相当)。M39 以前のフラットな `recipes/{core,main,desktop}` は stable として受理する。したがってビルド済みイメージでも `zpkg search` / `zpkg install <pkg>` がそのまま動く。`ZPKG_REPOS` を明示すれば上書きできる(開発時のソースツリー、overlay など)。
 
 ## bootstrap チェーン(M2)
 

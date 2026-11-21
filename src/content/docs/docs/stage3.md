@@ -13,19 +13,19 @@ ZIGNOS の **stage3 tarball** は、カーネルとブートローダーを除�
 ## 中身
 
 - `base.list` の**依存クロージャ**から linux と grub を除いた
-  **{{stage3.package_count}} パッケージ**({{build_date}} 時点 / 約 {{stage3.size_mib}} MiB):
+  **67 パッケージ**(現行ビルド r20 / 約 1.1 GiB):
   glibc / gcc / binutils / make / bash / coreutils / tar / gzip / xz / bzip2 /
   pkgconf / busybox / openrc / initscripts / eudev / kmod / gperf / util-linux /
   shadow / e2fsprogs / kbd / tzdata / inetutils / procps / dosfstools / zpkg /
-  ca-certificates / bubblewrap と、その依存・makedepends
+  git / ca-certificates / bubblewrap と、その依存・makedepends
 - PAM 対応の `login` と `/etc/pam.d`(login / su / passwd / system-auth /
-  system-login / system-local-login)。開発ツリーの最新は **r15**
-  (2026.11.20-alpha / 55 パッケージ / 976 MiB、SHA-256
-  `0f54ff44cae3491b77282583bbf326667d1f603bc24116c8283895723feeaac0`)
+  system-login / system-local-login)。現行マニフェストは **r20**
+  ({{release}} / 67 パッケージ / 約 1.1 GiB、SHA-256
+  `9409ff1920365585d56692c32c2d8ebaab98ae662a7d580dd21d1315a6f8e937`)
 - meson / ninja / python3 / go など、ソースビルドに必要なものも含む
 - **含まないもの**: カーネル、initramfs、カーネルモジュール、GRUB、ブート設定、
   ユーザーデータ、キャッシュ、SSH ホスト鍵、machine-id、root パスワード(ロック済み)
-- SSH / DHCP / WiFi / エディタ / man は含まれない(Gentoo 流。chroot 後に
+- SSH / DHCP / WiFi / エディタ / man は含まれない(chroot 後に
   `zpkg install` で追加する)
 - 同梱: レシピツリー `/usr/share/zignos/recipes/stable/{core,main,desktop}`、
   `/etc/zpkg/make.conf`(`CHANNEL=stable`)、`/etc/zignos-stage3`(ビルド情報)、
@@ -33,10 +33,11 @@ ZIGNOS の **stage3 tarball** は、カーネルとブートローダーを除�
   `/mnt/zignos/usr/sbin/zignos-fstab /mnt/zignos` で生成するか `blkid` の
   UUID を記入する。間違った UUID を有効にすると `/` が read-only で起動する)
 - 署名済みツリーでは `recipes.manifest` / `recipes.manifest.sig` も同梱される。
-  現行の {{stage3.revision}} は公式署名鍵が未運用のため未署名。stage3 の
+  現行ビルド r20 は公式署名鍵が未運用のため未署名。stage3 の
   `/etc/zpkg/sync.conf` が `RECIPEALLOWUNSIGNED=1` を設定している
-  (詳細は [パッケージ署名と検証](/docs/signing/))。zpkg は {{zpkg.version}} で、
-  DB には provenance と SPDX SBOM も含まれる
+  (詳細は [パッケージ署名と検証](/docs/signing/))。r20 の zpkg は 0.3.1 で、
+  DB には provenance と SPDX SBOM も含まれる。起動後に `zpkg upgrade` で
+  0.3.2 に更新できる
 - `/etc/zpkg/sync.conf` は既定で GitHub のレシピリポジトリを指す。
   `zpkg sync` は `.zpkg-git` の commit とリモート HEAD を比較し、変更がある
   ときだけ shallow clone する。レシピ tarball を手動で作る必要はない。
@@ -45,8 +46,10 @@ ZIGNOS の **stage3 tarball** は、カーネルとブートローダーを除�
   `zpkg channel testing` で切り替える
   (詳細は [リリースチャンネル](/docs/channels/))
 
-> 旧構成(2026-11-17)は 2.1 GiB / 86 パッケージだった。現在は最小ベース化と
-> eudev / tzdata / inetutils / procps の追加を経て {{stage3.package_count}} パッケージ / {{stage3.size_mib}} MiB。
+> 旧構成(2026-11-17)は 2.1 GiB / 86 パッケージだった。現在は最小ベース化、
+> eudev / tzdata / inetutils / procps、PAM、git の追加を経て
+> 現行マニフェストは r20 で 67 パッケージ / 約 1.1 GiB。前回の
+> 2026.11.19-alpha / r12 は 54 パッケージ / 977 MiB でした。
 
 ## 配布
 
@@ -121,7 +124,7 @@ efibootmgr -v
 
 | 形態 | 中身 | 用途 |
 |---|---|---|
-| **stage3**(本ドキュメント) | base.list の依存クロージャ − linux/grub({{stage3.package_count}}) | 既定の実機インストール。自分で展開・chroot して完成させる |
+| **stage3**(本ドキュメント) | base.list の依存クロージャ − linux/grub(現行 r20 は 67) | 既定の実機インストール。自分で展開・chroot して完成させる |
 | **seed**(`make-seed.sh`) | 実行中のフルシステム | 開発者が既存システムを複製・拡張する |
 | **イメージ**(`make-image.sh`) | 起動可能な完成ディスク像(BIOS/UEFI) | dd してすぐ起動する |
 | **installer**(`zignos-install`) | 実行中システムを別ディスクへコピー | USB から起動して内部ディスクへ導入する |

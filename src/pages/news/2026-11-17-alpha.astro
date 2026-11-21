@@ -28,8 +28,8 @@ import PageLayout from '../../layouts/PageLayout.astro';
       <p>
         ZIGNOS は、<a href="https://studio-nosa.live/" rel="external">Studio NØSa.</a>
         が開発する、ゼロからビルドするソースベースの Linux ディストリビューションです。
-        この alpha では、Gentoo / Exherbo 流の <strong>stage3 tarball</strong> を
-        配布物として用意しました。
+        この alpha では、chroot 可能な最小ベースである
+        <strong>stage3 tarball</strong> を配布物として用意しました。
       </p>
       <ul>
         <li>カーネルとブートローダーを除いた、chroot 可能な最小ベース</li>
@@ -40,7 +40,7 @@ import PageLayout from '../../layouts/PageLayout.astro';
 
       <h2>当時のベース</h2>
       <p>
-        リリース後の開発でベースを Gentoo の <code>@system</code> 相当まで最小化しました。
+        リリース後の開発でベースを最小限のシステム構成まで絞り込みました。
         当時の stage3 は <strong>53 パッケージ / 約 976 MiB</strong> です。
         SSH / DHCP / WiFi / エディタ / man は含まれず、必要なものを
         <code>zpkg install</code> で追加します。

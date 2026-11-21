@@ -93,7 +93,10 @@ zpkg install linux grub</code></pre>
       <p>
         <code>{release.recipes.filename}</code> には
         stable / testing / unstable の全チャンネル
-        (各 {release.recipes.per_channel} レシピ、合計 {release.recipes.total})が入っています。
+        (stable {release.recipes.channels.stable.core + release.recipes.channels.stable.main + release.recipes.channels.stable.desktop} /
+        testing {release.recipes.channels.testing.core + release.recipes.channels.testing.main + release.recipes.channels.testing.desktop} /
+        unstable {release.recipes.channels.unstable.core + release.recipes.channels.unstable.main + release.recipes.channels.unstable.desktop}、
+        合計 {release.recipes.total})が入っています。
         stage3 には stable だけが同梱されるため、他チャンネルは
         <code>zpkg sync</code> で追加します。
       </p>
@@ -111,7 +114,6 @@ zpkg install linux grub</code></pre>
         <li>各ファイルには SHA-256 を添付します。展開・実行前に照合してください。</li>
         <li>stage3 の root はロック済みです。chroot 後に <code>passwd</code> で設定してください。</li>
         <li>Secure Boot は無効にしてください(GRUB / カーネルは未署名)。</li>
-        <li>配布イメージの初期パスワードは初回起動時に必ず変更してください。</li>
       </ul>
 
       <h2>リンク</h2>
