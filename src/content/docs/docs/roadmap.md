@@ -13,7 +13,7 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 ## 現在のシステム(2026-11-21)
 
 - **GUI: M48 完了** — Stable / Testing / Unstable の系列分岐に加え、SDDM を全チャンネル、Plasma Login Manager を Testing / Unstable に追加した。Stable は Linux 6.18.64 LTS / Qt 6.8.5 LTS / KF6 6.18 / Plasma 6.4.5 / Gear 25.04.3 / Mesa 26.2.7、Testing は Linux 7.3.5 / Qt 6.11.3 / KF6 6.32 / Plasma 6.8.3 / Gear 26.08.3 / Mesa 26.3.1、Unstable は Linux 7.4-rc3 / Gear 26.11.80 beta。Testing のデスクトップは QEMU でパネル・壁紙・KRunner・Dolphin・Kate・UDisks2 まで確認し、未解決 soname 0。SDDM / PLM は daemon・PAM セッション・KWin 起動まで確認したが、QEMU の Mesa softpipe (`sp_find_cached_tile`) が greeter の透過合成で落ちるため、画面表示は実 GPU 待ち。SDDM / PLM の helper が root の ambient groups をセッションへ渡す問題と、共通 D-Bus ポリシーの衝突も修正した
-- **base.list {{base.top_level}} トップレベル = 依存込み {{base.closure}} パッケージ**(唯一の定義)/ 12G ブータブルイメージ(BIOS/UEFI 版)。レシピツリーは **stable 382(core 77 + main 100 + desktop 205)/ testing・unstable 389(core 77 + main 102 + desktop 210)**
+- **base.list {{base.top_level}} トップレベル = 依存込み {{base.closure}} パッケージ**(唯一の定義)/ 12G ブータブルイメージ(BIOS/UEFI 版)。レシピツリーは **stable 389(core 77 + main 100 + desktop 212)/ testing・unstable 399(core 77 + main 102 + desktop 220)**
 - 起動: BIOS/MBR または UEFI/GPT → GRUB 2.14 → kernel 7.1.8 + initramfs(busybox) → OpenRC 0.64.1 → eudev 3.3.0 → serial/VGA ログイン(shadow / PAM)
 - カーネル: x86_64_defconfig + `x86_64-generic.config`(起動系は組み込み、GPU/WiFi/追加 NIC はモジュール)。root は initramfs が `root=UUID=` で解決
 - ネットワーク: **ベースには含まない**(Gentoo 流の opt-in)。`zpkg install dhcpcd openssh` の後 `rc-update add dhcpcd boot` / `rc-update add sshd default`
@@ -21,7 +21,7 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 - 無線: wpa_supplicant 2.12 + iw(libnl、D-Bus 制御 IF)を main/ から任意インストール。WiFi ドライバはカーネルモジュール、firmware は `main/linux-firmware`
 - サービス: ベースが有効化するのは udev(eudev)/ console(ttyS0)/ console-vga(tty1) のみ。mdev はフォールバックとして同梱するが無効。dhcpcd/dbus/sshd/chronyd/wpa_supplicant/crond/nftables は入れてから自分で有効化。デスクトップでは dbus/elogind/polkit を default で有効化し、UPower は専用の OpenRC サービス、PipeWire/WirePlumber は Plasma の XDG autostart から起動する
 - 運用: ベースは toolchain + coreutils + zpkg + tzdata + eudev + inetutils/procps。main/ には 87 パッケージ(エディタ / SSH / man / git / curl / wget / doas、M30 のネットワーク診断・ビルド・圧縮・監視、M34 の NetworkManager/nmtui)があり、任意インストール
-- zpkg: DB schema 2・world/upgrade・USE フラグ(package.use/IUSE)・フック(ldconfig 自動)・トランザクション・slots・binpkg リポジトリ・レシピ同期(`zpkg sync`)・依存アトム解決(バージョン制約 / provides / conflicts / 逆依存 / USE 制約)・Ed25519 署名(index / レシピ manifest / ロールバック・期限)・bubblewrap ビルド隔離(ro root / namespace / capability / network)・再現可能ビルド(SOURCE_DATE_EPOCH / ログ / provenance / SBOM)・リリースチャンネル(stable/testing/unstable)・upgrade の差分表示/全ビルド後インストール/整合性チェック・リリースマニフェスト(ビルドごとの release.json)
+- zpkg: DB schema 2・world/upgrade・USE フラグ(package.use/IUSE)・フック(ldconfig 自動)・トランザクション・slots・binpkg リポジトリ・レシピ同期(`zpkg sync`)・依存アトム解決(バージョン制約 / provides / conflicts / 逆依存 / USE 制約)・Ed25519 署名(index / レシピ manifest / ロールバック・期限)・bubblewrap ビルド隔離(ro root / namespace / capability / network)・再現可能ビルド(SOURCE_DATE_EPOCH / ログ / provenance / SBOM)・リリースチャンネル(stable/testing/unstable)・upgrade の差分表示/新規依存の先行導入/全ビルド後インストール/整合性チェック・リリースマニフェスト(ビルドごとの release.json)
 - bootstrap: stage0/1(cross toolchain、メンテナ専用)→ stage2 フェーズ1(bootstrap core)→ **フェーズ2(base.list 全量)**。/usr は完全に zpkg 管理
 - リリースモデル: **ローリングリリース**(ブートストラップ設計)。更新は `zpkg upgrade` と `build-system.sh`
 
@@ -78,8 +78,10 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 | M47 | Stable / Testing / Unstable のパッケージ系列分岐 | 完了(2026-11-21 Testing デスクトップ QEMU 確認、stage3 r17) | Qt 6.12 / Plasma 6.9 は次期 |
 | M48 | SDDM 全チャンネル + Plasma Login Manager | 完了(2026-11-21 パッケージ・PAM・グループ修正。greeter 目視は実 GPU 待ち) | QEMU softpipe の修正待ち |
 | M49 | レシピ同期の git 化 | 完了(2026-11-21 zpkg 0.3.1 / initscripts r26 / stage3 r20) | - |
+| M50 | Spectacle / kio-extras | 完了(2026-11-21 stable 6.4.5・Testing/Unstable 6.8.3、kio-extras 全チャンネル) | GUI 操作の実 GPU 確認 |
+| M51 | zpkg の自己更新と新規依存の自動導入 | 完了(2026-11-21 zpkg 0.3.2 / initscripts r27) | - |
 
-次の候補: M48 の残り(実 GPU での greeter 目視) / M47 の残り(実 GPU での Unstable 検証・Qt 6.12 / Plasma 6.9 移行・Mesa main) / 配布用 ISO・UEFI / 実機 GPU・WiFi / Spectacle / kio-extras / リリースマニフェストの CI 連携 / ストレージ系(LUKS/LVM/XFS/Btrfs) / 公式署名鍵の運用と binpkg リポジトリの公開 / 最小依存ビルドルート / 完全な固定ビルドルート / resource limit / SAT solver(複数バージョン・スロットを含む完全解)。
+次の候補: **M48 の残り(実 GPU での greeter 目視)** / M47 の残り(実 GPU での Unstable 検証・Qt 6.12 / Plasma 6.9 移行・Mesa main) / 配布用 ISO・UEFI / 実機 GPU・WiFi / リリースマニフェストの CI 連携 / ストレージ系(LUKS/LVM/XFS/Btrfs) / 公式署名鍵の運用と binpkg リポジトリの公開 / 最小依存ビルドルート / 完全な固定ビルドルート / resource limit / SAT solver(複数バージョン・スロットを含む完全解)。
 
 ## M25: stage3 tarball(2026-11-17 完走)
 
@@ -259,7 +261,21 @@ M42 時点の `desktop/` は 0 パッケージで、依存・OpenRC 統合・PoC
 - [x] **M44: KF6 + KWin + Plasma 最小** — 完了(2026-11-20 QEMU 実走行)。Qt 6.8.5 / KF6 6.18.0 / Plasma 6.4.5 / Xwayland 24.1.9 / xkbcomp 1.4.7 / kactivitymanagerd を追加。`linux-pam` を core へ移して shadow を PAM 対応にし、tty1 のログインが elogind の seat0 セッションになることを確認。virtio-gpu + TCG で `startplasma-wayland` → KWin(DRM)→ Xwayland → ksmserver → plasmashell を起動し、パネルとデスクトップをスクリーンショットで確認。kickoff(kirigami-addons)・音量(plasma-pa)・壁紙・UDisks2・PLM・PipeWire・Xwayland GLX は M45
 - [x] **M45: フル Plasma** — 完了(2026-11-20 QEMU 実走行)。PipeWire / WirePlumber / plasma-pa、NetworkManager の polkit 化 + plasma-nm、UPower + powerdevil、kirigami-addons / 壁紙 / polkit-kde-agent、Konsole / Dolphin / KCalc / Filelight、Xwayland GLX 1.4、kcm_style の xrdb 修正を実装。PLM は Plasma 6.6 以降のため M46 へ
 - [x] **M46: UDisks2 / KDE アプリ** — 進行中(2026-11-20)。libatasmart / libblockdev(part/fs/loop/swap/mdraid/crypto/nvme)/ udisks2 と、cryptsetup / LVM2 / libnvme / json-c / keyutils / libbytesize を追加。chroot で UDisks2 の D-Bus 起動と `udisksctl status` を確認。libarchive + Ark、Kate、Gwenview(Exiv2 / LCMS2 / kImageAnnotator / kColorPicker)、Okular(Poppler 25.04.0)、KWalletManager を追加し、`kde-applications` を 9 アプリに更新。main 98 / desktop 205 / 各チャンネル 380。BIOS/MBR の検証イメージ `zignos-m46.img`(16 GiB sparse / 実使用 8.8 GiB)を QEMU で起動し、Plasma の壁紙・パネル、5 アプリ、`udisksctl status` を確認。さらに stage3 から入れた **クリーンな 291 パッケージの BIOS イメージ** `zignos-m46-clean.img`(10 GiB sparse / 実使用 6.5 GiB)で壁紙・パネル・時計、Kate / Ark / Dolphin・日本語表示、UDisks2 を確認し、クリーン root で見つかった libltdl / Xwayland / xkbcomp / DejaVu などの欠落依存をレシピに反映。`shared-mime-info 2.4` も追加し、MIME の関連付けと Dolphin のファイル種別表示を確認。`ipaex-fonts` を追加し、Kate で日本語表示を確認
-- [ ] **M46: 配布物** — 配布用 ISO(BIOS/UEFI)、実機 GPU、Plasma 6.6 LTS/PLM 移行、Spectacle / kio-extras
+- [ ] **M46: 配布物** — 配布用 ISO(BIOS/UEFI)、実機 GPU、Plasma 6.6 LTS/PLM 移行
+- [x] **M50: Spectacle / kio-extras** — 完了(2026-11-21)。stable は
+  Spectacle 6.4.5 + OpenCV 4.14.0、Testing / Unstable は Spectacle 6.8.3 +
+  KQuickImageEditor 0.7.0.1 / Tesseract 5.5.4 / Leptonica 1.87.0。
+  PrisonScanner のため stable は Prison 6.18 + ZXing-cpp 1.4.0、
+  Testing / Unstable は Prison 6.32 + ZXing-cpp 3.1.1 を使用。
+  kio-extras は 25.04.3 / 26.08.3 / 26.11.80 で、archive / fish / info / man /
+  thumbnail / recentlyused / 検索などの worker を追加。録画用に
+  FFmpeg 8.0.1 と libva 2.24.1 を KPipeWire へ追加
+- [x] **M51: zpkg の自己更新と新規依存** — 完了(2026-11-21)。zpkg 0.3.2 の
+  レシピにソースアーカイブを同梱し、通常システムでも `zpkg upgrade zpkg` が
+  ビルドできるようにした。`zpkg upgrade` は新しく必要になった依存
+  (`KindInstall`)を先にインストールしてからアップグレード対象をビルドする。
+  initscripts r27 で git モードの sync.conf に必要な `git` を依存に追加。
+  0.2.0 → 0.3.0 の更新は既知の非対応経路として修正しない
 
 ## M41: リリース情報の一元管理(2026-11-19 検証)
 

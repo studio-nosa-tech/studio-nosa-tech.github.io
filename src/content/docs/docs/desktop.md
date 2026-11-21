@@ -8,7 +8,7 @@ ZIGNOS はコンソール主体の最小ベースとして育ってきました�
 
 **M47 で Stable / Testing / Unstable のデスクトップ系列を実際に分岐し、
 M48 で SDDM を全チャンネル、Plasma Login Manager を Testing / Unstable に
-追加しました。`desktop/` は stable 205 / testing・unstable 210 レシピです。
+追加しました。`desktop/` は stable 212 / testing・unstable 220 レシピです。
 Stable は Qt 6.8.5 / KF6 6.18.0 / Plasma 6.4.5 / Gear 25.04.3、Testing は
 Qt 6.11.3 / KF6 6.32 / Plasma 6.8.3 / Gear 26.08.3、Unstable は
 Linux 7.4-rc3 と Gear 26.11.80 beta を採用しています。
@@ -61,9 +61,9 @@ Qt 6.8 LTS でビルドできる最新の Gear(25.04.3)を固定し、Testing �
 - **`plasma-meta`** — Plasma セッション本体(kwin / plasma-workspace /
   plasma-desktop / systemsettings / plasma-nm / plasma-pa / powerdevil /
   壁紙 / kirigami-addons / polkit エージェント / UDisks2 など)。KDE アプリは含めません
-- **`kde-applications`** — KDE Gear のアプリ。M46 では Konsole / Dolphin /
-  KCalc / Filelight / Kate / Ark / Gwenview / Okular / KWalletManager を収録し、
-  Spectacle と kio-extras は次の増分で追加します。Plasma 本体には依存しません
+- **`kde-applications`** — KDE Gear のアプリ。Konsole / Dolphin /
+  KCalc / Filelight / Kate / Ark / Gwenview / Okular / KWalletManager /
+  Spectacle / kio-extras を収録します。Plasma 本体には依存しません
 
 `plasma-meta` と `kde-applications` は独立してインストール・削除できます。
 将来は `kde-applications-{utilities,graphics,multimedia,network,office,pim,sdk}`
@@ -172,7 +172,7 @@ BIOS/MBR の検証イメージ(QEMU)でビルド・起動を確認していま�
   (`sp_find_cached_tile`)で segfault するため、デスクトップの目視確認は
   Testing 側で行いました。実 GPU または Plasma 6.9 投入時に再検証します
 
-Spectacle(OpenCV 必須)と kio-extras、UEFI 版/ISO は次の増分です。
+Spectacle と kio-extras は M50 で追加しました。UEFI 版/ISO は次の増分です。
 
 ### M48 で追加したもの
 
@@ -226,9 +226,11 @@ rc-update add sddm default          # SDDM (全チャンネル)
 | M43 | 基盤(PAM / elogind / polkit / Wayland / Mesa / フォント / Qt6)+ メタレシピ骨格(完了) |
 | M44 | KF6 + KWin + Plasma 最小 + `plasma-meta`(完了。QEMU でパネル/デスクトップ表示) |
 | M45 | フル Plasma(音声 / ネットワーク / 電源 / 設定 / アプリ)+ `kde-applications`(完了。QEMU で確認) |
-| M46 | UDisks2 / KDE アプリ拡張 / 検証イメージ(第1増分完了)。クリーンな配布用イメージ / UEFI / 実機検証 / Plasma 6.6・PLM / Spectacle・kio-extras は次の増分 |
+| M46 | UDisks2 / KDE アプリ拡張 / 検証イメージ(第1増分完了)。クリーンな配布用イメージ / UEFI / 実機検証 / Plasma 6.6・PLM は次の増分 |
 | M47 | Stable / Testing / Unstable の系列分岐(完了)。Testing は Qt 6.11 / Plasma 6.8 / Gear 26.08、Unstable は Linux 7.4-rc3 と Gear 26.11.80 beta。Qt 6.12 / Plasma 6.9 は次期 |
 | M48 | SDDM を全チャンネル、PLM を Testing / Unstable に追加(完了)。helper の root グループ混入と共通 D-Bus ポリシーを修正。greeter の目視は QEMU softpipe のため実 GPU 待ち |
+| M49 | レシピ同期の git 化(完了)。`zpkg sync --git` と `/etc/zpkg/sync.conf` の既定 GitHub リポジトリ、stage3 r20 |
+| M50 | Spectacle / kio-extras を全チャンネルに追加(完了)。stable は Spectacle 6.4.5 + OpenCV、Testing / Unstable は 6.8.3 + KQuickImageEditor / Tesseract。KPipeWire 用に FFmpeg / libva を追加 |
 
 各フェーズの完了条件と依存関係は [ロードマップ](/docs/roadmap/) に記録します。
 
@@ -246,9 +248,16 @@ QEMU の virtio-gpu と Wayland を使い、DRM/seat を含む実際のセッシ
 
 ## 現在の制限
 
-- `desktop/` は 205 レシピ。`kde-applications` は Konsole / Dolphin / KCalc /
-  Filelight / Kate / Ark / Gwenview / Okular / KWalletManager の 9 アプリ
-- Spectacle(OpenCV 必須)と kio-extras は次の増分で追加する
+- `desktop/` は stable 212 / Testing・Unstable 220 レシピ。`kde-applications` は
+  Konsole / Dolphin / KCalc / Filelight / Kate / Ark / Gwenview / Okular /
+  KWalletManager / Spectacle / kio-extras の 11 アプリ
+- Spectacle は stable 6.4.5(OpenCV core/imgproc)、Testing / Unstable 6.8.3
+  (KQuickImageEditor / Tesseract)。録画のソフトウェア VP8/VP9/H.264
+  エンコーダ(libvpx / openh264)は未導入で、VAAPI のある GPU か
+  エンコーダ追加後に利用する。撮影・録画・OCR の GUI 操作は実 GPU で確認する。
+  OCR 用の言語データは eng / jpn / jpn_vert / osd を同梱する
+- kio-extras は archive / fish / info / man / thumbnail / recentlyused /
+  検索などの worker を提供する。Samba / MTP / AFC / NFS は未導入のため無効
 - 日本語表示は IPAex Gothic / Mincho で対応済み(UI の翻訳は英語のまま。
   日本語ロケールの UI 翻訳は次の増分)
 - SDDM 0.21 は全チャンネル、PLM 6.8.3 は Testing / Unstable に導入済み。
