@@ -36,32 +36,66 @@ export default defineConfig({
       sidebar: [
         {
           label: 'ZIGNOS',
-          items: [{ label: 'ドキュメント概要', link: '/docs/' }],
-        },
-        {
-          label: 'インストール',
           items: [
-            { label: 'インストール(stage3)', slug: 'docs/install' },
-            { label: 'stage3 リファレンス', slug: 'docs/stage3' },
+            { label: 'ドキュメント概要', link: '/docs/' },
+            { label: 'ZIGNOS 概要', slug: 'docs/overview' },
+            { label: '哲学', slug: 'docs/philosophy' },
+            { label: 'コントリビュート', slug: 'docs/contributing' },
           ],
         },
         {
-          label: '設計',
+          label: 'FAQ',
           items: [
-            { label: 'zpkg', slug: 'docs/design-pkg' },
+            { label: 'FAQ', slug: 'docs/faq' },
+            { label: 'インストール FAQ', slug: 'docs/faq/install' },
+            { label: 'ファイルシステム', slug: 'docs/faq/filesystems' },
+            { label: 'ZIGNOS の機能', slug: 'docs/faq/features' },
+            { label: '一般 FAQ', slug: 'docs/faq/general' },
+            { label: 'コミュニティ', slug: 'docs/faq/community' },
+            { label: '制限・未実装', slug: 'docs/faq/limitations' },
+          ],
+        },
+        {
+          label: '使う',
+          items: [
+            {
+              label: 'はじめに',
+              items: [
+                { label: 'はじめに', slug: 'docs/getting-started' },
+                { label: '要件', slug: 'docs/getting-started/requirements' },
+                { label: 'ダウンロード', slug: 'docs/getting-started/download' },
+                { label: 'インストール環境の準備', slug: 'docs/getting-started/media' },
+                { label: 'SystemRescue の起動', slug: 'docs/getting-started/boot' },
+                { label: 'ZIGNOS のインストール', slug: 'docs/getting-started/install' },
+                { label: '初回起動と設定', slug: 'docs/getting-started/first-boot' },
+              ],
+            },
+            {
+              label: 'システム管理',
+              items: [
+                { label: 'システム管理', slug: 'docs/system' },
+                { label: '設定ファイルの場所', slug: 'docs/system/config' },
+                { label: 'パッケージの管理', slug: 'docs/system/packages' },
+                { label: 'チャンネルとアップグレード', slug: 'docs/system/channels' },
+                { label: 'サービス (OpenRC)', slug: 'docs/system/services' },
+                { label: 'デスクトップ (KDE)', slug: 'docs/system/desktop' },
+              ],
+            },
+          ],
+        },
+        {
+          label: 'リファレンス',
+          items: [
+            { label: 'インストールガイド(詳細)', slug: 'docs/install' },
+            { label: 'stage3 リファレンス', slug: 'docs/stage3' },
+            { label: 'zpkg 設計', slug: 'docs/design-pkg' },
             { label: 'zpkg 設定', slug: 'docs/zpkg-config' },
             { label: 'リリースチャンネル', slug: 'docs/channels' },
             { label: '署名と検証', slug: 'docs/signing' },
             { label: 'ビルド隔離', slug: 'docs/build-sandbox' },
             { label: '再現可能ビルド', slug: 'docs/reproducibility' },
-            { label: 'システム', slug: 'docs/design-system' },
-            { label: 'デスクトップ(KDE Plasma 6)', slug: 'docs/desktop' },
-          ],
-        },
-        {
-          label: 'プロジェクト',
-          items: [
-            { label: '現在のリリース', link: '/releases/current/' },
+            { label: 'システム設計', slug: 'docs/design-system' },
+            { label: 'デスクトップ環境', slug: 'docs/desktop' },
             { label: 'リリースマニフェスト', slug: 'docs/release-manifest' },
             { label: 'ロードマップ', slug: 'docs/roadmap' },
           ],
