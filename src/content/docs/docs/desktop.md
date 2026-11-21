@@ -8,7 +8,7 @@ ZIGNOS はコンソール主体の最小ベースとして育ってきました�
 
 **M47 で Stable / Testing / Unstable のデスクトップ系列を実際に分岐し、
 M48 で SDDM を全チャンネル、Plasma Login Manager を Testing / Unstable に
-追加しました。`desktop/` は stable 205 / testing・unstable 209 レシピです。
+追加しました。`desktop/` は stable 205 / testing・unstable 210 レシピです。
 Stable は Qt 6.8.5 / KF6 6.18.0 / Plasma 6.4.5 / Gear 25.04.3、Testing は
 Qt 6.11.3 / KF6 6.32 / Plasma 6.8.3 / Gear 26.08.3、Unstable は
 Linux 7.4-rc3 と Gear 26.11.80 beta を採用しています。

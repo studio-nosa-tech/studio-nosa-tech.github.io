@@ -180,8 +180,9 @@ zpkg sync --from ./zignos-recipes -n       # 検証だけ
 ```
 
 `ZPKG_RECIPE_URL` / `ZPKG_RECIPE_GIT` / `ZPKG_RECIPE_BRANCH` 環境変数は
-`sync.conf` より優先されます。private リポジトリは git の credential helper
-か SSH 鍵が必要です。`sync` はレシピツリーを置き換えるだけで、インストール済み
+`sync.conf` より優先されます。既定のリポジトリは public のため
+未認証で取得できます。private リポジトリは git の credential helper か
+SSH 鍵が必要です。`sync` はレシピツリーを置き換えるだけで、インストール済み
 パッケージは更新しません。必要なら続けて `zpkg upgrade` を実行します。
 
 `sync` はツリーの `recipes.manifest` を trusted key で検証します。署名が

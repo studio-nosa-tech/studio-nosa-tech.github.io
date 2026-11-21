@@ -37,7 +37,7 @@ zpkg sync
 zpkg sync --git --from https://github.com/studio-nosa-tech/zignos-recipes
 ```
 
-private リポジトリの場合は git の credential helper か SSH 鍵が必要です。
+既定のリポジトリは public のため未認証で取得できます。private の場合は git の credential helper か SSH 鍵が必要です。
 
 ## カーネルとデスクトップ(KDE)のチャンネル方針
 

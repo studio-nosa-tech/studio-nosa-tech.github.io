@@ -40,7 +40,7 @@ ZIGNOS の **stage3 tarball** は、カーネルとブートローダーを除�
 - `/etc/zpkg/sync.conf` は既定で GitHub のレシピリポジトリを指す。
   `zpkg sync` は `.zpkg-git` の commit とリモート HEAD を比較し、変更がある
   ときだけ shallow clone する。レシピ tarball を手動で作る必要はない。
-  private リポジトリの場合は git の credential helper か SSH 鍵が必要
+  既定のリポジトリは public のため未認証で取得できる。private の場合は git の credential helper か SSH 鍵が必要
 - testing / unstable は同梱されない。`zpkg sync` で全チャンネルを取得してから
   `zpkg channel testing` で切り替える
   (詳細は [リリースチャンネル](/docs/channels/))
