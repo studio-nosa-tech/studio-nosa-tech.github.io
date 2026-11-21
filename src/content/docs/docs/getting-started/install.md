@@ -1,6 +1,6 @@
 ---
 title: ZIGNOS のインストール
-description: stage3 を展開し、chroot でカーネルと GRUB を導入して ZIGNOS を完成させる。
+description: stage3 を展開し、root パスワード、ネットワーク、SSH、カーネルと GRUB を設定して ZIGNOS を完成させる。
 ---
 
 このページは流れをつかむための概要です。コマンドの完全な手順、UEFI の
@@ -50,13 +50,63 @@ mount --make-rslave /mnt/zignos/sys
 mount --rbind /run /mnt/zignos/run
 mount --make-rslave /mnt/zignos/run
 chroot /mnt/zignos /bin/bash -l
-passwd                    # root のロックを解除
 ```
 
 UEFI では `/sys` を rbind することで、chroot 内から `efivarfs` が見えます。
 詳細は [インストールガイド](/docs/install/) を参照してください。
 
-## 4. カーネルと GRUB を導入する
+## 4. root のパスワードを変更する
+
+stage3 の root はロックされています。chroot 内で新しいパスワードを設定して
+ロックを解除します。
+
+```sh
+passwd
+```
+
+## 5. ネットワークを設定する
+
+stage3 には DHCP クライアントも NetworkManager も入っていません。chroot 内で
+どちらか一方を導入します。まず DNS を設定してからパッケージを取得します。
+
+```sh
+printf 'nameserver 1.1.1.1\nnameserver 8.8.8.8\n' > /etc/resolv.conf
+```
+
+### A. dhcpcd(有線の最小構成)
+
+```sh
+zpkg install dhcpcd
+rc-update add dhcpcd boot
+```
+
+### B. NetworkManager(有線 / WiFi)
+
+```sh
+zpkg install networkmanager-wifi
+rc-update add networkmanager default
+```
+
+`networkmanager-wifi` は NetworkManager + `wpa_supplicant` + `iw` +
+`linux-firmware` をまとめて導入します。dhcpcd と NetworkManager は
+同時に有効化しないでください。接続の確認は再起動後に行います。
+
+## 6. SSH を有効にする(任意)
+
+```sh
+zpkg install openssh
+rc-update add sshd default
+```
+
+root の SSH ログインは無効です。一般ユーザーを作成し、そのユーザーの
+`~/.ssh/authorized_keys` を設定してから接続してください。
+
+```sh
+useradd -m -G wheel -s /bin/bash yourname
+passwd yourname
+```
+
+## 7. カーネルと GRUB を導入する
 
 ```sh
 # UEFI
@@ -68,7 +118,7 @@ zpkg use --package grub bios
 zpkg install linux grub
 ```
 
-## 5. fstab と GRUB を設定する
+## 8. fstab と GRUB を設定する
 
 ```sh
 zignos-fstab /
@@ -79,7 +129,7 @@ UEFI では `grub-install --target=x86_64-efi --efi-directory=/boot/efi`、
 BIOS では `grub-install --target=i386-pc /dev/sdX` を実行します。
 PARTUUID / UUID が正しいことを確認してから再起動してください。
 
-## 6. 再起動する
+## 9. 再起動する
 
 ```sh
 exit
