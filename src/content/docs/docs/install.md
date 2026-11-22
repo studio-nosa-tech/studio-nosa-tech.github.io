@@ -703,6 +703,7 @@ rc-update add dbus default
 rc-update add elogind default
 rc-update add polkit default
 rc-update add upower default
+# NetworkManager を使っている場合のみ
 rc-update add networkmanager default
 rc-update add sddm default
 ```
