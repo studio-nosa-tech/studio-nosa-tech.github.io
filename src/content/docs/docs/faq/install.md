@@ -7,7 +7,7 @@ description: ZIGNOS のインストールでよくある質問。stage3、System
 
 現在はありません。ZIGNOS のライブ ISO は配布しておらず、**SystemRescue で起動し、
 stage3 tarball を展開して chroot する**のが既定の方法です。手順は
-[はじめに](/docs/getting-started/) と [インストールガイド](/docs/install/) にあります。
+[インストールガイド](/docs/install/) にあります。
 
 ## stage3 tarball はどこから入手しますか?
 

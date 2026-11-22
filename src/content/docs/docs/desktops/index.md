@@ -17,7 +17,13 @@ ZIGNOS のデスクトップ環境は **KDE Plasma 6 (Wayland)** です。stage3
 
 ## 導入
 
+実機の GPU に合わせて、先に `VIDEO_CARDS` を設定してください。Intel Gen8 以降なら
+`zpkg video-cards iris`、QEMU なら `zpkg video-cards virgl` です。対応表は
+[インストールガイド](/docs/install/) の「10. デスクトップと VIDEO_CARDS」に
+あります。
+
 ```sh
+zpkg video-cards iris
 zpkg install plasma-meta kde-applications
 rc-update add sddm default
 ```

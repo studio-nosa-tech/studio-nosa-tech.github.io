@@ -1,20 +1,36 @@
 ---
 title: 実機インストール
-description: stage3 tarball を既定とした ZIGNOS の実機インストール。ディスク準備、chroot、カーネル、UEFI GRUB と efibootmgr まで。
+description: stage3 tarball を既定とした ZIGNOS の実機インストール。ディスク準備、chroot、カーネル、UEFI GRUB、VIDEO_CARDS、デスクトップ追加まで 1 ページで説明します。
 ---
 
 ZIGNOS の実機インストールは、**stage3 tarball をディスクへ展開し、chroot の中で
-カーネルと GRUB を入れる方法を既定**とします。ベースは意図的に最小構成なので、
-このガイドでは「何が入っていないか」と「何を自分で入れるか」も含めて説明します。
+カーネルと GRUB を入れる方法を既定**とします。要件確認からデスクトップの追加まで、
+この 1 ページで完結します。ベースは意図的に最小構成なので、このガイドでは
+「何が入っていないか」と「何を自分で入れるか」も含めて説明します。
 
-- **既定: stage3 tarball**(このガイドの 2〜9 章)
-- 代替: ZIGNOS イメージから `zignos-install` でコピー(10 章 A)
-- 代替: イメージを直接 `dd`(10 章 B)
-- レスキュー: SystemRescue から chroot(10 章 C)
+- **既定: stage3 tarball**(このガイドの 2〜10 章)
+- 代替: ZIGNOS イメージから `zignos-install` でコピー(11 章 A)
+- 代替: イメージを直接 `dd`(11 章 B)
+- レスキュー: SystemRescue から chroot(11 章 C)
 
 > **注意**: `<DISK>` は `/dev/nvme0n1` や `/dev/sda` などの**ディスク全体**、
 > `<PART>` は `nvme0n1p1` / `sda1` などのパーティションです。コマンドを実行すると
 > 対象ディスクの全データが消えます。必ず `lsblk` で確認してください。
+
+## 必要なもの
+
+| 項目 | 要件・目安 |
+|---|---|
+| CPU | x86_64 |
+| ファームウェア | BIOS または UEFI(Secure Boot は無効) |
+| メモリ | CLI は 512 MiB 以上、KDE Plasma は 2 GiB 以上を推奨 |
+| ストレージ | CLI は 8 GiB 以上、デスクトップは 16 GiB 以上を推奨 |
+| ネットワーク | 有線を推奨。WiFi はファームウェアが必要 |
+| インストール媒体 | SystemRescue を書き込んだ USB メモリ(現行 13.03) |
+| stage3 | tarball と SHA-256(現在は一般配布準備中) |
+
+stage3 は約 1.1 GiB です。カーネル、GRUB、追加パッケージ、ビルドキャッシュの
+容量は別途必要です。
 
 ## 対応ファームウェア
 
@@ -625,7 +641,102 @@ reboot
 
 ---
 
-## 10. 初回起動後
+## 10. デスクトップと VIDEO_CARDS(任意)
+
+KDE Plasma 6 を入れる場合は、**Mesa をビルドする前に GPU ドライバを選びます**。
+ZIGNOS の Mesa は `VIDEO_CARDS` で Gallium ドライバを切り替えるため、これを
+設定せずに `plasma-meta` を入れると、QEMU 向けの既定(`virgl softpipe`)で
+ビルドされます。
+
+### 10.1 GPU と VIDEO_CARDS
+
+| GPU | 設定する値 | コマンド例 |
+|---|---|---|
+| Intel Gen8 以降(Skylake / Kaby Lake / Coffee Lake / Ice Lake 以降) | `iris` | `zpkg video-cards iris` |
+| Intel Gen4-7(Haswell / Broadwell) | `crocus` | `zpkg video-cards crocus` |
+| Intel Gen3(Ivy Bridge 以前) | `i915` | `zpkg video-cards i915` |
+| AMD GCN 以降(Sea Islands / Polaris / Vega / RDNA) | `radeonsi`(`amdgpu` も可) | `zpkg video-cards radeonsi` |
+| AMD R600 / R7000 | `r600` | `zpkg video-cards r600` |
+| NVIDIA(nouveau) | `nouveau`(`nvidia` も可) | `zpkg video-cards nouveau` |
+| QEMU / KVM(virtio-gpu) | `virgl` | `zpkg video-cards virgl` |
+| ソフトウェア描画 | `softpipe` / `llvmpipe` | `zpkg video-cards softpipe` |
+
+- Intel Gen8 以降の `iris` と Gen4-7 の `crocus` は、Mesa の CLC のために
+  `llvm` / `spirv-headers` / `spirv-tools` / `spirv-llvm-translator` を
+  makedepends として自動導入します。初回はダウンロードとビルドに時間が
+  かかります。
+- `radeonsi` / `r600` / `llvmpipe` / `nouveau` は LLVM を使います。
+- NVIDIA のプロプライエタリドライバは ZIGNOS のレシピには含まれません。
+  `nouveau` は Mesa の Gallium ドライバを使う場合のみ選択してください。
+- 複数の GPU を使う場合は空白区切りで指定できます。
+  `VIDEO_CARDS="iris virgl"` のように書きます。
+
+### 10.2 設定する
+
+`zpkg video-cards` を使うと `/etc/zpkg/make.conf` に書き込まれます。
+
+```sh
+# Intel の実機
+zpkg video-cards iris
+
+# AMD
+zpkg video-cards radeonsi
+
+# QEMU
+zpkg video-cards virgl
+
+# 現在の設定を確認
+zpkg video-cards
+```
+
+直接書く場合は `/etc/zpkg/make.conf` に 1 行追加します。
+
+```sh
+VIDEO_CARDS="iris"
+```
+
+### 10.3 デスクトップを入れる
+
+```sh
+zpkg install plasma-meta kde-applications
+rc-update add dbus default
+rc-update add elogind default
+rc-update add polkit default
+rc-update add upower default
+rc-update add networkmanager default
+rc-update add sddm default
+```
+
+Plasma Login Manager を使う場合は `sddm` の代わりに
+`rc-update add plasmalogin default` を実行します(Testing / Unstable)。
+SDDM と PLM は同時に有効化しないでください。コンソールの getty が tty1 を
+掴んでログイン画面が出ない場合は、`rc-update del console default` で
+tty1 を空けます。
+
+デスクトップの構成とサービスは [KDE Plasma 6](/docs/system/desktop/) を
+参照してください。
+
+### 10.4 後から VIDEO_CARDS を変える
+
+Mesa を再ビルドする必要があります。
+
+```sh
+zpkg video-cards iris
+zpkg install -f mesa
+```
+
+または、設定変更を `zpkg upgrade` に拾わせる場合:
+
+```sh
+zpkg upgrade --newuse
+```
+
+`video_cards` ファイルを持つレシピだけが `VIDEO_CARDS` の影響を受けます。
+Mesa の binpkg キーにも選択した値が含まれます。
+
+---
+
+## 11. 初回起動後
 
 ```sh
 uname -r                 # 6.18.64

@@ -12,19 +12,14 @@ ZIGNOS は、ゼロから組み立てるソースベースの Linux ディスト
 
 - [ZIGNOS 概要](/docs/overview/) — 現在のリリース、チャンネル、デスクトップ、リポジトリ
 - [哲学](/docs/philosophy/) — なぜゼロから作るのか
-- [はじめに](/docs/getting-started/) — 要件確認から初回起動までの流れ
+- [インストール](/docs/install/) — 要件確認からデスクトップ追加まで 1 ページ
 - [FAQ](/docs/faq/) — よくある質問
 
 ## 使う
 
 ### インストール
 
-- [要件](/docs/getting-started/requirements/)
-- [ダウンロード](/docs/getting-started/download/)
-- [インストール環境の準備](/docs/getting-started/media/)
-- [SystemRescue の起動](/docs/getting-started/boot/)
-- [ZIGNOS のインストール](/docs/getting-started/install/)
-- [初回起動と設定](/docs/getting-started/first-boot/)
+- [インストール](/docs/install/) — 要件、SystemRescue、stage3、chroot、カーネル、GRUB、VIDEO_CARDS、デスクトップ
 
 ### システム管理
 
@@ -62,7 +57,6 @@ ZIGNOS は、ゼロから組み立てるソースベースの Linux ディスト
 
 ## リファレンス
 
-- [インストールガイド(詳細)](/docs/install/) — コマンド完全版
 - [stage3 リファレンス](/docs/stage3/) — 中身・ビルド・配布
 - [リリースチャンネル](/docs/channels/) — チャンネル運用と upgrade の詳細
 - [システム設計](/docs/design-system/) — init、サービス、カーネル方針

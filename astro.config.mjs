@@ -9,6 +9,16 @@ import remarkRelease from './src/plugins/remark-release.mjs';
 // Public docs live under /docs (they are the canonical copies).
 export default defineConfig({
   site: 'https://studio-nosa-tech.github.io',
+  // The old multi-page installer was merged into /docs/install/.
+  redirects: {
+    '/docs/getting-started': '/docs/install/',
+    '/docs/getting-started/requirements': '/docs/install/',
+    '/docs/getting-started/download': '/docs/install/',
+    '/docs/getting-started/media': '/docs/install/',
+    '/docs/getting-started/boot': '/docs/install/',
+    '/docs/getting-started/install': '/docs/install/',
+    '/docs/getting-started/first-boot': '/docs/install/',
+  },
   markdown: {
     processor: unified({ remarkPlugins: [remarkRelease] }),
   },
@@ -58,18 +68,7 @@ export default defineConfig({
         {
           label: '使う',
           items: [
-            {
-              label: 'はじめに',
-              items: [
-                { label: 'はじめに', slug: 'docs/getting-started' },
-                { label: '要件', slug: 'docs/getting-started/requirements' },
-                { label: 'ダウンロード', slug: 'docs/getting-started/download' },
-                { label: 'インストール環境の準備', slug: 'docs/getting-started/media' },
-                { label: 'SystemRescue の起動', slug: 'docs/getting-started/boot' },
-                { label: 'ZIGNOS のインストール', slug: 'docs/getting-started/install' },
-                { label: '初回起動と設定', slug: 'docs/getting-started/first-boot' },
-              ],
-            },
+            { label: 'インストール', slug: 'docs/install' },
             {
               label: 'システム管理',
               items: [
@@ -117,7 +116,6 @@ export default defineConfig({
         {
           label: 'リファレンス',
           items: [
-            { label: 'インストールガイド(詳細)', slug: 'docs/install' },
             { label: 'stage3 リファレンス', slug: 'docs/stage3' },
             { label: 'リリースチャンネル', slug: 'docs/channels' },
             { label: 'システム設計', slug: 'docs/design-system' },

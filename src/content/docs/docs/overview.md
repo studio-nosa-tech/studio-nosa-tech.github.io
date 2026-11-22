@@ -70,7 +70,7 @@ stage3 と既定のイメージは CLI の最小ベースのままです。デ�
 
 ## 次に読む
 
-- 初めて使う: [はじめに](/docs/getting-started/)
+- 初めて使う: [インストール](/docs/install/)
 - 設計を知る: [哲学](/docs/philosophy/) / [システム設計](/docs/design-system/)
 - パッケージ管理: [zpkg 設計](/docs/design-pkg/) / [zpkg 設定](/docs/zpkg-config/)
 - よくある質問: [FAQ](/docs/faq/)

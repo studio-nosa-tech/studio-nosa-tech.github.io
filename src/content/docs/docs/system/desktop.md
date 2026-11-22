@@ -6,6 +6,24 @@ description: ZIGNOS に KDE Plasma 6 (Wayland) を導入し、SDDM / Plasma Logi
 ZIGNOS のデスクトップは任意です。stage3 は CLI のみで、KDE Plasma 6 は
 `desktop/` のレシピから追加します。
 
+## GPU ドライバ (VIDEO_CARDS)
+
+Mesa の Gallium ドライバは `VIDEO_CARDS` で選びます。`plasma-meta` を入れる前に
+設定してください。
+
+```sh
+# Intel Gen8 以降
+zpkg video-cards iris
+
+# QEMU / virtio-gpu
+zpkg video-cards virgl
+```
+
+GPU と値の対応表、AMD / NVIDIA の例は
+[インストールガイド](/docs/install/) の「10. デスクトップと VIDEO_CARDS」を
+参照してください。設定後に変更した場合は `zpkg install -f mesa` で Mesa を
+再ビルドします。
+
 ## 導入
 
 ```sh
