@@ -242,7 +242,7 @@ sha256sum --check zignos-stage3-20261121-r20-x86_64.tar.xz.sha256
 > `{{stage3.sha256}}` です。
 >
 > r20 は `linux-pam` r3、initscripts r26、zpkg 0.3.1、git 2.56.1 を同梱します。
-> 起動後に `zpkg sync && zpkg upgrade` で zpkg 0.3.2 と initscripts r27 に
+> 起動後に `zpkg sync && zpkg upgrade` で zpkg 0.3.3 と initscripts r28 に
 > 更新できます。
 >
 > root はロック済み、SSH ホスト鍵・machine-id・ユーザーは含みません。

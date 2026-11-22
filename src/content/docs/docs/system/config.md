@@ -16,7 +16,7 @@ description: ZIGNOS のシステム設定と zpkg の設定ファイル一覧。
 | `sync.conf` | レシピツリーの同期元(git / tarball / URL) |
 | `security.conf` | 信頼済み鍵と署名の設定 |
 | `sandbox.conf` | bubblewrap ビルド隔離のモード |
-| `build.conf` | 再現可能ビルドの設定 |
+| `build.conf` | 再現可能ビルド・ログ・キャッシュ保持の設定 |
 
 信頼済み公開鍵は `/etc/zpkg/trusted.d/` に置きます。
 

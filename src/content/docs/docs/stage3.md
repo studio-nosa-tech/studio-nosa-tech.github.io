@@ -37,7 +37,7 @@ ZIGNOS の **stage3 tarball** は、カーネルとブートローダーを除�
   `/etc/zpkg/sync.conf` が `RECIPEALLOWUNSIGNED=1` を設定している
   (詳細は [パッケージ署名と検証](/docs/signing/))。r20 の zpkg は 0.3.1 で、
   DB には provenance と SPDX SBOM も含まれる。起動後に `zpkg upgrade` で
-  0.3.2 に更新できる
+  0.3.3 に更新できる
 - `/etc/zpkg/sync.conf` は既定で GitHub のレシピリポジトリを指す。
   `zpkg sync` は `.zpkg-git` の commit とリモート HEAD を比較し、変更がある
   ときだけ shallow clone する。レシピ tarball を手動で作る必要はない。

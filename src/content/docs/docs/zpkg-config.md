@@ -1,6 +1,6 @@
 ---
 title: zpkg 設定
-description: ZIGNOS のパッケージマネージャ zpkg の設定ファイル(USE、make.conf、binpkg リポジトリ、レシピ同期、署名)と環境変数の一覧。
+description: ZIGNOS のパッケージマネージャ zpkg の設定ファイル(USE、make.conf、binpkg リポジトリ、レシピ同期、署名、ビルドキャッシュ)と環境変数の一覧。
 ---
 
 `zpkg` の設定は、**ターゲットルート**の `/etc/zpkg/` に置きます。
@@ -16,7 +16,7 @@ description: ZIGNOS のパッケージマネージャ zpkg の設定ファイル
 ├── sync.conf      # zpkg sync の既定ソース
 ├── security.conf  # 署名検証ポリシー
 ├── sandbox.conf   # ビルドサンドボックス
-├── build.conf     # 再現性(SOURCE_DATE_EPOCH / ログ / SBOM)
+├── build.conf     # 再現性 / ログ / SBOM / キャッシュ保持
 └── trusted.d/     # 信頼する公開鍵(*.pub)
 ```
 
@@ -31,7 +31,7 @@ description: ZIGNOS のパッケージマネージャ zpkg の設定ファイル
 | `sync.conf` | レシピ同期の既定ソース | `RECIPEURL=` / `RECIPEGIT=` / `RECIPEBRANCH=` / `RECIPEALLOWUNSIGNED=` |
 | `security.conf` | 署名検証ポリシー | `TRUSTED_KEYS=...` / `ALLOW_UNSIGNED=0|1` / `ALLOW_EXPIRED=0|1` |
 | `sandbox.conf` | ビルドサンドボックス | `SANDBOX=auto|require|off` / `BUILD_NET=0|1` / `BWRAP=...` |
-| `build.conf` | 再現性と記録 | `SOURCE_DATE_EPOCH=<unix>` / `BUILD_LOG=0|1` / `SBOM=0|1` |
+| `build.conf` | 再現性・記録・ビルドキャッシュ | `SOURCE_DATE_EPOCH=<unix>` / `BUILD_LOG=0|1` / `SBOM=0|1` / `KEEP_WORKDIR=0|1` / `BUILD_BINPKG=0|1` / `KEEP_SOURCES=0|1` |
 | `trusted.d/` | 信頼する公開鍵 | `<keyid>.pub`(PKIX PEM) |
 
 ## USE フラグ
@@ -253,6 +253,52 @@ SBOM=1
 値を変えると binpkg の tar/gzip の mtime が変わり、artifact の SHA-256 も
 変わります。詳細は [再現可能なビルド](/docs/reproducibility/) を参照してください。
 
+## ビルドキャッシュ(`build.conf`)
+
+既定ではディスク消費を抑えるため、成功したビルドの作業データを残しません。
+
+```sh
+# /etc/zpkg/build.conf
+KEEP_WORKDIR=0   # インストール成功後に作業ディレクトリを削除
+BUILD_BINPKG=0   # ローカル binpkg を作らない
+KEEP_SOURCES=0   # ビルドに使ったソースアーカイブを削除
+```
+
+| キー | 既定 | `1` のとき |
+|---|---|---|
+| `KEEP_WORKDIR` | `0` | `$ZPKG_CACHE/build/<base>/` を残す |
+| `BUILD_BINPKG` | `0` | 成功時に `$ZPKG_CACHE/binpkgs/` へ binpkg を作る |
+| `KEEP_SOURCES` | `0` | ダウンロードしたソースアーカイブを残す |
+
+- 新しいビルドが成功すると、同じパッケージの古い作業ディレクトリと古い
+  binpkg は削除されます。バージョンを上げても古いデータが溜まりません
+- 作成した binpkg は、レシピ digest とチャンネルが一致するときに次の
+  `zpkg install` で再利用されます
+- ソースアーカイブは、そのビルドで使ったアーカイブだけを削除します。
+  パッチなどの同梱ファイルは残ります
+- `zpkg build` は destroot を成果物として返すため、実行中は作業ディレクトリを
+  残します。削除されるのは `zpkg install` の成功後です
+- `--repro-check` は比較のため binpkg を作ります。`BUILD_BINPKG=0` の場合は
+  比較後に削除されます
+- 環境変数 `ZPKG_KEEP_WORKDIR` / `ZPKG_BUILD_BINPKG` / `ZPKG_KEEP_SOURCES`
+  が `build.conf` より優先されます
+- 0.3.2 以前が作った作業ディレクトリはパッケージ名を記録していないため、
+  自動削除の対象外です。`/var/cache/zpkg/build` を手動で削除してください
+
+キャッシュの場所と中身は次のとおりです。
+
+```text
+/var/cache/zpkg/
+├── build/      # 作業ディレクトリ(既定では成功後に削除)
+├── binpkgs/    # ローカル binpkg と sidecar(既定では作らない)
+├── logs/       # ビルドログ
+└── *.tar.*     # ソースアーカイブ(既定では成功後に削除)
+```
+
+キャッシュを丸ごと捨ててよい場合は、`/var/cache/zpkg` を削除しても
+インストール済みパッケージには影響しません。次回のビルドで再取得・再生成
+されます。
+
 ## パスと環境変数
 
 | 変数 | 既定 | 内容 |
@@ -277,6 +323,9 @@ SBOM=1
 | `ZPKG_SOURCE_DATE_EPOCH` | `946684800` | 固定ビルド時刻(標準の `SOURCE_DATE_EPOCH` も可) |
 | `ZPKG_BUILD_LOG` | `1` | `0` でビルドログを保存しない |
 | `ZPKG_SBOM` | `1` | `0` で SPDX SBOM を生成しない |
+| `ZPKG_KEEP_WORKDIR` | `0` | `1` でインストール成功後も作業ディレクトリを残す |
+| `ZPKG_BUILD_BINPKG` | `0` | `1` でソースビルド後にローカル binpkg を作る |
+| `ZPKG_KEEP_SOURCES` | `0` | `1` でダウンロードしたソースアーカイブを残す |
 | `ZPKG_USE` | なし | グローバル USE を丸ごと上書き |
 | `ZPKG_CFLAGS` | なし | `CFLAGS` を上書き(空文字も有効) |
 | `ZPKG_MAKEOPTS` | なし | `MAKEOPTS` を上書き(空文字も有効) |

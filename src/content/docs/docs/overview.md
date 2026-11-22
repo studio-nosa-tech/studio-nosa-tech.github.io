@@ -24,7 +24,7 @@ ZIGNOS は、ゼロから組み立てる **ソースベースの Linux ディス
 |---|---|
 | リリース | **{{release}}** |
 | stage3 | **{{stage3.revision}}** / {{stage3.package_count}} パッケージ / 約 {{stage3.size_mib}} MiB |
-| zpkg | {{zpkg.version}}（開発ツリーは 0.3.2） |
+| zpkg | {{zpkg.version}}（開発ツリーは 0.3.3） |
 | Linux kernel | {{kernel.full}} |
 | base.list | トップレベル {{base.top_level}} / 依存込み {{base.closure}} |
 | レシピ | {{recipes.total}}（stable / testing / unstable の合計） |

@@ -75,7 +75,7 @@ tarball の隣に置く sidecar です。
 
 > 上の値は r20 ビルドの値をもとにした抜粋です(packages / artifacts は省略)。
 > 開発ツリーはこれより新しく、
-> zpkg 0.3.2 / stable 389 / testing・unstable 399 レシピです。実際に配布する
+> zpkg 0.3.3 / stable 389 / testing・unstable 399 レシピです。実際に配布する
 > manifest は `make-stage3.sh` / `release-manifest.py` がビルドごとに生成します。
 >
 > `recipes.per_channel` はビルドしたチャンネル(stage3 なら stable)の数です。

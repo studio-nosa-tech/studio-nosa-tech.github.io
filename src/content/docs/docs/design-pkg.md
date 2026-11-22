@@ -3,7 +3,7 @@ title: zpkg 設計
 description: zpkg の設計。レシピ形式、DB schema 2、USE フラグ、トランザクション、binpkg。
 ---
 
-ステータス: v0.3.2 設計(実装と合わせて更新する。DB schema 2・world/upgrade・USE
+ステータス: v0.3.3 設計(実装と合わせて更新する。DB schema 2・world/upgrade・USE
 フラグ・フック・トランザクション・依存アトム解決・レシピ同期・reproducible build
 は実装済み — 後述の各節参照)
 
@@ -16,7 +16,7 @@ description: zpkg の設計。レシピ形式、DB schema 2、USE フラグ、�
 - 最初は数百行〜1500 行程度のシンプルな実装。長期的に本格的なパッケージマネージャ相当へ進化させる
 - **Go で書く**: 単一静的バイナリとして chroot 内でも動かせる。将来の USE フラグ・ソルバー拡張も同じコードベースで行う
 
-## まだ無いもの(v0.3.2 時点)
+## まだ無いもの(v0.3.3 時点)
 
 - 公開バイナリリポジトリの配布・運用(署名の仕組みと `keys/` 出力は実装済み)
 
@@ -228,7 +228,12 @@ chroot するため、stage3 のディレクトリ chroot でもサンドボッ�
   SOURCE_DATE_EPOCH にし、AccessTime/ChangeTime をゼロにする。所有者・モード・
   内容・順序はビルドのまま
 - **work dir** — `build/<name>-<version>[-rN][-opts]`。`--clean` は work 全体を
-  削除し、`--repro-check` は 2 回目の前に自動 clean
+  削除し、`--repro-check` は 2 回目の前に自動 clean。既定ではインストール成功後に
+  現在の work dir を削除し、同じパッケージの古い work dir は新しいビルドの成功時に
+  削除する。`KEEP_WORKDIR=1` で現在の work dir を残す
+- **ビルドキャッシュ** — 既定では binpkg を作らず、ビルドに使ったソースアーカイブも
+  成功後に削除する。`BUILD_BINPKG=1` で binpkg を作り、`KEEP_SOURCES=1` で
+  ソースアーカイブを残す。古い binpkg は新しいビルドの成功時に削除する
 - **ビルドログ** — `$ZPKG_CACHE/logs/<base>.log` に既定で保存。ヘッダに
   package / recipe / recipe digest / epoch / sandbox / network / started /
   build script を書き、stdout/stderr を tee する。`BUILD_LOG=0` で無効
@@ -379,7 +384,7 @@ binrepo/
 
 ## リリースチャンネルと upgrade(M40 / M51)
 
-zpkg 0.3.2 では、レシピツリーは `stable` / `testing` / `unstable` の3チャンネルを
+zpkg 0.3.3 では、レシピツリーは `stable` / `testing` / `unstable` の3チャンネルを
 持つ。選択は `/etc/zpkg/make.conf` の `CHANNEL=`(既定 stable)、
 `ZPKG_CHANNEL` 環境変数、`--channel` の順で上書きできる。
 
@@ -407,7 +412,7 @@ zpkg 0.3.2 では、レシピツリーは `stable` / `testing` / `unstable` の3
 
 詳細は [リリースチャンネル](/docs/channels/) を参照。
 
-## コマンド(v0.3.2)
+## コマンド(v0.3.3)
 
 | コマンド | 内容 |
 |---|---|
@@ -456,11 +461,13 @@ Total: 2 packages (1 target, 1 dependency)
 >>> Building fastfetch-2.71.0-r2
 ...コンパイラ出力...
 >>> Built fastfetch-2.71.0-r2 (66 files) in 1m2s
->>> Packed binpkg /var/cache/zpkg/binpkgs/fastfetch-2.71.0-r2.pkg.tar.gz
 >>> Installing (1 of 1) fastfetch-2.71.0-r2
 >>> Installed fastfetch-2.71.0-r2
 ```
 
+- `BUILD_BINPKG=1` のときは Built と Installing の間に
+  `>>> Packed binpkg /var/cache/zpkg/binpkgs/fastfetch-2.71.0-r2.pkg.tar.gz`
+  が入る。既定(`BUILD_BINPKG=0`)では binpkg を作らない
 - 一覧の USE はレシピの `iuse` を基準にし、有効を `flag`、無効を `-flag` で示す
   (iuse に無いが有効なフラグも末尾に表示)。並びはアルファベット順
 - `(dependency)` は依存として自動で入るパッケージ。コマンドラインで指定したものが
