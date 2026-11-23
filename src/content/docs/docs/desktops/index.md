@@ -39,8 +39,8 @@ zpkg install fonts-noto-cjk fonts-noto-emoji
 zpkg install fcitx5 fcitx5-qt fcitx5-gtk fcitx5-configtool
 ```
 
-`fcitx5-gtk` は現在 GLib クライアント(GClient)のみを提供し、GTK 用の IM
-モジュールは含みません(ZIGNOS はまだ GTK スタックを同梱していません)。
+`fcitx5-gtk` は GLib クライアント(GClient)と GTK 3 用 IM モジュールを提供します。
+GTK 2 / GTK 4 用のモジュールは含みません。
 
 `fonts-noto`(通常の Noto ファミリ)と `fonts-noto-extra`(Condensed / Semi /
 Extra ウェイト)も用意しています。どちらも上流の Noto 全ファミリを含むため、
@@ -66,10 +66,14 @@ fcitx5 -d
 fcitx5-configtool
 ```
 
+環境変数(`/etc/environment`)の設定を含む詳しい手順は
+[日本語入力 (fcitx5 + Mozc)](/docs/desktops/japanese/) にまとめています。
+
 ## ページ
 
 - [KDE Plasma 6](/docs/system/desktop/) — 導入、ログイン、サービス
 - [Wayland と Xwayland](/docs/desktops/wayland/) — セッション、X11 アプリ、GLX
+- [日本語入力 (fcitx5 + Mozc)](/docs/desktops/japanese/) — 導入、環境変数、Mozc の設定
 - [デスクトップ環境(詳細)](/docs/desktop/) — チャンネル構成と実装状況
 
 現時点で KDE Plasma 以外のデスクトップ環境は公式には提供していません。
