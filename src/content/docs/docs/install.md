@@ -893,7 +893,7 @@ zpkg sync --git --from https://github.com/studio-nosa-tech/zignos-recipes
 
 # 新しい stage3 tarball / レシピ tarball / ディレクトリ / URL も可
 zpkg sync --from zignos-stage3-<new>.tar.xz
-zpkg sync --from zignos-recipes-20261120-r20.tar.xz
+zpkg sync --from zignos-recipes-20261123-r21.tar.xz
 zpkg sync --from ./zignos-recipes
 zpkg sync --from https://example.invalid/zignos-recipes.tar.xz
 
@@ -913,7 +913,7 @@ zpkg search networkmanager
 含みます。git を使わない場合はこの tarball を sync してから切り替えます。
 
 ```sh
-zpkg sync --from zignos-recipes-20261120-r20.tar.xz --allow-unsigned
+zpkg sync --from zignos-recipes-20261123-r21.tar.xz --allow-unsigned
 zpkg channel testing      # /etc/zpkg/make.conf の CHANNEL= を更新
 zpkg upgrade -p           # 変更一覧を確認
 zpkg upgrade              # 実行(確認プロンプトあり)
@@ -926,14 +926,14 @@ zpkg upgrade              # 実行(確認プロンプトあり)
 `--allow-unsigned` を付けてください(公式署名鍵の運用開始後は不要です)。
 
 ```sh
-zpkg sync --from zignos-recipes-20261120-r20.tar.xz --allow-unsigned
+zpkg sync --from zignos-recipes-20261123-r21.tar.xz --allow-unsigned
 ```
 
 署名済みツリーを検証する場合は、先に公開鍵を登録します。
 
 ```sh
 zpkg key import zignos-signing.pub
-zpkg sync --from zignos-recipes-20261120-r20.tar.xz
+zpkg sync --from zignos-recipes-20261123-r21.tar.xz
 ```
 
 詳細は [パッケージ署名と検証](/docs/signing/) を参照してください。
