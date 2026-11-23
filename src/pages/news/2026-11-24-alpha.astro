@@ -1,0 +1,117 @@
+---
+import PageLayout from '../../layouts/PageLayout.astro';
+import release from '../../data/release.json';
+
+const available = release.availability === 'available';
+const assetBase = `https://github.com/studio-nosa-tech/zignos-recipes/releases/download/${release.release}`;
+const releasePage = `https://github.com/studio-nosa-tech/zignos-recipes/releases/tag/${release.release}`;
+---
+
+<PageLayout
+  title={`ZIGNOS ${release.release} — ZIGNOS`}
+  description={`ZIGNOS ${release.release} のリリースノート。stage3 ${release.stage3.revision}、${release.stage3.package_count} パッケージ、zpkg ${release.zpkg.version}。`}
+>
+  <div class="wrap">
+    <section class="page-hero">
+      <span class="eyebrow">RELEASE · ALPHA</span>
+      <h1>ZIGNOS {release.release}</h1>
+      <p>{release.build_date}</p>
+    </section>
+
+    <div class="prose">
+      <div class="notice">
+        <strong>stage3 のダウンロードは{available ? '公開中です。' : '準備中です。'}</strong>
+        {' '}配布物は <a href="/download/">ダウンロードページ</a> と
+        <a href={releasePage}>GitHub Releases</a> から取得できます。
+        ファイル名・サイズ・SHA-256 は
+        <a href="/releases/current/">現在のリリース</a> と
+        <a href="/releases.json">release.json</a> にまとめています。
+      </div>
+
+      <h2>今回のリリース</h2>
+      <p>
+        {release.release} は、stable チャンネルのベースシステムを最新の
+        レシピへ更新した stage3 です。初の一般配布版として、stage3 tarball・
+        レシピツリー・zpkg バイナリを GitHub Releases で公開します。
+      </p>
+      <div class="stats">
+        <div class="stat">
+          <strong>{release.stage3.package_count}</strong>
+          <span>stage3 のパッケージ数</span>
+        </div>
+        <div class="stat">
+          <strong>{release.stage3.size_mib} MiB</strong>
+          <span>stage3 のサイズ</span>
+        </div>
+        <div class="stat">
+          <strong>{release.stage3.revision}</strong>
+          <span>stage3 リビジョン</span>
+        </div>
+        <div class="stat">
+          <strong>zpkg {release.zpkg.version}</strong>
+          <span>パッケージマネージャ</span>
+        </div>
+      </div>
+
+      <h2>ハイライト</h2>
+      <ul>
+        <li>
+          <strong>ベースの更新</strong> — Linux headers 6.18.65、OpenSSL 4.0.3、
+          xz 5.8.4、shadow 4.20.4、linux-pam r5、zpkg 0.3.4-r4 を収録
+        </li>
+        <li>
+          <strong>locales</strong> — <code>en_US.UTF-8</code> と
+          <code>ja_JP.UTF-8</code> を生成する <code>locales</code> パッケージを
+          ベースに追加
+        </li>
+        <li>
+          <strong>Go 1.27.4</strong> — ソースビルドに必要な Go ツールチェーンを
+          stage3 に同梱
+        </li>
+        <li>
+          <strong>stage3 のクリーンアップ</strong> — ビルド用ディレクトリや
+          テストルートを tarball から除外し、ベースシステムだけを収録
+        </li>
+      </ul>
+
+      <h2>配布物</h2>
+      <table>
+        <thead>
+          <tr><th>配布物</th><th>ファイル</th><th>サイズ</th></tr>
+        </thead>
+        <tbody>
+          {release.artifacts.map((a) => (
+            <tr>
+              <td>{a.name}</td>
+              <td><a href={`${assetBase}/${a.filename}`}><code>{a.filename}</code></a></td>
+              <td>{a.size.toLocaleString('en-US')} バイト</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p class="mono">
+        stage3 SHA-256: <code class="hash">{release.stage3.sha256}</code>
+      </p>
+
+      <h2>インストール</h2>
+      <pre><code>tar -xpf {release.stage3.filename} -C /mnt/zignos
+# /dev /proc /sys /run をマウントして chroot
+chroot /mnt/zignos /bin/bash -l
+passwd
+zpkg install linux grub</code></pre>
+      <p>
+        パーティション作成、UEFI の GRUB 登録、初回設定を含む手順は
+        <a href="/docs/install/">インストールガイド</a> を参照してください。
+      </p>
+
+      <h2>リンク</h2>
+      <ul>
+        <li><a href="/download/">ダウンロード</a></li>
+        <li><a href={releasePage}>GitHub Releases</a></li>
+        <li><a href="/releases/current/">現在のリリース</a></li>
+        <li><a href="/docs/stage3/">stage3 ガイド</a></li>
+        <li><a href="/docs/channels/">リリースチャンネル</a></li>
+      </ul>
+    </div>
+  </div>
+</PageLayout>

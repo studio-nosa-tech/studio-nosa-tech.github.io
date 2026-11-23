@@ -9,6 +9,8 @@ const labels: Record<string, string> = {
   zpkg: 'zpkg バイナリ',
 };
 const artifacts = release.artifacts;
+const assetBase = `https://github.com/studio-nosa-tech/zignos-recipes/releases/download/${release.release}`;
+const releasePage = `https://github.com/studio-nosa-tech/zignos-recipes/releases/tag/${release.release}`;
 ---
 
 <PageLayout
@@ -31,7 +33,11 @@ const artifacts = release.artifacts;
         <strong>{available ? '公開中です。' : 'Coming soon.'}</strong>
         {' '}ファイル名・サイズ・SHA-256 はすべて
         <a href="/releases.json">release.json</a> から生成しています。
-        公開時期は <a href="/news/">ニュース</a> で案内します。
+        {available ? (
+          <>配布物は <a href={releasePage}>GitHub Releases</a> から取得できます。</>
+        ) : (
+          <>公開時期は <a href="/news/">ニュース</a> で案内します。</>
+        )}
       </div>
 
       <h2>このリリースの配布物</h2>
@@ -43,7 +49,9 @@ const artifacts = release.artifacts;
           {artifacts.map((a) => (
             <tr>
               <td>{labels[a.name] ?? a.name}</td>
-              <td><code>{a.filename}</code></td>
+              <td>
+                <a href={`${assetBase}/${a.filename}`}><code>{a.filename}</code></a>
+              </td>
               <td>{a.size.toLocaleString('en-US')} バイト</td>
             </tr>
           ))}
@@ -54,7 +62,8 @@ const artifacts = release.artifacts;
       <p class="mono">
         {artifacts.map((a) => (
           <>
-            <code class="hash">{a.sha256}</code> <span class="muted">{a.filename}</span><br />
+            <code class="hash">{a.sha256}</code> <span class="muted">{a.filename}</span>{' '}
+            <a href={`${assetBase}/${a.filename}.sha256`}>sha256</a><br />
           </>
         ))}
       </p>
@@ -79,8 +88,8 @@ const artifacts = release.artifacts;
       <pre><code># 1. 展開
 tar -xpf {release.stage3.filename} -C /mnt/zignos
 
-# 2. chroot
-zignos-enter.sh /mnt/zignos
+# 2. chroot(手動マウント。/dev /proc /sys /run はインストールガイド参照)
+chroot /mnt/zignos /bin/bash -l
 
 # 3. カーネルとブートローダー
 zpkg install linux grub</code></pre>
@@ -118,6 +127,7 @@ zpkg install linux grub</code></pre>
 
       <h2>リンク</h2>
       <ul>
+        <li><a href={releasePage}>GitHub Releases</a></li>
         <li><a href="/releases/current/">このリリースの詳細</a></li>
         <li><a href="/releases.json">release.json</a></li>
         <li><a href="/docs/release-manifest/">リリースマニフェストの仕様</a></li>

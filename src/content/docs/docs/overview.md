@@ -21,14 +21,14 @@ ZIGNOS は、ゼロから組み立てる **ソースベースの Linux ディス
 
 ## 現在のリリース
 
-公開マニフェストの値です。stage3 の一般配布は現在**準備中**で、公開は
-[ニュース](/news/) で案内します。
+公開マニフェストの値です。stage3 は [ダウンロード](/download/)
+(GitHub Releases)から取得できます。
 
 | 項目 | 内容 |
 |---|---|
 | リリース | **{{release}}** |
 | stage3 | **{{stage3.revision}}** / {{stage3.package_count}} パッケージ / 約 {{stage3.size_mib}} MiB |
-| zpkg | {{zpkg.version}}（開発ツリーは 0.3.3） |
+| zpkg | {{zpkg.version}} |
 | Linux kernel | {{kernel.full}} |
 | base.list | トップレベル {{base.top_level}} / 依存込み {{base.closure}} |
 | レシピ | {{recipes.total}}（stable / testing / unstable の合計） |

@@ -13,7 +13,7 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 ## 現在のシステム(2026-11-21)
 
 - **GUI: M51 完了** — Stable / Testing / Unstable の系列分岐、SDDM / Plasma Login Manager、Spectacle / kio-extras、zpkg 0.3.2 の自己更新と新規依存の先行導入まで実装した。Stable は Linux 6.18.64 LTS / Qt 6.8.5 LTS / KF6 6.18 / Plasma 6.4.5 / Gear 25.04.3 / Mesa 26.2.7、Testing は Linux 7.3.5 / Qt 6.11.3 / KF6 6.32 / Plasma 6.8.3 / Gear 26.08.3 / Mesa 26.3.1、Unstable は Linux 7.4-rc3 / Gear 26.11.80 beta。Testing のデスクトップは QEMU でパネル・壁紙・KRunner・Dolphin・Kate・UDisks2 まで確認し、未解決 soname 0。SDDM / PLM は daemon・PAM セッション・KWin 起動まで確認したが、QEMU の Mesa softpipe (`sp_find_cached_tile`) が greeter の透過合成で落ちるため、画面表示は実 GPU 待ち
-- **base.list 38 トップレベル = 依存込み 69 パッケージ**(linux / grub を含む)。そこからカーネルとブートローダーを除いた **stage3 r20 は 67 パッケージ / 約 1.1 GiB**(配布準備中)。レシピツリーは **stable 389(core 77 + main 100 + desktop 212)/ testing・unstable 399(core 77 + main 102 + desktop 220)**
+- **base.list 39 トップレベル = 依存込み 72 パッケージ**(linux / grub を含む)。そこからカーネルとブートローダーを除いた **stage3 r21 は 64 パッケージ / 約 1.1 GiB**(公開中)。レシピツリーは **stable 429(core 78 + main 109 + desktop 242)/ testing・unstable 439(core 78 + main 111 + desktop 250)**
 - 起動: BIOS/MBR または UEFI/GPT → GRUB 2.14 → kernel 6.18.64(stable)+ initramfs(busybox) → OpenRC 0.64.1 → eudev 3.3.0 → serial/VGA ログイン(shadow / PAM)
 - カーネル: x86_64_defconfig + `x86_64-generic.config`(起動系は組み込み、GPU/WiFi/追加 NIC はモジュール)。root は initramfs が `root=UUID=` で解決
 - ネットワーク: **ベースには含まない**(opt-in)。`zpkg install dhcpcd openssh` の後 `rc-update add dhcpcd boot` / `rc-update add sshd default`

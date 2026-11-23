@@ -1,17 +1,17 @@
 {
   "schema": 1,
-  "release": "2026.11.20-alpha",
+  "release": "2026.11.24-alpha",
   "channel": "stable",
-  "availability": "coming-soon",
-  "generated": "2026-11-20T21:43:30Z",
-  "build_date": "2026-11-20",
+  "availability": "available",
+  "generated": "2026-11-23T16:25:26Z",
+  "build_date": "2026-11-23",
   "stage3": {
-    "revision": "r20",
-    "filename": "zignos-stage3-20261121-r20-x86_64.tar.xz",
-    "size": 1114279740,
-    "sha256": "9409ff1920365585d56692c32c2d8ebaab98ae662a7d580dd21d1315a6f8e937",
-    "size_mib": 1063,
-    "package_count": 67,
+    "revision": "r21",
+    "filename": "zignos-stage3-20261124-r21-x86_64.tar.xz",
+    "size": 1122508792,
+    "sha256": "66ec7b975ccc667e57bbb47709531016159419062f7e12c9b8583e33d7773e63",
+    "size_mib": 1071,
+    "package_count": 64,
     "packages": [
       {
         "name": "bash",
@@ -21,22 +21,8 @@
         "category": "core"
       },
       {
-        "name": "bc",
-        "version": "7.0.3",
-        "revision": 0,
-        "slot": "0",
-        "category": "core"
-      },
-      {
         "name": "binutils",
         "version": "2.47",
-        "revision": 0,
-        "slot": "0",
-        "category": "core"
-      },
-      {
-        "name": "bison",
-        "version": "3.8.2",
         "revision": 0,
         "slot": "0",
         "category": "core"
@@ -105,27 +91,6 @@
         "category": "core"
       },
       {
-        "name": "efibootmgr",
-        "version": "18",
-        "revision": 0,
-        "slot": "0",
-        "category": "main"
-      },
-      {
-        "name": "efivar",
-        "version": "39",
-        "revision": 0,
-        "slot": "0",
-        "category": "main"
-      },
-      {
-        "name": "elfutils",
-        "version": "0.195",
-        "revision": 0,
-        "slot": "0",
-        "category": "core"
-      },
-      {
         "name": "eudev",
         "version": "3.3.0",
         "revision": 1,
@@ -155,14 +120,14 @@
       },
       {
         "name": "flex",
-        "version": "2.6.4",
+        "version": "2.6.17",
         "revision": 0,
         "slot": "0",
         "category": "core"
       },
       {
         "name": "gawk",
-        "version": "5.4.1",
+        "version": "5.4.2",
         "revision": 0,
         "slot": "0",
         "category": "core"
@@ -170,6 +135,13 @@
       {
         "name": "gcc",
         "version": "16.2.0",
+        "revision": 0,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "gettext",
+        "version": "1.0",
         "revision": 0,
         "slot": "0",
         "category": "core"
@@ -231,16 +203,9 @@
         "category": "core"
       },
       {
-        "name": "initramfs",
-        "version": "1.0",
-        "revision": 2,
-        "slot": "0",
-        "category": "core"
-      },
-      {
         "name": "initscripts",
         "version": "1.0.0",
-        "revision": 26,
+        "revision": 29,
         "slot": "0",
         "category": "core"
       },
@@ -281,7 +246,7 @@
       },
       {
         "name": "linux-headers",
-        "version": "6.18.64",
+        "version": "6.18.65",
         "revision": 0,
         "slot": "0",
         "category": "core"
@@ -289,7 +254,14 @@
       {
         "name": "linux-pam",
         "version": "1.7.3",
-        "revision": 3,
+        "revision": 5,
+        "slot": "0",
+        "category": "core"
+      },
+      {
+        "name": "locales",
+        "version": "1.0.0",
+        "revision": 0,
         "slot": "0",
         "category": "core"
       },
@@ -358,14 +330,14 @@
       },
       {
         "name": "openssl",
-        "version": "4.0.1",
+        "version": "4.0.3",
         "revision": 0,
         "slot": "0",
         "category": "core"
       },
       {
         "name": "patch",
-        "version": "2.8",
+        "version": "2.8.1",
         "revision": 0,
         "slot": "0",
         "category": "core"
@@ -380,16 +352,23 @@
       {
         "name": "perl",
         "version": "5.44.0",
-        "revision": 0,
+        "revision": 1,
         "slot": "0",
         "category": "core"
       },
       {
         "name": "pkgconf",
-        "version": "3.0.5",
+        "version": "3.0.11",
         "revision": 0,
         "slot": "0",
         "category": "core"
+      },
+      {
+        "name": "popt",
+        "version": "1.19",
+        "revision": 0,
+        "slot": "0",
+        "category": "main"
       },
       {
         "name": "procps",
@@ -401,7 +380,7 @@
       {
         "name": "python3",
         "version": "3.14.10",
-        "revision": 0,
+        "revision": 2,
         "slot": "0",
         "category": "core"
       },
@@ -415,7 +394,7 @@
       {
         "name": "rsync",
         "version": "3.5.2",
-        "revision": 0,
+        "revision": 2,
         "slot": "0",
         "category": "main"
       },
@@ -428,8 +407,8 @@
       },
       {
         "name": "shadow",
-        "version": "4.20.2",
-        "revision": 3,
+        "version": "4.20.4",
+        "revision": 0,
         "slot": "0",
         "category": "core"
       },
@@ -449,14 +428,14 @@
       },
       {
         "name": "util-linux",
-        "version": "2.42.2",
+        "version": "2.42.4",
         "revision": 0,
         "slot": "0",
         "category": "core"
       },
       {
         "name": "xz",
-        "version": "5.8.3",
+        "version": "5.8.4",
         "revision": 0,
         "slot": "0",
         "category": "core"
@@ -470,7 +449,7 @@
       },
       {
         "name": "zpkg",
-        "version": "0.3.1",
+        "version": "0.3.4",
         "revision": 4,
         "slot": "0",
         "category": "core"
@@ -478,19 +457,19 @@
       {
         "name": "zstd",
         "version": "1.5.7",
-        "revision": 0,
+        "revision": 1,
         "slot": "0",
         "category": "core"
       }
     ]
   },
   "zpkg": {
-    "version": "0.3.1"
+    "version": "0.3.4"
   },
   "kernel": {
     "package": "linux",
-    "version": "6.18.64",
-    "revision": 7,
+    "version": "6.18.65",
+    "revision": 0,
     "in_stage3": false
   },
   "bootloader": {
@@ -500,30 +479,30 @@
     "in_stage3": false
   },
   "base": {
-    "top_level": 38,
-    "closure": 69
+    "top_level": 39,
+    "closure": 72
   },
   "recipes": {
-    "filename": "zignos-recipes-20261120-r20.tar.xz",
-    "size": 813948,
-    "sha256": "5f3f75779e2633b0f3e37b993646338f0b374c53c456c12c7537b80ff88bb802",
-    "per_channel": 382,
-    "total": 1160,
+    "filename": "zignos-recipes-20261123-r21.tar.xz",
+    "size": 950448,
+    "sha256": "887912c027899373fb9d15e8fa1991e6bb87bd3ec077b39b7f390f807f5cf43c",
+    "per_channel": 429,
+    "total": 1307,
     "channels": {
       "stable": {
-        "core": 77,
-        "main": 100,
-        "desktop": 205
+        "core": 78,
+        "main": 109,
+        "desktop": 242
       },
       "testing": {
-        "core": 77,
-        "main": 102,
-        "desktop": 210
+        "core": 78,
+        "main": 111,
+        "desktop": 250
       },
       "unstable": {
-        "core": 77,
-        "main": 102,
-        "desktop": 210
+        "core": 78,
+        "main": 111,
+        "desktop": 250
       }
     }
   },
@@ -535,40 +514,40 @@
   },
   "source": {
     "zignos": {
-      "commit": "8fcb87d9f00c938dc465c33556fe91d93ddf6e6d",
+      "commit": "b663b87",
       "dirty": false
     },
     "zpkg": {
-      "commit": "",
+      "commit": "86bda7b",
       "dirty": false
     },
     "recipes": {
-      "commit": "",
+      "commit": "cb23b52",
       "dirty": false
     },
     "build": {
-      "commit": "a3a8f38fb6f05e6785f2c272e170ec1e4bddc5f3",
-      "dirty": true
+      "commit": "9f8adad",
+      "dirty": false
     }
   },
   "artifacts": [
     {
       "name": "stage3",
-      "filename": "zignos-stage3-20261121-r20-x86_64.tar.xz",
-      "size": 1114279740,
-      "sha256": "9409ff1920365585d56692c32c2d8ebaab98ae662a7d580dd21d1315a6f8e937"
+      "filename": "zignos-stage3-20261124-r21-x86_64.tar.xz",
+      "size": 1122508792,
+      "sha256": "66ec7b975ccc667e57bbb47709531016159419062f7e12c9b8583e33d7773e63"
     },
     {
       "name": "recipes",
-      "filename": "zignos-recipes-20261120-r20.tar.xz",
-      "size": 813948,
-      "sha256": "5f3f75779e2633b0f3e37b993646338f0b374c53c456c12c7537b80ff88bb802"
+      "filename": "zignos-recipes-20261123-r21.tar.xz",
+      "size": 950448,
+      "sha256": "887912c027899373fb9d15e8fa1991e6bb87bd3ec077b39b7f390f807f5cf43c"
     },
     {
       "name": "zpkg",
-      "filename": "zpkg-0.3.1-r4-x86_64",
-      "size": 11683358,
-      "sha256": "670f194ffb0652eaf66e64c668a3893f9cae0c145c379031a8009a08ce092f8a"
+      "filename": "zpkg-0.3.4-r4-x86_64",
+      "size": 11719901,
+      "sha256": "059eee9d44c001d38a136c6c192577597db625612017ead45aae04c9694a4b01"
     }
   ]
 }

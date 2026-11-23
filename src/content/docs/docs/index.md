@@ -6,7 +6,7 @@ description: ZIGNOS の概要、導入、システム管理、リファレンス
 ZIGNOS は、ゼロから組み立てるソースベースの Linux ディストリビューションです。
 [Studio NØSa.](https://studio-nosa.live/) が開発しています。
 
-> stage3 の一般配布は現在**準備中**です。公開は [ニュース](/news/) で案内します。
+> stage3 は [ダウンロード](/download/)(GitHub Releases)から取得できます。
 
 ## はじめての方
 

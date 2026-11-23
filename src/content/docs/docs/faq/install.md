@@ -11,9 +11,8 @@ stage3 tarball を展開して chroot する**のが既定の方法です。手�
 
 ## stage3 tarball はどこから入手しますか?
 
-現在は一般配布を**準備中**です。公開時は [ダウンロード](/download/) と
-[ニュース](/news/) で案内します。開発者は `zignos-build/make-stage3.sh` で
-生成できます。ファイル名・サイズ・SHA-256 は
+現在は [ダウンロード](/download/)(GitHub Releases)から取得できます。
+開発者は `zignos-build/make-stage3.sh` でも生成できます。ファイル名・サイズ・SHA-256 は
 [現在のリリース](/releases/current/) と `/releases.json` に記録されます。
 
 ## Secure Boot を有効にしたままインストールできますか?

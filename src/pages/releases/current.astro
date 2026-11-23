@@ -17,6 +17,8 @@ const perChannel = Object.entries(release.recipes.channels)
   .join(' / ');
 const generated = release.generated.replace('T', ' ').replace('Z', ' UTC');
 const newsSlug = release.release.replace(/\./g, '-');
+const assetBase = `https://github.com/studio-nosa-tech/zignos-recipes/releases/download/${release.release}`;
+const releasePage = `https://github.com/studio-nosa-tech/zignos-recipes/releases/tag/${release.release}`;
 ---
 
 <PageLayout
@@ -115,7 +117,9 @@ const newsSlug = release.release.replace(/\./g, '-');
           {release.artifacts.map((a) => (
             <tr>
               <td>{a.name}</td>
-              <td><code>{a.filename}</code></td>
+              <td>
+                <a href={`${assetBase}/${a.filename}`}><code>{a.filename}</code></a>
+              </td>
               <td>{a.size.toLocaleString('en-US')}</td>
             </tr>
           ))}
@@ -155,6 +159,7 @@ const newsSlug = release.release.replace(/\./g, '-');
         <li><a href="/releases.json">release.json(機械可読マニフェスト)</a></li>
         <li><a href={`/news/${newsSlug}/`}>リリースノート</a></li>
         <li><a href="/download/">ダウンロード</a></li>
+        <li><a href={releasePage}>GitHub Releases</a></li>
         <li><a href="/docs/release-manifest/">リリースマニフェストの仕様</a></li>
       </ul>
     </div>

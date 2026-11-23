@@ -27,7 +27,7 @@ ZIGNOS の実機インストールは、**stage3 tarball をディスクへ展�
 | ストレージ | CLI は 8 GiB 以上、デスクトップは 16 GiB 以上を推奨 |
 | ネットワーク | 有線を推奨。WiFi はファームウェアが必要 |
 | インストール媒体 | SystemRescue を書き込んだ USB メモリ(現行 13.03) |
-| stage3 | tarball と SHA-256(現在は一般配布準備中) |
+| stage3 | [ダウンロードページ](/download/)の tarball と SHA-256 |
 
 stage3 は約 1.1 GiB です。カーネル、GRUB、追加パッケージ、ビルドキャッシュの
 容量は別途必要です。
@@ -232,34 +232,33 @@ mount <DISK>1 /mnt/zignos
 
 stage3 は「カーネルと GRUB を除いた最小ベース」です。現行マニフェストは
 **{{release}} / stage3 {{stage3.revision}}({{stage3.package_count}} パッケージ /
-約 {{stage3.size_mib}} MiB)** です。r20 は `linux-pam` r3
-(`system-login` / `system-local-login` を含む)、initscripts r26
-(`/etc/zpkg/sync.conf` と base-accounts)、zpkg 0.3.1 の git sync、
-WiFi 修正(`networkmanager-wifi`)を含みます。stage3 の一般配布は準備中で、
-公開後はダウンロードページの tarball を使えます。
+約 {{stage3.size_mib}} MiB)** です。r21 は Linux headers 6.18.65、
+OpenSSL 4.0.3、zpkg 0.3.4-r4、locales(en_US.UTF-8 / ja_JP.UTF-8)、
+Go 1.27.4 を含みます。配布物は[ダウンロードページ](/download/)と
+GitHub Releases から取得できます。
 
 開発者向けには build VM で生成します。
 
 ```sh
 # ビルドホストの作業ツリー内
-sudo OUT=/var/tmp/zignos-stage3-20261121-r20-x86_64.tar.xz ./make-stage3.sh
-sha256sum /var/tmp/zignos-stage3-20261121-r20-x86_64.tar.xz \
-  > /var/tmp/zignos-stage3-20261121-r20-x86_64.tar.xz.sha256
+sudo OUT=/var/tmp/zignos-stage3-20261124-r21-x86_64.tar.xz ./make-stage3.sh
+sha256sum /var/tmp/zignos-stage3-20261124-r21-x86_64.tar.xz \
+  > /var/tmp/zignos-stage3-20261124-r21-x86_64.tar.xz.sha256
 ```
 
 生成物を USB / SSH で実機へ運び、**展開前にチェックサムを検証**します。
 
 ```sh
-sha256sum --check zignos-stage3-20261121-r20-x86_64.tar.xz.sha256
+sha256sum --check zignos-stage3-20261124-r21-x86_64.tar.xz.sha256
 ```
 
-> **現行マニフェスト(r20)**: {{build_date}} 時点で **{{stage3.package_count}} パッケージ /
+> **現行マニフェスト(r21)**: {{build_date}} 時点で **{{stage3.package_count}} パッケージ /
 > 約 {{stage3.size_mib}} MiB**。ファイル名は `{{stage3.filename}}`、SHA-256 は
 > `{{stage3.sha256}}` です。
 >
-> r20 は `linux-pam` r3、initscripts r26、zpkg 0.3.1、git 2.56.1 を同梱します。
-> 起動後に `zpkg sync && zpkg upgrade` で zpkg 0.3.3 と initscripts r28 に
-> 更新できます。
+> r21 は Linux headers 6.18.65、OpenSSL 4.0.3、zpkg 0.3.4-r4、locales、
+> Go 1.27.4 を同梱します。起動後に `zpkg sync && zpkg upgrade` で
+> チャンネルを追加・更新できます。
 >
 > root はロック済み、SSH ホスト鍵・machine-id・ユーザーは含みません。
 
@@ -581,7 +580,7 @@ linux-firmware** をまとめて入れるメタパッケージです。ファー
 WiFi が認識されない事故を避けるため、WiFi を使う場合はこちらを使ってください。
 有線専用なら `zpkg install networkmanager` だけでも構いません。
 
-> `networkmanager-wifi` は **stage3 r13 以降**に同梱されています(現行ビルドは r20)。r12 の場合は
+> `networkmanager-wifi` は **stage3 r13 以降**に同梱されています(現行ビルドは r21)。r12 の場合は
 > `zpkg install networkmanager wpa_supplicant iw linux-firmware` を使ってください。
 >
 > **WiFi しか使えない機体**では、この chroot の中で WiFi スタックまで入れてから
@@ -768,7 +767,7 @@ zignos-install /dev/nvme0n1
 
 UEFI で起動した場合は GPT + ESP、BIOS なら MBR になります。`efibootmgr` が
 入っていれば NVRAM も登録します。イメージは `make-image.sh` で
-生成します(公開配布は準備中)。
+生成します(ブータブルイメージは今後の配布物に追加予定)。
 
 ### 代替 B: イメージを直接 `dd`
 
@@ -1000,7 +999,7 @@ grep -E 'menuentry|linux /boot|initrd /boot' /boot/grub/grub.cfg
   [デスクトップ環境](/docs/desktop/))
 - **WiFi は firmware 導入後**。`networkmanager-wifi` または `linux-firmware`
   (約 2 GiB)
-- **stage3 の公開は準備中**。現在は `make-stage3.sh` で生成
+- **stage3 は GitHub Releases で公開中**。開発者は `make-stage3.sh` でも生成可能
 - **x86_64 のみ**。BIOS/UEFI の両方に対応
 - root の初期パスワードは配布イメージの案内を参照し、**最初に変更**する
 

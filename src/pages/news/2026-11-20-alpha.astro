@@ -1,6 +1,6 @@
 ---
 import PageLayout from '../../layouts/PageLayout.astro';
-import release from '../../data/release.json';
+import release from '../../data/release-2026-11-20-alpha.json';
 
 const available = release.availability === 'available';
 const recipeCount = (c: { core: number; main: number; desktop: number }) =>
@@ -23,10 +23,11 @@ const perChannel = Object.entries(release.recipes.channels)
 
     <div class="prose">
       <div class="notice">
-        <strong>stage3 のダウンロードは{available ? '公開中です。' : '準備中です。'}</strong>
+        <strong>このリリースの stage3 は{available ? '公開中です。' : '準備中です。'}</strong>
         {' '}配布物のファイル名・サイズ・SHA-256 は
         <a href="/releases/current/">現在のリリース</a> と
         <a href="/releases.json">release.json</a> にまとめています。
+        現行の r21 は <a href="/download/">ダウンロードページ</a> から取得できます。
       </div>
 
       <h2>今回のリリース</h2>
