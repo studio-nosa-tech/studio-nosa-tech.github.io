@@ -16,6 +16,10 @@ Qt 6.11.3 / KF6 6.32 / Plasma 6.8.3 / Gear 26.08.3、Unstable は
 Linux 7.4-rc3 と Gear 26.11.80 beta を採用しています。
 stage3 と既定のイメージは CLI の最小ベースのままです。**
 
+![ZIGNOS の KDE Plasma 6(Wayland)デスクトップ。Konsole で fastfetch、Quick Settings を開いた状態](images/plasma6-desktop.png)
+
+*Testing チャンネル(Linux 7.3.5 / Plasma 6.8.3)を Intel HD Graphics 520 で動作させた画面。*
+
 ## 目標
 
 - Plasma 6 の Wayland セッションで、ログイン → パネル/デスクトップ →
