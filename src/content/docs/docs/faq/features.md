@@ -43,6 +43,14 @@ Unstable → Testing → Stable の順に検証されます。詳細は
 
 SDDM は全チャンネル、Plasma Login Manager は Testing / Unstable で利用できます。
 
+## Flatpak
+
+`flatpak` / `xdg-desktop-portal` / `xdg-desktop-portal-kde` を導入すると、
+Flathub のアプリをサンドボックスで実行できます。ファイル選択・画面共有・
+印刷は KDE ポータルが処理します。systemd は不要で、ポータルは D-Bus
+アクティベーションで起動します。詳細は [Flatpak](/docs/desktops/flatpak/) を
+参照してください。
+
 ## ファームウェアと起動
 
 x86_64 の BIOS / UEFI に対応します。GRUB 2.14 を使い、UEFI では efibootmgr も

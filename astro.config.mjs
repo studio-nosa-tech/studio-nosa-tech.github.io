@@ -86,6 +86,7 @@ export default defineConfig({
                 { label: 'KDE Plasma 6', slug: 'docs/system/desktop' },
                 { label: 'Wayland と Xwayland', slug: 'docs/desktops/wayland' },
                 { label: '日本語入力 (fcitx5 + Mozc)', slug: 'docs/desktops/japanese' },
+                { label: 'Flatpak', slug: 'docs/desktops/flatpak' },
                 { label: 'デスクトップ環境(詳細)', slug: 'docs/desktop' },
               ],
             },

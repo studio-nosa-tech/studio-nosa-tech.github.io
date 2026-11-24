@@ -34,6 +34,7 @@ ZIGNOS は、ゼロから組み立てるソースベースの Linux ディスト
 - [デスクトップ概要](/docs/desktops/)
 - [KDE Plasma 6](/docs/system/desktop/)
 - [Wayland と Xwayland](/docs/desktops/wayland/)
+- [Flatpak](/docs/desktops/flatpak/)
 - [デスクトップ環境(詳細)](/docs/desktop/)
 
 ## パッケージング

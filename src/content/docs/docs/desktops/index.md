@@ -14,6 +14,7 @@ ZIGNOS のデスクトップ環境は **KDE Plasma 6 (Wayland)** です。stage3
 - OpenRC のまま、PAM / elogind / polkit でセッションを作る
 - ログインは SDDM(全チャンネル)、または Plasma Login Manager(Testing / Unstable)
 - 日本語表示は Noto CJK / Noto Emoji と IPAex フォント、日本語入力は fcitx5 + mozc
+- Flatpak と xdg-desktop-portal (KDE バックエンド) に対応
 
 ## 導入
 
@@ -74,6 +75,7 @@ fcitx5-configtool
 - [KDE Plasma 6](/docs/system/desktop/) — 導入、ログイン、サービス
 - [Wayland と Xwayland](/docs/desktops/wayland/) — セッション、X11 アプリ、GLX
 - [日本語入力 (fcitx5 + Mozc)](/docs/desktops/japanese/) — 導入、環境変数、Mozc の設定
+- [Flatpak](/docs/desktops/flatpak/) — Flathub、ポータル連携、トラブルシューティング
 - [デスクトップ環境(詳細)](/docs/desktop/) — チャンネル構成と実装状況
 
 現時点で KDE Plasma 以外のデスクトップ環境は公式には提供していません。

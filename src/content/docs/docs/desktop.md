@@ -9,9 +9,10 @@ ZIGNOS はコンソール主体の最小ベースとして育ってきました�
 **M47 で Stable / Testing / Unstable のデスクトップ系列を実際に分岐し、
 M48 で SDDM を全チャンネル、Plasma Login Manager を Testing / Unstable に
 追加しました。M50 で Spectacle と kio-extras を加え、M51 で zpkg 0.3.2 の
-自己更新と新規依存の自動導入を追加しています。`desktop/` は stable 212 /
-testing・unstable 220 レシピ、`kde-applications` は 11 アプリです。
-Stable は Qt 6.8.5 / KF6 6.18.0 / Plasma 6.4.5 / Gear 25.04.3、Testing は
+自己更新と新規依存の自動導入を追加しています。Flatpak / xdg-desktop-portal
+にも対応しました。`desktop/` は stable 252 / testing・unstable 260 レシピ、
+`kde-applications` は 11 アプリです。
+Stable は Qt 6.8.5 / KF6 6.18.0 / Plasma 6.4.6 / Gear 25.04.3、Testing は
 Qt 6.11.3 / KF6 6.32 / Plasma 6.8.3 / Gear 26.08.3、Unstable は
 Linux 7.4-rc3 と Gear 26.11.80 beta を採用しています。
 stage3 と既定のイメージは CLI の最小ベースのままです。**
@@ -36,8 +37,8 @@ stage3 と既定のイメージは CLI の最小ベースのままです。**
 
 | コンポーネント | Stable(LTS/安定) | Testing(最新安定) | Unstable(挑戦的) |
 |---|---|---|---|
-| Linux kernel | 6.18.64 LTS | 7.3.5 最新安定 | 7.4-rc3 mainline |
-| KDE Plasma | 6.4.5(Qt 6.8 LTS 対応) | 6.8.3 | 6.8.3(6.9 公開待ち) |
+| Linux kernel | 6.18.65 LTS | 7.3.6 最新安定 | 7.4-rc3 mainline |
+| KDE Plasma | 6.4.6(Qt 6.8 LTS 対応) | 6.8.3 | 6.8.3(6.9 公開待ち) |
 | Qt | 6.8.5 LTS | 6.11.3 | 6.11.3(Plasma 6.9 と同時に 6.12) |
 | KDE Frameworks | 6.18 | 6.32 | 6.32(6.33 は Plasma 6.9 と同時) |
 | KDE Gear(アプリ) | 25.04.3 | 26.08.3 | 26.11.80 beta |
@@ -76,6 +77,11 @@ Qt 6.8 LTS でビルドできる最新の Gear(25.04.3)を固定し、Testing �
 将来は `kde-applications-{utilities,graphics,multimedia,network,office,pim,sdk}`
 のサブメタへ分割できる構成にします。
 
+Flatpak は `flatpak` / `xdg-desktop-portal` / `xdg-desktop-portal-kde` の
+3 パッケージで追加します。システムヘルパーは D-Bus アクティベーションで
+起動し、ファイル選択・画面共有・印刷は KDE ポータルが処理します。詳細は
+[Flatpak](/docs/desktops/flatpak/) を参照してください。
+
 ## OpenRC との統合
 
 Plasma の Wayland セッションは、OpenRC 上では次の順序で支えます。
@@ -107,7 +113,7 @@ BIOS/MBR の検証イメージ(QEMU)でビルド・起動を確認していま�
   `swrast` ドライバを導入
 - **Qt / KF6 / Plasma**: Qt 6.8.5(qtbase / qtdeclarative / qtwayland /
   qt5compat / qttools / qtpositioning / qtlocation / qtsensors)、
-  KF6 6.18.0、Plasma 6.4.5(KWin / plasma-workspace / plasma-desktop /
+  KF6 6.18.0、Plasma 6.4.6(KWin / plasma-workspace / plasma-desktop /
   systemsettings / kscreenlocker / kactivitymanagerd など)
 - **Xwayland**: Xwayland 24.1.9 / xkbcomp 1.4.7 / libXfont2 / libfontenc /
   libxshmfence。ksmserver は Wayland でも xcb を要求するため必須
@@ -160,9 +166,9 @@ BIOS/MBR の検証イメージ(QEMU)でビルド・起動を確認していま�
 
 ### M47 で分岐したもの
 
-- **Stable**: Linux 6.18.64 LTS / Qt 6.8.5 / KF6 6.18 / Plasma 6.4.5 /
+- **Stable**: Linux 6.18.65 LTS / Qt 6.8.5 / KF6 6.18 / Plasma 6.4.6 /
   Gear 25.04.3 / Mesa 26.2.7。既存の安定系列を維持
-- **Testing**: Linux 7.3.5 / Qt 6.11.3 / KF6 6.32 / Plasma 6.8.3 /
+- **Testing**: Linux 7.3.6 / Qt 6.11.3 / KF6 6.32 / Plasma 6.8.3 /
   Gear 26.08.3 / Mesa 26.3.1。QEMU でパネル・壁紙・KRunner・Dolphin・Kate・
   UDisks2(vda / sr0)まで確認し、未解決 soname 0
 - **Unstable**: Linux 7.4-rc3 / Gear 26.11.80 beta。Qt 6.12・KF6 6.33・
@@ -214,13 +220,14 @@ QEMU で行います。通常の Plasma ユーザーセッション(不透明な
 - **M49: レシピ同期** — `zpkg sync --git` が `.zpkg-git` の commit と
   リモート HEAD を比較し、変更時だけ shallow clone します。stage3 の
   `/etc/zpkg/sync.conf` は既定で GitHub の `zignos-recipes` を参照します
-- **M50: Spectacle / kio-extras** — stable は Spectacle 6.4.5 + OpenCV
+- **M50: Spectacle / kio-extras** — stable は Spectacle 6.4.6 + OpenCV
   4.14.0(core/imgproc)、Testing / Unstable は Spectacle 6.8.3 +
   KQuickImageEditor 0.7.0.1 / Tesseract 5.5.4。OCR 用に eng / jpn /
   jpn_vert / osd の tessdata を同梱します。kio-extras は stable 25.04.3 /
   Testing 26.08.3 / Unstable 26.11.80 で、archive / fish / info / man /
   thumbnail / recentlyused / 検索などの worker を提供します。録画用に
-  FFmpeg 8.0.1 と libva 2.24.1 を KPipeWire に追加しました
+  FFmpeg 8.0.3(stable)/ 8.1.3(testing・unstable)と libva 2.24.1 を
+  KPipeWire に追加しました
 - **M51: 更新システム** — zpkg 0.3.2 はソースアーカイブをレシピに同梱し、
   通常システムでも自己更新できます。`zpkg upgrade` は新しく必要になった
   依存を先にインストールしてから、既存パッケージを更新します。initscripts
@@ -252,7 +259,7 @@ rc-update add sddm default          # SDDM (全チャンネル)
 | M47 | Stable / Testing / Unstable の系列分岐(完了)。Testing は Qt 6.11 / Plasma 6.8 / Gear 26.08、Unstable は Linux 7.4-rc3 と Gear 26.11.80 beta。Qt 6.12 / Plasma 6.9 は次期 |
 | M48 | SDDM を全チャンネル、PLM を Testing / Unstable に追加(完了)。helper の root グループ混入と共通 D-Bus ポリシーを修正。greeter の目視は QEMU softpipe のため実 GPU 待ち |
 | M49 | レシピ同期の git 化(完了)。`zpkg sync --git` と `/etc/zpkg/sync.conf` の既定 GitHub リポジトリ、stage3 r20 |
-| M50 | Spectacle / kio-extras を全チャンネルに追加(完了)。stable は Spectacle 6.4.5 + OpenCV、Testing / Unstable は 6.8.3 + KQuickImageEditor / Tesseract。KPipeWire 用に FFmpeg / libva を追加 |
+| M50 | Spectacle / kio-extras を全チャンネルに追加(完了)。stable は Spectacle 6.4.6 + OpenCV、Testing / Unstable は 6.8.3 + KQuickImageEditor / Tesseract。KPipeWire 用に FFmpeg / libva を追加 |
 | M51 | zpkg の自己更新と新規依存の自動導入(完了)。zpkg 0.3.2 / initscripts r27 |
 
 各フェーズの完了条件と依存関係は [ロードマップ](/docs/roadmap/) に記録します。
@@ -274,7 +281,7 @@ QEMU の virtio-gpu と Wayland を使い、DRM/seat を含む実際のセッシ
 - `desktop/` は stable 212 / Testing・Unstable 220 レシピ。`kde-applications` は
   Konsole / Dolphin / KCalc / Filelight / Kate / Ark / Gwenview / Okular /
   KWalletManager / Spectacle / kio-extras の 11 アプリ
-- Spectacle は stable 6.4.5(OpenCV core/imgproc)、Testing / Unstable 6.8.3
+- Spectacle は stable 6.4.6(OpenCV core/imgproc)、Testing / Unstable 6.8.3
   (KQuickImageEditor / Tesseract)。録画のソフトウェア VP8/VP9/H.264
   エンコーダ(libvpx / openh264)は未導入で、VAAPI のある GPU か
   エンコーダ追加後に利用する。撮影・録画・OCR の GUI 操作は実 GPU で確認する。
