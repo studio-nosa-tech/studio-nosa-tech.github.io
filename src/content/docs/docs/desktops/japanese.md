@@ -79,8 +79,11 @@ fcitx5 は XDG autostart で Plasma と一緒に起動します。起動して�
 `fcitx5 -d` をシステム設定 → 自動起動 に追加してください。
 
 Wayland ネイティブのアプリはコンポジタの入力メソッドプロトコルを使うため、
-上記の環境変数が無くても動作します。環境変数は主に Xwayland と、
-各ツールキットの IM モジュールを明示したい場合に必要です。
+上記の環境変数が無くても動作します。ただし Electron アプリ(Chromium 系)は
+`--enable-wayland-ime` を明示する必要があります。ZIGNOS の Discord
+(r1 以降)はランチャーでこのフラグを渡します。KDE Plasma の
+「システム設定 → 入力デバイス → 仮想キーボード」で Fcitx5 を選んでおくと、
+Wayland の入力メソッドプロトコルが有効になります。
 
 ## 動作確認
 
@@ -104,6 +107,10 @@ GTK 3 アプリ(例: `gtk3-demo`)でも同様に確認できます。
   `/usr/lib/gtk-3.0/3.0.0/immodules/im-fcitx5.so` があるか確認してください
 - **Xwayland のアプリだけ変換できない** — `XMODIFIERS` が反映されていません。
   `/etc/environment` の 3 行と再ログインを確認してください
+- **Discord で入力できない** — Discord (r1 以降)は Wayland で
+  `--enable-wayland-ime` 付きで起動します。古いパッケージの場合は
+  `zpkg install -f discord` で更新してください。KDE の「仮想キーボード」で
+  Fcitx5 が選ばれていることも確認してください
 - **日本語が表示されない** — `fonts-noto-cjk`(または `ipaex-fonts`)を
   インストールしてください
 
