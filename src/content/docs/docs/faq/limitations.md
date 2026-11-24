@@ -1,9 +1,9 @@
 ---
 title: 制限・未実装
-description: ZIGNOS alpha 時点の既知の制限。配布、Secure Boot、暗号化、実機 GPU、署名の現状。
+description: ZIGNOS 2026.11.24 時点の既知の制限。配布、Secure Boot、暗号化、実機 GPU、署名の現状。
 ---
 
-ZIGNOS は alpha です。以下は現時点の既知の制限です。
+ZIGNOS は 2026.11.24 で最初の正式版を公開しました。以下は現時点の既知の制限です。
 
 ## 配布
 

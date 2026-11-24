@@ -18,6 +18,7 @@ export default defineConfig({
     '/docs/getting-started/boot': '/docs/install/',
     '/docs/getting-started/install': '/docs/install/',
     '/docs/getting-started/first-boot': '/docs/install/',
+    '/news/2026-11-24-alpha': '/news/2026-11-24/',
   },
   markdown: {
     processor: unified({ remarkPlugins: [remarkRelease] }),
