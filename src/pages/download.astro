@@ -1,6 +1,7 @@
 ---
 import PageLayout from '../layouts/PageLayout.astro';
 import release from '../data/release.json';
+import live from '../data/live.json';
 
 const available = release.availability === 'available';
 const labels: Record<string, string> = {
@@ -15,7 +16,7 @@ const releasePage = `https://github.com/studio-nosa-tech/zignos-recipes/releases
 
 <PageLayout
   title="ダウンロード — ZIGNOS"
-  description={`ZIGNOS ${release.release} の stage3 tarball、レシピツリー、zpkg バイナリ。`}
+  description={`ZIGNOS ${release.release} の stage3 tarball、レシピツリー、zpkg バイナリ、Live DVD。`}
 >
   <div class="wrap">
     <section class="page-hero">
@@ -110,13 +111,35 @@ zpkg install linux grub</code></pre>
         <code>zpkg sync</code> で追加します。
       </p>
 
-      <h2>ブータブルイメージ</h2>
+      <h2 id="live">Live DVD</h2>
       <p>
-        現在のマニフェストは stage3 とレシピツリー、zpkg バイナリを対象にしています。
-        BIOS / UEFI のブータブルイメージは、起動検証の結果
-        (BIOS: {release.boot.bios} / UEFI: {release.boot.uefi})とあわせて
-        次のリリースで配布物に加える予定です。
+        <strong>ZIGNOS Live DVD {live.label}</strong> は、インストールせずに試せる
+        デスクトップ Live イメージです。<code>{live.channel}</code> チャンネルをベースに、
+        KDE Plasma 6 (Wayland)、BIOS / UEFI 起動、TUI インストーラーを含みます。
       </p>
+      <div class="notice">
+        <strong>SourceForge で配布中です。</strong>
+        {' '}<a href={live.download}>{live.filename}</a> をダウンロード
+        ({live.size.toLocaleString('en-US')} バイト / 約 4.4 GB)。
+      </div>
+      <table>
+        <tbody>
+          <tr><th>ファイル</th><td><code>{live.filename}</code></td></tr>
+          <tr><th>サイズ</th><td>{live.size.toLocaleString('en-US')} バイト</td></tr>
+          <tr><th>SHA-256</th><td><code class="hash">{live.sha256}</code></td></tr>
+          <tr><th>MD5</th><td><code class="hash">{live.md5}</code></td></tr>
+        </tbody>
+      </table>
+      <p>
+        <a href={live.sha256_url}>SHA-256 ファイル</a>も同じフォルダにあります。
+        Live DVD を含むすべての配布物は
+        <a href={live.project}>SourceForge の ZIGNOS プロジェクト</a>を参照してください。
+      </p>
+      <ul>
+        <li>4 GB 以上の USB メモリに書き込んで起動します。</li>
+        <li>alpha 版です。不具合は<a href="/docs/community/forum/">フォーラム</a>または Issue へ。</li>
+        <li>インストールは Live 内の TUI インストーラーを使います(stage3 手順とは異なります)。</li>
+      </ul>
 
       <h2>検証とセキュリティ</h2>
       <ul>
@@ -128,6 +151,7 @@ zpkg install linux grub</code></pre>
       <h2>リンク</h2>
       <ul>
         <li><a href={releasePage}>GitHub Releases</a></li>
+        <li><a href={live.project}>SourceForge (Live DVD)</a></li>
         <li><a href="/releases/current/">このリリースの詳細</a></li>
         <li><a href="/releases.json">release.json</a></li>
         <li><a href="/docs/release-manifest/">リリースマニフェストの仕様</a></li>

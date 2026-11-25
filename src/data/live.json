@@ -1,0 +1,13 @@
+{
+  "label": "2026.11.25 (Alpha)",
+  "version": "2026.11.25",
+  "channel": "testing",
+  "filename": "zignos-live-desktop-20261125.iso",
+  "size": 4446615552,
+  "sha256": "cdefa3d135bd9be56d3388a18f6ee1da0c9e642b2c54f9bf63702bd79049f755",
+  "md5": "321d5bf2ba52d9d0d1378ef95b03d808",
+  "project": "https://sourceforge.net/projects/zignos/files/",
+  "folder": "https://sourceforge.net/projects/zignos/files/LiveISO/20261125%28Alpha%29/",
+  "download": "https://sourceforge.net/projects/zignos/files/LiveISO/20261125%28Alpha%29/zignos-live-desktop-20261125.iso/download",
+  "sha256_url": "https://sourceforge.net/projects/zignos/files/LiveISO/20261125%28Alpha%29/zignos-live-desktop-20261125.sha256/download"
+}

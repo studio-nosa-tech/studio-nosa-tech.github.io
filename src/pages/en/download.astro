@@ -1,6 +1,7 @@
 ---
 import PageLayout from '../../layouts/PageLayout.astro';
 import release from '../../data/release.json';
+import live from '../../data/live.json';
 
 const available = release.availability === 'available';
 const labels: Record<string, string> = {
@@ -16,7 +17,7 @@ const releasePage = `https://github.com/studio-nosa-tech/zignos-recipes/releases
 <PageLayout
   lang="en"
   title="Download — ZIGNOS"
-  description={`The stage3 tarball, recipe tree, and zpkg binary for ZIGNOS ${release.release}.`}
+  description={`The stage3 tarball, recipe tree, zpkg binary, and Live DVD for ZIGNOS ${release.release}.`}
 >
   <div class="wrap">
     <section class="page-hero">
@@ -112,13 +113,36 @@ zpkg install linux grub</code></pre>
         <code>zpkg sync</code>.
       </p>
 
-      <h2>Bootable images</h2>
+      <h2 id="live">Live DVD</h2>
       <p>
-        The current manifest covers stage3, the recipe tree, and the zpkg binary.
-        BIOS / UEFI bootable images, together with the boot verification results
-        (BIOS: {release.boot.bios} / UEFI: {release.boot.uefi}),
-        are planned to be added to the artifacts in the next release.
+        <strong>ZIGNOS Live DVD {live.label}</strong> is a desktop Live image you can
+        try without installing. It is based on the <code>{live.channel}</code> channel
+        and includes KDE Plasma 6 (Wayland), BIOS / UEFI boot, and a TUI installer.
       </p>
+      <div class="notice">
+        <strong>Distributed on SourceForge.</strong>
+        {' '}Download <a href={live.download}>{live.filename}</a>
+        ({live.size.toLocaleString('en-US')} bytes / about 4.4 GB).
+      </div>
+      <table>
+        <tbody>
+          <tr><th>File</th><td><code>{live.filename}</code></td></tr>
+          <tr><th>Size</th><td>{live.size.toLocaleString('en-US')} bytes</td></tr>
+          <tr><th>SHA-256</th><td><code class="hash">{live.sha256}</code></td></tr>
+          <tr><th>MD5</th><td><code class="hash">{live.md5}</code></td></tr>
+        </tbody>
+      </table>
+      <p>
+        A <a href={live.sha256_url}>SHA-256 file</a> is in the same folder.
+        See the <a href={live.project}>ZIGNOS project on SourceForge</a> for
+        all Live DVD files.
+      </p>
+      <ul>
+        <li>Write it to a USB drive of 4 GB or more and boot from it.</li>
+        <li>This is an alpha build. Report problems in the
+          <a href="/en/docs/community/forum/">forum</a> or Issues.</li>
+        <li>Use the TUI installer inside the Live session (the stage3 procedure does not apply).</li>
+      </ul>
 
       <h2>Verification and security</h2>
       <ul>
@@ -130,6 +154,7 @@ zpkg install linux grub</code></pre>
       <h2>Links</h2>
       <ul>
         <li><a href={releasePage}>GitHub Releases</a></li>
+        <li><a href={live.project}>SourceForge (Live DVD)</a></li>
         <li><a href="/en/releases/current/">Details for this release</a></li>
         <li><a href="/releases.json">release.json</a></li>
         <li><a href="/en/docs/release-manifest/">Release manifest specification</a></li>
