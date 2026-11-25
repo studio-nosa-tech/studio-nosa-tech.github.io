@@ -23,6 +23,8 @@ ZIGNOS は 2026.11.24 で最初の正式版を公開しました。以下は現�
 - 対応アーキテクチャは **x86_64 のみ**
 - 実機 GPU での Plasma / SDDM / PLM の目視確認は継続中です。QEMU の
   Mesa softpipe では greeter の透過合成で KWin が落ちる既知の問題があります
+- AMD / NVIDIA GPU での実機動作確認は未実施です。NVIDIA は nouveau のみで、
+  プロプライエタリドライバは公式リポジトリに含まれません
 - WiFi は `linux-firmware` と `wpa_supplicant` が必要です。検証済みの一部
   チップ以外は実機確認が残っています
 - Xwayland の GLX は有効ですが、実機 GPU での確認は残っています

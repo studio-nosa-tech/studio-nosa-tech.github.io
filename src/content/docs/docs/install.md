@@ -793,6 +793,10 @@ ZIGNOS の Mesa は `VIDEO_CARDS` で Gallium ドライバを切り替えるた�
 - 複数の GPU を使う場合は空白区切りで指定できます。
   `VIDEO_CARDS="iris virgl"` のように書きます。
 
+> **注意**: AMD / NVIDIA GPU での実機動作確認は行っていません。NVIDIA は
+> オープンソースの `nouveau` のみで、プロプライエタリドライバは公式リポジトリに
+> 含まれません。
+
 ### 10.2 設定する
 
 `zpkg video-cards` を使うと `/etc/zpkg/make.conf` に書き込まれます。

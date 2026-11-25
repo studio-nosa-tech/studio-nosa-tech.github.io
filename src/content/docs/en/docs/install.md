@@ -813,6 +813,10 @@ ZIGNOS's Mesa switches Gallium drivers via `VIDEO_CARDS`, so installing
 - For multiple GPUs, separate the values with spaces, as in
   `VIDEO_CARDS="iris virgl"`
 
+> **Note**: AMD and NVIDIA GPUs have not been verified on real hardware.
+> NVIDIA support is the open-source `nouveau` only; the proprietary driver is
+> not in the official repository.
+
 ### 10.2 Configure
 
 `zpkg video-cards` writes to `/etc/zpkg/make.conf`.

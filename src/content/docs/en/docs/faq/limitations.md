@@ -26,6 +26,8 @@ the known limitations at present.
 - Visual verification of Plasma / SDDM / PLM on real GPUs is ongoing. With
   QEMU's Mesa softpipe there is a known issue where KWin crashes on the
   greeter's transparency compositing
+- AMD and NVIDIA GPUs have not been verified on real hardware. NVIDIA support
+  is nouveau only; the proprietary driver is not in the official repository
 - WiFi requires `linux-firmware` and `wpa_supplicant`. Real-hardware
   verification remains for chips other than a few verified ones
 - Xwayland GLX is enabled, but verification on real GPUs remains
