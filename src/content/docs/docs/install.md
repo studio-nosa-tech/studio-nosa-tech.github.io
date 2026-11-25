@@ -78,12 +78,10 @@ sha256sum zignos-live-desktop-20261125.iso
 
 ### USB に書き込む
 
-```sh
-# Linux / macOS(デバイス名は lsblk で確認。例: /dev/sdX)
-sudo dd if=zignos-live-desktop-20261125.iso of=/dev/sdX bs=4M status=progress conv=fsync
-```
-
-Windows では Rufus、balenaEtcher、Ventoy などで書き込みます。
+> **注意(2026.11.25 alpha)**: この ISO は現在 **CD/DVD 用**です。MBR/GPT を持たない
+> ため、USB に `dd` しても BIOS / UEFI から起動できません。USB で試す場合は
+> Ventoy などの ISO ブートローダーを使うか、CD/DVD・VM の CD-ROM で起動してください。
+> ハイブリッド ISO(USB 直書き対応)は準備中です。
 
 ### 起動する
 
