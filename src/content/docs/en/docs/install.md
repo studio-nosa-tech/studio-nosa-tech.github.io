@@ -64,7 +64,7 @@ session.
 
 ### What you need
 
-- A USB drive of 4 GB or more
+- A USB drive of 8 GB or more
 - 2 GiB of memory (4 GiB recommended)
 - The Live DVD ISO from the [download page](/en/download/#live) (about 4.4 GB)
 - No network during the install
