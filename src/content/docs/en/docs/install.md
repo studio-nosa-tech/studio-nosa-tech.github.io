@@ -1,23 +1,137 @@
 ---
 title: Installation on real hardware
-description: Installing ZIGNOS on real hardware with the stage3 tarball as the default. One page covers disk preparation, chroot, the kernel, UEFI GRUB, VIDEO_CARDS and adding a desktop.
+description: Install ZIGNOS on real hardware from the official Live DVD (TUI installer) or the stage3 tarball, with the pros and cons of each and what the Live DVD contains.
 ---
 
-The default way to install ZIGNOS on real hardware is to **unpack the stage3
-tarball onto the disk and install the kernel and GRUB from inside a chroot**.
-This single page covers everything from checking requirements to adding a
-desktop. The base is intentionally minimal, so this guide also explains what is
-not included and what you need to install yourself.
+There are **two ways** to install ZIGNOS on real hardware.
 
-- **Default: stage3 tarball** (sections 2–10 of this guide)
-- Alternative: copy from a ZIGNOS image with `zignos-install` (section 11, option A)
-- Alternative: write the image directly with `dd` (section 11, option B)
-- Rescue: chroot from SystemRescue (section 11, option C)
+1. **Official Live DVD** — boot a desktop image and use the TUI installer to copy
+   the running system to an internal disk. This is the fastest route to a KDE
+   Plasma desktop.
+2. **stage3 tarball** — unpack the minimal base and build the kernel and GRUB
+   inside a chroot. You choose the channel, disk layout and packages.
+
+Read the comparison first, then follow the route that fits.
+
+| | Live DVD | stage3 |
+|---|---|---|
+| Difficulty | Answer the installer prompts | Manual (chroot / GRUB) |
+| Time | 15–30 minutes (excluding download) | 30–60 minutes or more |
+| Initial state | Full testing desktop | Minimal CLI |
+| Channel | testing | stable / testing / unstable |
+| Network | Not needed during install | Needed for packages |
+| Disk layout | GPT+ESP or MBR created automatically | Manual (LVM / LUKS possible) |
+| Customization | Limited | Full |
+| Best for | Trying it out / a standard desktop | Minimal systems / servers / full control |
+
+**Live DVD advantages**
+
+- The fastest route to a KDE Plasma desktop
+- GPU drivers (Intel / AMD / NVIDIA nouveau / VMs) and Japanese input work out of the box
+- No network needed during the install
+- The TUI works with the keyboard alone
+
+**Live DVD disadvantages**
+
+- Stuck on the testing channel (it can be changed later)
+- Copies every package from the Live system, using about 10 GB
+- Less control over partitions and package selection
+- Alpha build: things may change or break
+
+**stage3 advantages**
+
+- Start from a minimal base and add only what you need
+- Choose the channel and the disk layout, including LUKS / LVM
+- You can follow the build and dependency chain
+
+**stage3 disadvantages**
+
+- Partitioning, chroot, kernel and GRUB are manual
+- Needs a network to fetch packages
+- The desktop is a separate install
 
 > **Caution**: `<DISK>` is a **whole disk** such as `/dev/nvme0n1` or
 > `/dev/sda`, and `<PART>` is a partition such as `nvme0n1p1` or `sda1`.
 > Running the commands destroys all data on the target disk. Always confirm
 > with `lsblk`.
+
+## Install from the Live DVD
+
+The official Live DVD is a bootable image with the KDE Plasma 6 desktop.
+The TUI installer in the Live session copies the running system to an internal
+disk. The installed system is the same testing-channel desktop as the Live
+session.
+
+### What you need
+
+- A USB drive of 4 GB or more
+- 2 GiB of memory (4 GiB recommended)
+- The Live DVD ISO from the [download page](/en/download/#live) (about 4.4 GB)
+- No network during the install
+
+### Download and verify
+
+Get the ISO and SHA-256 from the [download page](/en/download/#live).
+
+```sh
+sha256sum zignos-live-desktop-20261125.iso
+# cdefa3d135bd9be56d3388a18f6ee1da0c9e642b2c54f9bf63702bd79049f755
+```
+
+### Write it to USB
+
+```sh
+# Linux / macOS (find the device with lsblk; e.g. /dev/sdX)
+sudo dd if=zignos-live-desktop-20261125.iso of=/dev/sdX bs=4M status=progress conv=fsync
+```
+
+On Windows use Rufus, balenaEtcher or Ventoy.
+
+### Boot
+
+- UEFI: disable Secure Boot and put the USB drive first in the boot order
+- BIOS: boot from the USB drive
+- Choose "ZIGNOS Live" in the GRUB menu
+- The Live desktop starts with automatic login (user `live`, no password)
+
+### Start the installer
+
+Use the "Install ZIGNOS" icon on the desktop, or run:
+
+```sh
+doas zignos-installer
+```
+
+1. Choose the target disk (all data on it is destroyed)
+2. Choose the firmware (UEFI / BIOS)
+3. Enter the hostname, user name, password, timezone, locale and keymap
+4. Review the summary and start
+5. The progress gauge advances; wait for "Installation complete."
+6. Reboot and remove the USB drive
+
+SDDM appears after the reboot. Log in as the user you created.
+
+### Initial state after install
+
+- root is locked; use `doas` (the new user is in wheel)
+- KDE Plasma 6 (Wayland), KDE applications, NetworkManager, PipeWire,
+  fcitx5 + Mozc, Flatpak and the GPU drivers are installed
+- The channel is testing; change it with `zpkg channel`
+- Because the Live system is copied as-is, it uses about 10 GB
+
+### Notes
+
+- This is an alpha build. Report problems in the
+  [forum](/en/docs/community/forum/) or Issues
+- The whole disk is erased; confirm the target with `lsblk`
+- Secure Boot must be disabled (GRUB and the kernel are unsigned)
+- No root password is set. Set one with `doas passwd root` if you need it
+
+## Install from stage3 (sections 1–10)
+
+The rest of this page is the stage3 route: unpack the minimal base and install
+the kernel and GRUB inside a chroot. You choose the channel, disk layout and
+additional packages.
 
 ## Requirements
 
@@ -770,23 +884,20 @@ ip addr                  # If wired DHCP was installed
 - Check the channel: `zpkg channel`. For testing / unstable, fetch the recipe
   tree with `zpkg sync`, then switch with `zpkg channel testing`
 
-### Alternative A: `zignos-install` from a ZIGNOS image
+### Advanced A: copy from an existing ZIGNOS with `zignos-install`
 
-Write a ZIGNOS boot image to USB, then copy it to the internal disk with
-`zignos-install`. User creation and GRUB installation are automated.
+Copy a running ZIGNOS to another disk. The Live DVD's TUI installer uses the
+same `zignos-install` engine internally; for normal installs follow the
+"Install from the Live DVD" steps above.
 
 ```sh
-# Write the image to USB from SystemRescue
-dd if=zignos-uefi.img of=/dev/sdX bs=4M status=progress conv=fsync
-
-# After booting ZIGNOS from USB
+# On the running ZIGNOS
 lsblk
 zignos-install /dev/nvme0n1
 ```
 
 Booting in UEFI gives GPT + ESP; BIOS gives MBR. If `efibootmgr` is present,
-the NVRAM entry is registered too. Images are generated with `make-image.sh`
-(a bootable image is planned for a future release).
+the NVRAM entry is registered too.
 
 ### Alternative B: Write the image directly with `dd`
 

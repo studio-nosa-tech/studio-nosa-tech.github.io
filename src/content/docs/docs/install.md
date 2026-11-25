@@ -1,21 +1,134 @@
 ---
 title: 実機インストール
-description: stage3 tarball を既定とした ZIGNOS の実機インストール。ディスク準備、chroot、カーネル、UEFI GRUB、VIDEO_CARDS、デスクトップ追加まで 1 ページで説明します。
+description: 公式 Live DVD の TUI インストーラーと stage3 tarball の 2 つの方法で ZIGNOS を実機へインストールします。利点・欠点の比較と、Live DVD に含まれるものも説明します。
 ---
 
-ZIGNOS の実機インストールは、**stage3 tarball をディスクへ展開し、chroot の中で
-カーネルと GRUB を入れる方法を既定**とします。要件確認からデスクトップの追加まで、
-この 1 ページで完結します。ベースは意図的に最小構成なので、このガイドでは
-「何が入っていないか」と「何を自分で入れるか」も含めて説明します。
+ZIGNOS の実機インストールには **2 つの方法**があります。
 
-- **既定: stage3 tarball**(このガイドの 2〜10 章)
-- 代替: ZIGNOS イメージから `zignos-install` でコピー(11 章 A)
-- 代替: イメージを直接 `dd`(11 章 B)
-- レスキュー: SystemRescue から chroot(11 章 C)
+1. **公式 Live DVD** — デスクトップ入りの起動イメージから、TUI インストーラーで
+   内部ディスクへコピーします。最短で KDE Plasma デスクトップまで到達できます。
+2. **stage3 tarball** — 最小ベースを展開し、chroot の中でカーネルと GRUB を
+   組み立てます。チャンネル・ディスク構成・パッケージを自由に選べます。
+
+まず比較を読んで、用途に合う方を選んでください。
+
+| | Live DVD | stage3 |
+|---|---|---|
+| 難易度 | ウィザードに答えるだけ | 手動(chroot / GRUB) |
+| 所要時間 | 15〜30 分(ダウンロードを除く) | 30〜60 分以上 |
+| 初期状態 | testing のデスクトップ一式 | 最小 CLI |
+| チャンネル | testing | stable / testing / unstable |
+| ネットワーク | インストール中は不要 | パッケージ取得に必要 |
+| ディスク構成 | GPT+ESP または MBR を自動作成 | 手動(LVM / LUKS も可) |
+| カスタマイズ | 限定的 | 自由 |
+| 向いている用途 | まず試す / 標準デスクトップ | 最小構成 / サーバー / こだわり |
+
+**Live DVD の利点**
+
+- 最短で KDE Plasma デスクトップまで到達できる
+- GPU ドライバ(Intel / AMD / NVIDIA nouveau / VM)と日本語入力が最初から動く
+- インストール中にネットワークが不要
+- TUI なのでキーボードだけで操作できる
+
+**Live DVD の欠点**
+
+- testing チャンネル固定(後から変更は可能)
+- Live の全パッケージがコピーされ、約 10 GB を使う
+- パーティション構成やパッケージ選択の自由度が低い
+- alpha 版のため、変更や不具合がある
+
+**stage3 の利点**
+
+- 最小構成から自分で積める。不要なものは入らない
+- チャンネルを選べる。LUKS / LVM などディスク構成も自由
+- ビルドと依存を理解できる
+
+**stage3 の欠点**
+
+- パーティション、chroot、カーネル、GRUB を手動で設定する
+- ネットワークとパッケージ取得が必要
+- デスクトップは別途導入する
 
 > **注意**: `<DISK>` は `/dev/nvme0n1` や `/dev/sda` などの**ディスク全体**、
 > `<PART>` は `nvme0n1p1` / `sda1` などのパーティションです。コマンドを実行すると
 > 対象ディスクの全データが消えます。必ず `lsblk` で確認してください。
+
+## Live DVD からインストール
+
+公式 Live DVD は、KDE Plasma 6 デスクトップを含む起動イメージです。
+Live セッションの TUI インストーラーが、実行中のシステムを内部ディスクへ
+コピーします。インストール後の環境は Live と同じ testing チャンネルの
+デスクトップになります。
+
+### 用意するもの
+
+- 4 GB 以上の USB メモリ
+- 2 GiB 以上のメモリ(4 GiB 推奨)
+- Live DVD: [ダウンロードページ](/download/#live)の ISO(約 4.4 GB)
+- インストール中にネットワークは不要
+
+### ダウンロードと検証
+
+[ダウンロードページ](/download/#live)から ISO と SHA-256 を取得します。
+
+```sh
+sha256sum zignos-live-desktop-20261125.iso
+# cdefa3d135bd9be56d3388a18f6ee1da0c9e642b2c54f9bf63702bd79049f755
+```
+
+### USB に書き込む
+
+```sh
+# Linux / macOS(デバイス名は lsblk で確認。例: /dev/sdX)
+sudo dd if=zignos-live-desktop-20261125.iso of=/dev/sdX bs=4M status=progress conv=fsync
+```
+
+Windows では Rufus、balenaEtcher、Ventoy などで書き込みます。
+
+### 起動する
+
+- UEFI: Secure Boot を無効にし、USB を起動順の先頭にする
+- BIOS: USB から起動する
+- GRUB メニューの「ZIGNOS Live」を選ぶ
+- Live デスクトップが自動ログインで起動する(ユーザー `live`、パスワードなし)
+
+### インストーラーを起動する
+
+デスクトップの「Install ZIGNOS」アイコン、またはターミナルで:
+
+```sh
+doas zignos-installer
+```
+
+1. インストール先ディスクを選ぶ(全データが消えます)
+2. ファームウェア(UEFI / BIOS)を選ぶ
+3. ホスト名、ユーザー名、パスワード、タイムゾーン、ロケール、キーマップを入力
+4. 内容を確認して開始
+5. 進捗ゲージが進み、「Installation complete.」で完了
+6. 再起動し、USB を抜く
+
+再起動後は SDDM のログイン画面が出ます。作成したユーザーでログインしてください。
+
+### インストール後の初期状態
+
+- root はロック済み。管理操作は `doas`(作成ユーザーは wheel に所属)
+- KDE Plasma 6 (Wayland)、KDE アプリ、NetworkManager、PipeWire、
+  fcitx5 + Mozc、Flatpak、GPU ドライバが入っています
+- チャンネルは testing。変更する場合は `zpkg channel` を使います
+- Live の内容がそのままコピーされるため、約 10 GB のディスク容量を使います
+
+### 注意
+
+- alpha 版です。不具合は[フォーラム](/docs/community/forum/)または Issue へ
+- ディスク全体が消えます。`lsblk` で対象を確認してください
+- Secure Boot は無効(GRUB / カーネルは未署名)
+- root のパスワードは設定されません。必要なら `doas passwd root` で設定できます
+
+## stage3 からインストール(1〜10 章)
+
+ここからは stage3 tarball を使う方法です。最小ベースを展開し、chroot の中で
+カーネルと GRUB を導入します。チャンネル、ディスク構成、追加パッケージを
+自分で選べます。
 
 ## 必要なもの
 
@@ -751,23 +864,20 @@ ip addr                  # 有線 DHCP を入れた場合
 - チャンネル確認: `zpkg channel`。testing / unstable は
   `zpkg sync` でレシピツリーを取り込んでから `zpkg channel testing` で切り替え
 
-### 代替 A: ZIGNOS イメージから `zignos-install`
+### 上級 A: 既存の ZIGNOS から `zignos-install` でコピー
 
-ZIGNOS の起動イメージを USB に書き、そこから `zignos-install` で内部ディスクへ
-コピーする方法です。ユーザー作成と GRUB 導入まで自動化されます。
+すでに動作している ZIGNOS を別のディスクへコピーする方法です。Live DVD の
+TUI インストーラーも内部でこの `zignos-install` を使っています。通常は
+「Live DVD からインストール」の手順を使ってください。
 
 ```sh
-# SystemRescue でイメージを USB へ
-dd if=zignos-uefi.img of=/dev/sdX bs=4M status=progress conv=fsync
-
-# ZIGNOS を USB から起動後
+# 既存の ZIGNOS を起動して
 lsblk
 zignos-install /dev/nvme0n1
 ```
 
 UEFI で起動した場合は GPT + ESP、BIOS なら MBR になります。`efibootmgr` が
-入っていれば NVRAM も登録します。イメージは `make-image.sh` で
-生成します(ブータブルイメージは今後の配布物に追加予定)。
+入っていれば NVRAM も登録します。
 
 ### 代替 B: イメージを直接 `dd`
 
