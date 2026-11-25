@@ -21,6 +21,7 @@ Read the comparison first, then follow the route that fits.
 | Channel | testing | stable / testing / unstable |
 | Network | Not needed during install | Needed for packages |
 | Disk layout | GPT+ESP or MBR created automatically | Manual (LVM / LUKS possible) |
+| Target disk | SATA / USB (no eMMC or NVMe) | SATA / USB / NVMe (eMMC only if SystemRescue sees it) |
 | Customization | Limited | Full |
 | Best for | Trying it out / a standard desktop | Minimal systems / servers / full control |
 
@@ -50,6 +51,10 @@ Read the comparison first, then follow the route that fits.
 - Needs a network to fetch packages
 - The desktop is a separate install
 
+> **Important**: the current TUI installer (Live DVD) does not support
+> installing to **eMMC (`/dev/mmcblk*`) or NVMe (`/dev/nvme*`) devices**.
+> Use the manual stage3 procedure for those disks.
+
 > **Caution**: `<DISK>` is a **whole disk** such as `/dev/nvme0n1` or
 > `/dev/sda`, and `<PART>` is a partition such as `nvme0n1p1` or `sda1`.
 > Running the commands destroys all data on the target disk. Always confirm
@@ -67,6 +72,7 @@ session.
 - A USB drive of 8 GB or more
 - 2 GiB of memory (4 GiB recommended)
 - The Live DVD ISO from the [download page](/en/download/#live) (about 4.4 GB)
+- Target disk: SATA or USB (eMMC and NVMe are not supported)
 - No network during the install
 
 ### Download and verify
@@ -124,6 +130,8 @@ SDDM appears after the reboot. Log in as the user you created.
 - The whole disk is erased; confirm the target with `lsblk`
 - Secure Boot must be disabled (GRUB and the kernel are unsigned)
 - No root password is set. Set one with `doas passwd root` if you need it
+- The current TUI installer cannot install to eMMC (`/dev/mmcblk*`) or
+  NVMe (`/dev/nvme*`) disks; use the manual stage3 procedure
 
 ## Install from stage3 (sections 1–10)
 
@@ -139,12 +147,16 @@ additional packages.
 | Firmware | BIOS or UEFI (Secure Boot disabled) |
 | Memory | 512 MiB or more for CLI; 2 GiB or more recommended for KDE Plasma |
 | Storage | 8 GiB or more for CLI; 16 GiB or more recommended for a desktop |
+| Target disk | SATA / USB / NVMe; eMMC only if SystemRescue sees it |
 | Network | Wired recommended. WiFi requires firmware |
 | Installation media | USB flash drive with SystemRescue written to it (currently 13.03) |
 | stage3 | The tarball and SHA-256 from the [download page](/en/download/) |
 
 stage3 is about 1.1 GiB. Space for the kernel, GRUB, additional packages and
 the build cache is required separately.
+
+NVMe appears as `/dev/nvme0n1` and eMMC as `/dev/mmcblk0`. Installing to eMMC
+requires the MMC / SDHCI drivers.
 
 ## Supported firmware
 

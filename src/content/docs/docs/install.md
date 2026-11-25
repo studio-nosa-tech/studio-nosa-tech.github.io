@@ -20,6 +20,7 @@ ZIGNOS の実機インストールには **2 つの方法**があります。
 | チャンネル | testing | stable / testing / unstable |
 | ネットワーク | インストール中は不要 | パッケージ取得に必要 |
 | ディスク構成 | GPT+ESP または MBR を自動作成 | 手動(LVM / LUKS も可) |
+| 対象ディスク | SATA / USB(eMMC・NVMe は非対応) | SATA / USB / NVMe(eMMC は SystemRescue が認識する場合のみ) |
 | カスタマイズ | 限定的 | 自由 |
 | 向いている用途 | まず試す / 標準デスクトップ | 最小構成 / サーバー / こだわり |
 
@@ -49,6 +50,10 @@ ZIGNOS の実機インストールには **2 つの方法**があります。
 - ネットワークとパッケージ取得が必要
 - デスクトップは別途導入する
 
+> **重要**: 現行の TUI インストーラー(Live DVD)は **eMMC (`/dev/mmcblk*`) と
+> NVMe (`/dev/nvme*`) へのインストールに対応していません**。これらのディスクへ
+> 入れる場合は stage3 の手動インストールを使ってください。
+
 > **注意**: `<DISK>` は `/dev/nvme0n1` や `/dev/sda` などの**ディスク全体**、
 > `<PART>` は `nvme0n1p1` / `sda1` などのパーティションです。コマンドを実行すると
 > 対象ディスクの全データが消えます。必ず `lsblk` で確認してください。
@@ -65,6 +70,7 @@ Live セッションの TUI インストーラーが、実行中のシステム�
 - 8 GB 以上の USB メモリ
 - 2 GiB 以上のメモリ(4 GiB 推奨)
 - Live DVD: [ダウンロードページ](/download/#live)の ISO(約 4.4 GB)
+- インストール先: SATA / USB 接続のディスク(eMMC・NVMe は非対応)
 - インストール中にネットワークは不要
 
 ### ダウンロードと検証
@@ -121,6 +127,8 @@ doas zignos-installer
 - ディスク全体が消えます。`lsblk` で対象を確認してください
 - Secure Boot は無効(GRUB / カーネルは未署名)
 - root のパスワードは設定されません。必要なら `doas passwd root` で設定できます
+- 現行の TUI インストーラーは eMMC (`/dev/mmcblk*`) と NVMe (`/dev/nvme*`) に
+  インストールできません。stage3 の手動インストールを使ってください
 
 ## stage3 からインストール(1〜10 章)
 
@@ -136,12 +144,16 @@ doas zignos-installer
 | ファームウェア | BIOS または UEFI(Secure Boot は無効) |
 | メモリ | CLI は 512 MiB 以上、KDE Plasma は 2 GiB 以上を推奨 |
 | ストレージ | CLI は 8 GiB 以上、デスクトップは 16 GiB 以上を推奨 |
+| インストール先 | SATA / USB / NVMe。eMMC は SystemRescue が認識する場合のみ |
 | ネットワーク | 有線を推奨。WiFi はファームウェアが必要 |
 | インストール媒体 | SystemRescue を書き込んだ USB メモリ(現行 13.03) |
 | stage3 | [ダウンロードページ](/download/)の tarball と SHA-256 |
 
 stage3 は約 1.1 GiB です。カーネル、GRUB、追加パッケージ、ビルドキャッシュの
 容量は別途必要です。
+
+NVMe は `/dev/nvme0n1`、eMMC は `/dev/mmcblk0` として見えます。eMMC への
+インストールには MMC / SDHCI ドライバが必要です。
 
 ## 対応ファームウェア
 
