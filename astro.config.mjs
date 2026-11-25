@@ -19,6 +19,8 @@ export default defineConfig({
     '/docs/getting-started/install': '/docs/install/',
     '/docs/getting-started/first-boot': '/docs/install/',
     '/news/2026-11-24-alpha': '/news/2026-11-24/',
+    // Short link for the user forum (GitHub Discussions).
+    '/forum': '/docs/community/forum/',
   },
   markdown: {
     processor: unified({ remarkPlugins: [remarkRelease] }),
@@ -52,6 +54,7 @@ export default defineConfig({
             { label: 'ZIGNOS 概要', slug: 'docs/overview' },
             { label: '哲学', slug: 'docs/philosophy' },
             { label: 'コントリビュート', slug: 'docs/contributing' },
+            { label: 'フォーラム', slug: 'docs/community/forum' },
           ],
         },
         {

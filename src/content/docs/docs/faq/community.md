@@ -7,11 +7,14 @@ description: ZIGNOS の公開窓口、GitHub、バグ報告、コントリビュ
 
 現在の公式窓口は GitHub です。
 
+- [フォーラム (GitHub Discussions)](https://github.com/studio-nosa-tech/zignos/discussions)
 - [Studio NØSa. GitHub](https://github.com/studio-nosa-tech)
 - [zignos-recipes](https://github.com/studio-nosa-tech/zignos-recipes)
 - [公式サイトのリポジトリ](https://github.com/studio-nosa-tech/studio-nosa-tech.github.io)
 
-チャット、フォーラム、メーリングリストはありません。
+フォーラムは質問・相談・要望・作品の共有に、Issue は不具合報告に使います。
+使い方とカテゴリは[フォーラム](/docs/community/forum/)にまとめています。
+チャットとメーリングリストはありません。
 
 ## バグはどこに報告しますか?
 
