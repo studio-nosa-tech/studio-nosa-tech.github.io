@@ -47,8 +47,8 @@ never flow backwards.
 
 | Channel | Linux | KDE | Character |
 |---|---|---|---|
-| `stable` | **6.18.64 LTS** | Qt 6.8.5 LTS / KF6 6.18 / Plasma 6.4.5 / Gear 25.04.3 / Mesa 26.2.7 | Stable, long-term support |
-| `testing` | **7.3.5 latest stable** | Qt 6.11.3 / KF6 6.32 / Plasma 6.8.3 / Gear 26.08.3 / Mesa 26.3.1 | Latest stable |
+| `stable` | **6.18.65 LTS** | Qt 6.8.5 LTS / KF6 6.18 / Plasma 6.4.6 / Gear 25.04.3 / Mesa 26.2.7 | Stable, long-term support |
+| `testing` | **7.3.6 latest stable** | Qt 6.11.3 / KF6 6.32 / Plasma 6.8.3 / Gear 26.08.3 / Mesa 26.3.1 | Latest stable |
 | `unstable` | **7.4-rc3 mainline** | Qt 6.11.3 / KF6 6.32 / Plasma 6.8.3 / Gear 26.11.80 beta / Mesa 26.3.1 | Adventurous |
 
 - **Stable** pins the LTS versions of Linux and Qt, and keeps Plasma / Gear on validated stable series

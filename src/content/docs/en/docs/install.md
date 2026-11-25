@@ -399,7 +399,7 @@ zpkg install linux
 ```
 
 - It is built with `x86_64-generic.config` and installs `/boot/vmlinuz`,
-  `/boot/initramfs.img` and `/usr/lib/modules/6.18.64`
+  `/boot/initramfs.img` and `/usr/lib/modules/6.18.65`
 - The first run downloads the source and builds it, which takes **from a few
   minutes to a dozen or so minutes**
 - To change the configuration, edit
@@ -463,7 +463,7 @@ mountpoint /boot/efi || mount <DISK>p1 /boot/efi
 ```
 
 > Confirm that `grub-mkconfig` prints
-> `Found linux image: /boot/vmlinuz-6.18.64`. If it does not, see
+> `Found linux image: /boot/vmlinuz-6.18.65`. If it does not, see
 > "ZIGNOS does not appear in the GRUB menu".
 
 If efibootmgr is usable, `grub-install` **creates the NVRAM entry
@@ -757,7 +757,7 @@ selected value is also part of Mesa's binpkg key.
 ## 11. After the first boot
 
 ```sh
-uname -r                 # 6.18.64
+uname -r                 # 6.18.65
 rc-status                # udev / console / console-vga are started
 ip addr                  # If wired DHCP was installed
 ```
@@ -982,7 +982,7 @@ instead.
 ### `certs/extract-cert.c: openssl/bio.h: No such file or directory`
 
 Older stage3 did not include openssl in linux's build dependencies. Kernel
-6.18.64 requires OpenSSL headers to build `certs/extract-cert`.
+6.18.65 requires OpenSSL headers to build `certs/extract-cert`.
 
 ```sh
 zpkg install openssl
@@ -1016,8 +1016,8 @@ Check the generated result.
 grep -E 'menuentry|linux /boot|initrd /boot' /boot/grub/grub.cfg
 ```
 
-If `menuentry "ZIGNOS ..."`, `/boot/vmlinuz-6.18.64` and
-`/boot/initramfs-6.18.64.img` appear, you can select ZIGNOS from GRUB after
+If `menuentry "ZIGNOS ..."`, `/boot/vmlinuz-6.18.65` and
+`/boot/initramfs-6.18.65.img` appear, you can select ZIGNOS from GRUB after
 rebooting.
 
 ## Known limitations

@@ -91,8 +91,8 @@ rolling).
 
 ## Kernel policy
 
-- vanilla kernel (kernel.org). Series are split by channel: stable uses 6.18.64 LTS,
-  testing uses 7.3.5, and unstable uses 7.4-rc3 mainline
+- vanilla kernel (kernel.org). Series are split by channel: stable uses 6.18.65 LTS,
+  testing uses 7.3.6, and unstable uses 7.4-rc3 mainline
 - **Based on x86_64_defconfig**, merge `core/linux/x86_64-generic.config` with
   `merge_config.sh` (policy: "basically boot on any machine, fine-tune the details yourself")
 - **Drivers needed for boot are built in (=y)**: ACPI/APIC, SATA AHCI, NVMe, USB

@@ -42,8 +42,8 @@ ZIGNOS はローリングリリースです。用途に応じて3つのチャン
 
 | チャンネル | 用途 | 主な構成 |
 |---|---|---|
-| `stable` | 安定版。既定 | Linux 6.18.64 LTS / Qt 6.8.5 LTS / KF6 6.18 / Plasma 6.4.5 |
-| `testing` | 次期 stable の検証 | Linux 7.3.5 / Qt 6.11.3 / KF6 6.32 / Plasma 6.8.3 |
+| `stable` | 安定版。既定 | Linux 6.18.65 LTS / Qt 6.8.5 LTS / KF6 6.18 / Plasma 6.4.6 |
+| `testing` | 次期 stable の検証 | Linux 7.3.6 / Qt 6.11.3 / KF6 6.32 / Plasma 6.8.3 |
 | `unstable` | 開発中の最新版 | Linux 7.4-rc3 / Gear 26.11.80 beta |
 
 変更は **Unstable → Testing → Stable** の順に検証し、逆流させません。

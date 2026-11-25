@@ -91,8 +91,8 @@ description: init、コンソール、サービス、特権昇格、カーネル
 
 ## カーネル方針
 
-- vanilla kernel(kernel.org)。チャンネルごとに系列を分け、stable は 6.18.64 LTS、
-  testing は 7.3.5、unstable は 7.4-rc3 mainline を使う
+- vanilla kernel(kernel.org)。チャンネルごとに系列を分け、stable は 6.18.65 LTS、
+  testing は 7.3.6、unstable は 7.4-rc3 mainline を使う
 - **x86_64_defconfig をベース**に `core/linux/x86_64-generic.config` を
   `merge_config.sh` でマージする(「基本はどの端末でも起動、細部は個人で弄る」方針)
 - **起動に必要なドライバは組み込み(=y)**: ACPI/APIC、SATA AHCI、NVMe、USB

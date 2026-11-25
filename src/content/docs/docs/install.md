@@ -388,7 +388,7 @@ zpkg install linux
 ```
 
 - `x86_64-generic.config` でビルドされ、`/boot/vmlinuz`、`/boot/initramfs.img`、
-  `/usr/lib/modules/6.18.64` が入ります
+  `/usr/lib/modules/6.18.65` が入ります
 - 初回はソースをダウンロードしてビルドするため **数分〜十数分**かかります
 - 設定を変える場合は
   `/usr/share/zignos/recipes/stable/core/linux/x86_64-generic.config` を編集し、
@@ -449,7 +449,7 @@ mountpoint /boot/efi || mount <DISK>p1 /boot/efi
 /usr/sbin/grub-mkconfig -o /boot/grub/grub.cfg
 ```
 
-> `grub-mkconfig` が `Found linux image: /boot/vmlinuz-6.18.64` を表示することを
+> `grub-mkconfig` が `Found linux image: /boot/vmlinuz-6.18.65` を表示することを
 > 確認してください。出ない場合は「GRUB のメニューに ZIGNOS が出ない」を参照。
 
 `grub-install` は efibootmgr が使える環境なら **NVRAM エントリまで自動で作ります**。
@@ -739,7 +739,7 @@ Mesa の binpkg キーにも選択した値が含まれます。
 ## 11. 初回起動後
 
 ```sh
-uname -r                 # 6.18.64
+uname -r                 # 6.18.65
 rc-status                # udev / console / console-vga が started
 ip addr                  # 有線 DHCP を入れた場合
 ```
@@ -954,7 +954,7 @@ zpkg sync --from zignos-recipes-20261123-r21.tar.xz
 ### `certs/extract-cert.c: openssl/bio.h: No such file or directory`
 
 古い stage3 では linux のビルド依存に openssl が含まれていませんでした。
-カーネル 6.18.64 は `certs/extract-cert` のビルドに OpenSSL のヘッダーを要求します。
+カーネル 6.18.65 は `certs/extract-cert` のビルドに OpenSSL のヘッダーを要求します。
 
 ```sh
 zpkg install openssl
@@ -987,7 +987,7 @@ grub-mkconfig -o /boot/grub/grub.cfg
 grep -E 'menuentry|linux /boot|initrd /boot' /boot/grub/grub.cfg
 ```
 
-`menuentry "ZIGNOS ..."` と `/boot/vmlinuz-6.18.64`、`/boot/initramfs-6.18.64.img`
+`menuentry "ZIGNOS ..."` と `/boot/vmlinuz-6.18.65`、`/boot/initramfs-6.18.65.img`
 が出ていれば、再起動後に GRUB から ZIGNOS を選べます。
 
 ## 既知の制約

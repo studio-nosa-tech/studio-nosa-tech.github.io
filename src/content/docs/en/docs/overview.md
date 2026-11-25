@@ -43,8 +43,8 @@ ZIGNOS is a rolling release. Choose one of three channels.
 
 | Channel | Purpose | Main components |
 |---|---|---|
-| `stable` | Stable, the default | Linux 6.18.64 LTS / Qt 6.8.5 LTS / KF6 6.18 / Plasma 6.4.5 |
-| `testing` | Validation for the next stable | Linux 7.3.5 / Qt 6.11.3 / KF6 6.32 / Plasma 6.8.3 |
+| `stable` | Stable, the default | Linux 6.18.65 LTS / Qt 6.8.5 LTS / KF6 6.18 / Plasma 6.4.6 |
+| `testing` | Validation for the next stable | Linux 7.3.6 / Qt 6.11.3 / KF6 6.32 / Plasma 6.8.3 |
 | `unstable` | Latest development versions | Linux 7.4-rc3 / Gear 26.11.80 beta |
 
 Changes are validated in the order **Unstable → Testing → Stable** and never

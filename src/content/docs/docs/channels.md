@@ -46,8 +46,8 @@ ZIGNOS のチャンネルは、ベースのカーネルと KDE デスクトッ�
 
 | チャンネル | Linux | KDE | 性格 |
 |---|---|---|---|
-| `stable` | **6.18.64 LTS** | Qt 6.8.5 LTS / KF6 6.18 / Plasma 6.4.5 / Gear 25.04.3 / Mesa 26.2.7 | 安定・長期サポート |
-| `testing` | **7.3.5 最新安定** | Qt 6.11.3 / KF6 6.32 / Plasma 6.8.3 / Gear 26.08.3 / Mesa 26.3.1 | 最新安定版 |
+| `stable` | **6.18.65 LTS** | Qt 6.8.5 LTS / KF6 6.18 / Plasma 6.4.6 / Gear 25.04.3 / Mesa 26.2.7 | 安定・長期サポート |
+| `testing` | **7.3.6 最新安定** | Qt 6.11.3 / KF6 6.32 / Plasma 6.8.3 / Gear 26.08.3 / Mesa 26.3.1 | 最新安定版 |
 | `unstable` | **7.4-rc3 mainline** | Qt 6.11.3 / KF6 6.32 / Plasma 6.8.3 / Gear 26.11.80 beta / Mesa 26.3.1 | 挑戦的 |
 
 - **Stable** は Linux と Qt の LTS を固定し、Plasma / Gear も検証済みの安定系列に留めます
