@@ -12,9 +12,9 @@ ZIGNOS は [Studio NØSa.](https://studio-nosa.live/) が開発しています�
 |---|---|---|
 | [zignos-recipes](https://github.com/studio-nosa-tech/zignos-recipes) | stable / testing / unstable のレシピ | 公開 |
 | [studio-nosa-tech.github.io](https://github.com/studio-nosa-tech/studio-nosa-tech.github.io) | この公式サイト | 公開 |
-| `zignos` | 設計文書とロードマップ | 非公開 |
-| `zpkg` | パッケージマネージャ本体 | 非公開 |
-| `zignos-build` | bootstrap・stage3 / イメージ作成 | 非公開 |
+| `zignos` | 設計文書とロードマップ | 公開 |
+| `zpkg` | パッケージマネージャ本体 | 公開 |
+| `zignos-build` | bootstrap・stage3 / イメージ作成 | 公開 |
 
 ## レシピを変更する
 
@@ -51,5 +51,6 @@ GitHub の Issue で、次の情報を添えてください。
 
 ## コミュニティ
 
-現在の公開窓口は GitHub です。チャットやフォーラムはありません。
+現在の公開窓口は GitHub です。質問は[フォーラム](/docs/community/forum/)、
+不具合は Issue へ。チャットはありません。
 詳しくは [コミュニティ](/docs/faq/community/) を参照してください。

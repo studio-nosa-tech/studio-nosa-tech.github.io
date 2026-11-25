@@ -1,0 +1,67 @@
+---
+import PageLayout from '../../../layouts/PageLayout.astro';
+---
+
+<PageLayout
+  lang="en"
+  title="ZIGNOS 2026.11.17-alpha — ZIGNOS"
+  description="The first ZIGNOS alpha release. Preparing to publish the stage3 tarball."
+>
+  <div class="wrap">
+    <section class="page-hero">
+      <span class="eyebrow">RELEASE · ALPHA</span>
+      <h1>ZIGNOS 2026.11.17-alpha</h1>
+      <p>2026-11-17</p>
+    </section>
+
+    <div class="prose">
+      <div class="notice">
+        <strong>This page is a record as of 2026-11-17.</strong>
+        For the latest release information, see <a href="/en/releases/current/">Current release</a>.
+      </div>
+      <div class="notice">
+        <strong>stage3 downloads are being prepared.</strong>
+        Once it is ready to publish, we will announce it on this page and on the
+        <a href="/en/download/">Download</a> page.
+      </div>
+
+      <h2>First alpha</h2>
+      <p>
+        ZIGNOS is a source-based Linux distribution built from scratch, developed by
+        <a href="https://studio-nosa.live/" rel="external">Studio NØSa.</a>
+        This alpha's artifact is the <strong>stage3 tarball</strong>, a minimal
+        chrootable base.
+      </p>
+      <ul>
+        <li>A minimal chrootable base without the kernel or bootloader</li>
+        <li>Unpack, chroot, and complete it with <code>zpkg install linux grub</code></li>
+        <li>usr-merged (<code>/bin</code>, <code>/sbin</code> and <code>/lib</code> are symlinks to <code>/usr</code>)</li>
+        <li>root is locked. SSH host keys and machine-id are not included</li>
+      </ul>
+
+      <h2>Base at the time</h2>
+      <p>
+        Development after the release trimmed the base down to a minimal system.
+        The stage3 at the time was <strong>53 packages / about 976 MiB</strong>.
+        SSH / DHCP / WiFi / editors / man are not included; add what you need with
+        <code>zpkg install</code>.
+      </p>
+
+      <h2>Highlights</h2>
+      <ul>
+        <li><strong>zpkg</strong>: a package manager written in Go with USE flags, slots, binpkgs and transactions</li>
+        <li><strong>OpenRC</strong>: an init that does not use systemd. Services are opt-in</li>
+        <li><strong>BIOS / UEFI</strong>: supports both firmware types. GRUB selects the target with a USE flag</li>
+        <li><strong>fastfetch</strong>: ships the ZIGNOS neon orbit logo</li>
+      </ul>
+
+      <h2>Next</h2>
+      <p>
+        We will proceed with publishing stage3 and verifying BIOS / UEFI boot on real
+        hardware. For details, see the
+        <a href="/en/docs/install/">installation guide</a> and the
+        <a href="/en/docs/roadmap/">roadmap</a>.
+      </p>
+    </div>
+  </div>
+</PageLayout>

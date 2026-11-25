@@ -1,0 +1,170 @@
+---
+import PageLayout from '../../../layouts/PageLayout.astro';
+import release from '../../../data/release.json';
+
+const bootLabel: Record<string, string> = {
+  passed: 'Passed',
+  failed: 'Failed',
+  'not-tested': 'Not tested',
+};
+const availabilityLabel =
+  release.availability === 'available' ? 'Available' : 'Coming soon';
+const short = (sha: string) => sha.slice(0, 12);
+const recipeCount = (c: { core: number; main: number; desktop: number }) =>
+  c.core + c.main + c.desktop;
+const perChannel = Object.entries(release.recipes.channels)
+  .map(([name, c]) => `${name} ${recipeCount(c)}`)
+  .join(' / ');
+const generated = release.generated.replace('T', ' ').replace('Z', ' UTC');
+const newsSlug = release.release.replace(/\./g, '-');
+const assetBase = `https://github.com/studio-nosa-tech/zignos-recipes/releases/download/${release.release}`;
+const releasePage = `https://github.com/studio-nosa-tech/zignos-recipes/releases/tag/${release.release}`;
+---
+
+<PageLayout
+  lang="en"
+  title={`Release ${release.release} — ZIGNOS`}
+  description={`Release information for ZIGNOS ${release.release}. stage3 ${release.stage3.revision}, ${release.stage3.package_count} packages, zpkg ${release.zpkg.version}.`}
+>
+  <div class="wrap">
+    <section class="page-hero">
+      <span class="eyebrow">RELEASE · {release.channel.toUpperCase()}</span>
+      <h1>ZIGNOS {release.release}</h1>
+      <p>{release.build_date} · {availabilityLabel}</p>
+    </section>
+
+    <div class="prose">
+      <div class="notice">
+        <strong>This page is generated from the release manifest.</strong>
+        The download page, release notes and installation guide also read the
+        same <a href="/releases.json">release.json</a>.
+      </div>
+
+      <h2>Overview</h2>
+      <div class="stats">
+        <div class="stat">
+          <strong>{release.stage3.package_count}</strong>
+          <span>stage3 packages</span>
+        </div>
+        <div class="stat">
+          <strong>{release.stage3.size_mib} MiB</strong>
+          <span>stage3 size</span>
+        </div>
+        <div class="stat">
+          <strong>{release.stage3.revision}</strong>
+          <span>stage3 revision</span>
+        </div>
+        <div class="stat">
+          <strong>zpkg {release.zpkg.version}</strong>
+          <span>Package manager</span>
+        </div>
+      </div>
+
+      <h2>stage3</h2>
+      <table>
+        <tbody>
+          <tr><th>File</th><td><code>{release.stage3.filename}</code></td></tr>
+          <tr><th>Size</th><td>{release.stage3.size.toLocaleString('en-US')} bytes ({release.stage3.size_mib} MiB)</td></tr>
+          <tr><th>SHA-256</th><td><code class="hash">{release.stage3.sha256}</code></td></tr>
+          <tr><th>Channel</th><td>{release.channel}</td></tr>
+          <tr><th>Packages</th><td>{release.stage3.package_count}</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Kernel and bootloader</h2>
+      <p>
+        Not included in stage3; install them after chroot with
+        <code>zpkg install linux grub</code>.
+      </p>
+      <table>
+        <tbody>
+          <tr>
+            <th>Linux kernel</th>
+            <td>{release.kernel.version}-r{release.kernel.revision}</td>
+          </tr>
+          <tr>
+            <th>GRUB</th>
+            <td>{release.bootloader.version}-r{release.bootloader.revision}</td>
+          </tr>
+          <tr>
+            <th>Base</th>
+            <td>Top level {release.base.top_level} / with dependencies {release.base.closure}</td>
+          </tr>
+          <tr>
+            <th>Recipes</th>
+            <td>{release.recipes.total} ({perChannel})</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Boot verification</h2>
+      <table>
+        <tbody>
+          <tr><th>BIOS</th><td>{bootLabel[release.boot.bios] ?? release.boot.bios}</td></tr>
+          <tr><th>UEFI</th><td>{bootLabel[release.boot.uefi] ?? release.boot.uefi}</td></tr>
+          <tr><th>Real hardware</th><td>{bootLabel[release.boot.hardware] ?? release.boot.hardware}</td></tr>
+        </tbody>
+      </table>
+      <p>
+        <code>qemu-test.sh</code> records boot results during the release build.
+        Items that have not been tested are updated in the next manifest after
+        verification.
+      </p>
+
+      <h2>Artifacts</h2>
+      <table>
+        <thead>
+          <tr><th>Name</th><th>File</th><th>Size</th></tr>
+        </thead>
+        <tbody>
+          {release.artifacts.map((a) => (
+            <tr>
+              <td>{a.name}</td>
+              <td>
+                <a href={`${assetBase}/${a.filename}`}><code>{a.filename}</code></a>
+              </td>
+              <td>{a.size.toLocaleString('en-US')}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p class="mono">
+        recipes SHA-256: <code class="hash">{release.recipes.sha256}</code><br />
+        zpkg SHA-256: <code class="hash">{release.artifacts.find((a) => a.name === 'zpkg')?.sha256}</code>
+      </p>
+
+      <h2>Packages ({release.stage3.package_count})</h2>
+      <details>
+        <summary>List of packages included in stage3</summary>
+        <ul class="package-list">
+          {release.stage3.packages.map((p) => (
+            <li>
+              <code>{p.name}</code> {p.version}{p.revision > 0 ? `-r${p.revision}` : ''}
+              <span class="muted">{p.category}</span>
+            </li>
+          ))}
+        </ul>
+      </details>
+
+      <h2>Sources</h2>
+      <table>
+        <tbody>
+          <tr><th>zignos</th><td><code>{short(release.source.zignos.commit)}</code></td></tr>
+          <tr><th>zpkg</th><td><code>{short(release.source.zpkg.commit)}</code></td></tr>
+          <tr><th>zignos-recipes</th><td><code>{short(release.source.recipes.commit)}</code></td></tr>
+          <tr><th>zignos-build</th><td><code>{short(release.source.build.commit)}</code></td></tr>
+        </tbody>
+      </table>
+      <p class="muted">Manifest generated: {generated}</p>
+
+      <h2>Links</h2>
+      <ul>
+        <li><a href="/releases.json">release.json (machine-readable manifest)</a></li>
+        <li><a href={`/en/news/${newsSlug}/`}>Release notes</a></li>
+        <li><a href="/en/download/">Download</a></li>
+        <li><a href={releasePage}>GitHub Releases</a></li>
+        <li><a href="/en/docs/release-manifest/">Release manifest specification</a></li>
+      </ul>
+    </div>
+  </div>
+</PageLayout>

@@ -1,0 +1,139 @@
+---
+import PageLayout from '../../layouts/PageLayout.astro';
+import release from '../../data/release.json';
+
+const available = release.availability === 'available';
+const labels: Record<string, string> = {
+  stage3: 'stage3 tarball',
+  recipes: 'Recipe tree (all channels)',
+  zpkg: 'zpkg binary',
+};
+const artifacts = release.artifacts;
+const assetBase = `https://github.com/studio-nosa-tech/zignos-recipes/releases/download/${release.release}`;
+const releasePage = `https://github.com/studio-nosa-tech/zignos-recipes/releases/tag/${release.release}`;
+---
+
+<PageLayout
+  lang="en"
+  title="Download — ZIGNOS"
+  description={`The stage3 tarball, recipe tree, and zpkg binary for ZIGNOS ${release.release}.`}
+>
+  <div class="wrap">
+    <section class="page-hero">
+      <span class="eyebrow">DOWNLOAD</span>
+      <h1>Download</h1>
+      <p>
+        <strong>ZIGNOS {release.release}</strong>
+        ({release.build_date} / {release.channel} channel) artifacts.
+        {available ? 'The files below are available for download.' : 'Currently preparing for release (Coming soon).'}
+      </p>
+    </section>
+
+    <div class="prose">
+      <div class="notice">
+        <strong>{available ? 'Available now.' : 'Coming soon.'}</strong>
+        {' '}All file names, sizes, and SHA-256 values are
+        generated from <a href="/releases.json">release.json</a>.
+        {available ? (
+          <>Artifacts can be downloaded from <a href={releasePage}>GitHub Releases</a>.</>
+        ) : (
+          <>The release date will be announced in <a href="/en/news/">News</a>.</>
+        )}
+      </div>
+
+      <h2>Artifacts in this release</h2>
+      <table>
+        <thead>
+          <tr><th>Artifact</th><th>File</th><th>Size</th></tr>
+        </thead>
+        <tbody>
+          {artifacts.map((a) => (
+            <tr>
+              <td>{labels[a.name] ?? a.name}</td>
+              <td>
+                <a href={`${assetBase}/${a.filename}`}><code>{a.filename}</code></a>
+              </td>
+              <td>{a.size.toLocaleString('en-US')} bytes</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <h3>SHA-256</h3>
+      <p class="mono">
+        {artifacts.map((a) => (
+          <>
+            <code class="hash">{a.sha256}</code> <span class="muted">{a.filename}</span>{' '}
+            <a href={`${assetBase}/${a.filename}.sha256`}>sha256</a><br />
+          </>
+        ))}
+      </p>
+
+      <h2>Contents of stage3</h2>
+      <p>
+        A minimal base without the kernel and bootloader
+        (<strong>{release.stage3.package_count} packages / about {release.stage3.size_mib} MiB</strong>).
+        Unpack it, chroot in, and finish with <code>zpkg install linux grub</code>.
+        Only the <code>{release.channel}</code> channel is bundled.
+      </p>
+      <table>
+        <tbody>
+          <tr><th>stage3 revision</th><td>{release.stage3.revision}</td></tr>
+          <tr><th>zpkg</th><td>{release.zpkg.version}</td></tr>
+          <tr><th>Linux kernel</th><td>{release.kernel.version}-r{release.kernel.revision} (not included in stage3)</td></tr>
+          <tr><th>GRUB</th><td>{release.bootloader.version}-r{release.bootloader.revision} (not included in stage3)</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Usage</h2>
+      <pre><code># 1. Unpack
+tar -xpf {release.stage3.filename} -C /mnt/zignos
+
+# 2. chroot (manual mounts; see the install guide for /dev /proc /sys /run)
+chroot /mnt/zignos /bin/bash -l
+
+# 3. Kernel and bootloader
+zpkg install linux grub</code></pre>
+      <p>
+        For the full procedure, including partitioning, UEFI GRUB registration,
+        and initial setup, see the
+        <a href="/en/docs/install/">installation guide</a>.
+      </p>
+
+      <h2>Recipe tree</h2>
+      <p>
+        <code>{release.recipes.filename}</code> contains
+        all channels, stable / testing / unstable
+        (stable {release.recipes.channels.stable.core + release.recipes.channels.stable.main + release.recipes.channels.stable.desktop} /
+        testing {release.recipes.channels.testing.core + release.recipes.channels.testing.main + release.recipes.channels.testing.desktop} /
+        unstable {release.recipes.channels.unstable.core + release.recipes.channels.unstable.main + release.recipes.channels.unstable.desktop},
+        {release.recipes.total} total).
+        stage3 bundles only stable, so add the other channels with
+        <code>zpkg sync</code>.
+      </p>
+
+      <h2>Bootable images</h2>
+      <p>
+        The current manifest covers stage3, the recipe tree, and the zpkg binary.
+        BIOS / UEFI bootable images, together with the boot verification results
+        (BIOS: {release.boot.bios} / UEFI: {release.boot.uefi}),
+        are planned to be added to the artifacts in the next release.
+      </p>
+
+      <h2>Verification and security</h2>
+      <ul>
+        <li>A SHA-256 checksum is attached to each file. Verify it before unpacking or running.</li>
+        <li>The root account in stage3 is locked. Set a password with <code>passwd</code> after chrooting.</li>
+        <li>Disable Secure Boot (GRUB and the kernel are unsigned).</li>
+      </ul>
+
+      <h2>Links</h2>
+      <ul>
+        <li><a href={releasePage}>GitHub Releases</a></li>
+        <li><a href="/en/releases/current/">Details for this release</a></li>
+        <li><a href="/releases.json">release.json</a></li>
+        <li><a href="/en/docs/release-manifest/">Release manifest specification</a></li>
+      </ul>
+    </div>
+  </div>
+</PageLayout>

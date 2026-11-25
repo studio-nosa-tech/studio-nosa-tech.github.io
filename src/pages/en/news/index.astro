@@ -1,0 +1,48 @@
+---
+import PageLayout from '../../../layouts/PageLayout.astro';
+import release from '../../../data/release.json';
+
+const newsSlug = release.release.replace(/\./g, '-');
+---
+
+<PageLayout
+  lang="en"
+  title="News — ZIGNOS"
+  description="ZIGNOS release information and project updates."
+>
+  <div class="wrap">
+    <section class="page-hero">
+      <span class="eyebrow">NEWS</span>
+      <h1>News</h1>
+      <p>Release information and project updates.</p>
+    </section>
+
+    <div class="post-list">
+      <a class="post-card" href={`/en/news/${newsSlug}/`}>
+        <time datetime={release.build_date}>{release.build_date}</time>
+        <h2>ZIGNOS {release.release}</h2>
+        <p>
+          stage3 {release.stage3.revision} has
+          {release.stage3.package_count} packages / {release.stage3.size_mib} MiB,
+          zpkg {release.zpkg.version}. The first official release, bringing the
+          stable base up to date and adding locales and the Go toolchain.
+        </p>
+      </a>
+      <a class="post-card" href="/en/news/2026-11-19-alpha/">
+        <time datetime="2026-11-19">2026-11-19</time>
+        <h2>ZIGNOS 2026.11.19-alpha</h2>
+        <p>
+          Introduction of the release manifest. stage3 r12 has 54 packages / 977 MiB,
+          zpkg 0.2.0.
+        </p>
+      </a>
+      <a class="post-card" href="/en/news/2026-11-17-alpha/">
+        <time datetime="2026-11-17">2026-11-17</time>
+        <h2>ZIGNOS 2026.11.17-alpha</h2>
+        <p>
+          The first alpha release. Preparing to publish the stage3 tarball.
+        </p>
+      </a>
+    </div>
+  </div>
+</PageLayout>

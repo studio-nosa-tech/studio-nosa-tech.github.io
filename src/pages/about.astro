@@ -31,7 +31,7 @@ const versionOf = (name: string) =>
         <div class="stat"><strong>glibc {versionOf('glibc')}</strong><span>libc</span></div>
         <div class="stat"><strong>gcc {versionOf('gcc')}</strong><span>toolchain</span></div>
         <div class="stat"><strong>OpenRC {versionOf('openrc')}</strong><span>init system</span></div>
-        <div class="stat"><strong>zpkg 0.3.3</strong><span>package manager(開発ツリー)</span></div>
+        <div class="stat"><strong>zpkg {release.zpkg.version}</strong><span>package manager(開発ツリー)</span></div>
         <div class="stat"><strong>x86_64</strong><span>architecture</span></div>
       </div>
 
@@ -39,9 +39,9 @@ const versionOf = (name: string) =>
       <p>
         プロジェクトは 5 つのリポジトリで構成されています。
         <strong>zignos</strong> / <strong>zpkg</strong> /
-        <strong>zignos-build</strong> は非公開、
-        <strong>zignos-recipes</strong> とこの公式サイト
-        (<strong>studio-nosa-tech.github.io</strong>)は公開しています。
+        <strong>zignos-build</strong> / <strong>zignos-recipes</strong> と
+        この公式サイト (<strong>studio-nosa-tech.github.io</strong>) は
+        すべて公開しています。
       </p>
       <div class="grid">
         <article class="card">

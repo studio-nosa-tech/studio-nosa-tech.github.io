@@ -1,0 +1,134 @@
+---
+import PageLayout from '../../../layouts/PageLayout.astro';
+import release from '../../../data/release-2026-11-19-alpha.json';
+
+const available = release.availability === 'available';
+---
+
+<PageLayout
+  lang="en"
+  title={`ZIGNOS ${release.release} — ZIGNOS`}
+  description={`Release notes for ZIGNOS ${release.release}. Release manifest, zpkg ${release.zpkg.version}, stage3 ${release.stage3.revision}.`}
+>
+  <div class="wrap">
+    <section class="page-hero">
+      <span class="eyebrow">RELEASE · ALPHA</span>
+      <h1>ZIGNOS {release.release}</h1>
+      <p>{release.build_date}</p>
+    </section>
+
+    <div class="prose">
+      <div class="notice">
+        <strong>stage3 downloads are {available ? 'available.' : 'not yet available.'}</strong>
+        {' '}The file names, sizes and SHA-256 values for this release are in the
+        stage3 table below; other history is collected in the
+        <a href="/en/news/">news list</a>.
+        For the latest release information, see <a href="/en/releases/current/">Current release</a>.
+      </div>
+
+      <h2>This release</h2>
+      <p>
+        {release.release} consolidates release information into a machine-readable
+        manifest. The website, download page, release notes and installation guide
+        all read the same <code>release.json</code>, so package counts, sizes,
+        versions and checksums can no longer disagree.
+      </p>
+      <div class="stats">
+        <div class="stat">
+          <strong>{release.stage3.package_count}</strong>
+          <span>stage3 packages</span>
+        </div>
+        <div class="stat">
+          <strong>{release.stage3.size_mib} MiB</strong>
+          <span>stage3 size</span>
+        </div>
+        <div class="stat">
+          <strong>{release.stage3.revision}</strong>
+          <span>stage3 revision</span>
+        </div>
+        <div class="stat">
+          <strong>zpkg {release.zpkg.version}</strong>
+          <span>Package manager</span>
+        </div>
+      </div>
+
+      <h2>Highlights</h2>
+      <ul>
+        <li>
+          <strong>Release manifest</strong> — generates
+          <code>release.json</code> for every build. Records the stage3 SHA-256,
+          {release.stage3.package_count} packages and versions, the zpkg / kernel / GRUB
+          versions, the size of the base, recipe counts, the build date, source
+          commits and boot verification status
+        </li>
+        <li>
+          <strong>Automatic artifact generation</strong> — in addition to the stage3
+          tarball, generates the recipe trees for all channels and the zpkg binary at
+          build time, recording their SHA-256 in the manifest
+        </li>
+        <li>
+          <strong>zpkg {release.zpkg.version}</strong> — the three channels stable /
+          testing / unstable, and <code>zpkg upgrade</code> with diff display,
+          build-all-then-install, integrity checks and per-package rollback
+        </li>
+        <li>
+          <strong>initscripts r15</strong> — updates <code>/etc/os-release</code> to
+          <code>ZIGNOS {release.release}</code>
+        </li>
+        <li>
+          <strong>Boot verification</strong> — this time BIOS / UEFI / real hardware are
+          all <code>{release.boot.bios}</code>. Added a mechanism for
+          <code>qemu-test.sh</code> to record results in the manifest automatically
+        </li>
+      </ul>
+
+      <h2>stage3</h2>
+      <table>
+        <tbody>
+          <tr><th>File</th><td><code>{release.stage3.filename}</code></td></tr>
+          <tr><th>Size</th><td>{release.stage3.size.toLocaleString('en-US')} bytes ({release.stage3.size_mib} MiB)</td></tr>
+          <tr><th>SHA-256</th><td><code class="hash">{release.stage3.sha256}</code></td></tr>
+          <tr><th>Channel</th><td>{release.channel}</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Recipes and toolchain</h2>
+      <table>
+        <tbody>
+          <tr><th>Recipes</th><td>{release.recipes.total} ({release.recipes.per_channel} per channel)</td></tr>
+          <tr><th>Recipes tarball</th><td><code>{release.recipes.filename}</code></td></tr>
+          <tr><th>Linux kernel</th><td>{release.kernel.version}-r{release.kernel.revision}</td></tr>
+          <tr><th>GRUB</th><td>{release.bootloader.version}-r{release.bootloader.revision}</td></tr>
+          <tr><th>Base</th><td>Top level {release.base.top_level} / with dependencies {release.base.closure}</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Upgrade</h2>
+      <p>
+        Existing systems should check the channel before upgrading. This release
+        includes an initscripts version bump.
+      </p>
+      <pre><code>zpkg channel
+zpkg upgrade -p
+zpkg upgrade</code></pre>
+      <p>
+        For details on diff display and recovery, see
+        <a href="/en/docs/channels/">Release channels</a>.
+      </p>
+
+      <h2>Known limitations</h2>
+      <ul>
+        <li>Boot verification on BIOS / UEFI / real hardware has not been done (<code>not-tested</code>)</li>
+        <li>The official signing key is not in operation yet, and artifacts are unsigned</li>
+        <li>Bootable images are not included in this manifest's artifacts</li>
+      </ul>
+
+      <h2>Next</h2>
+      <p>
+        We will fill in automatic boot verification recording with actual image
+        builds, and move forward with signing key operation and bootable image
+        distribution. See also the <a href="/en/docs/roadmap/">roadmap</a>.
+      </p>
+    </div>
+  </div>
+</PageLayout>

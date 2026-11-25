@@ -5,34 +5,61 @@ import '../styles/site.css';
 interface Props {
   title: string;
   description: string;
+  /** Page language. The default locale (Japanese) has no URL prefix. */
+  lang?: 'ja' | 'en';
 }
 
-const { title, description } = Astro.props;
+const { title, description, lang = 'ja' } = Astro.props;
+const en = lang === 'en';
 const site = Astro.site ?? Astro.url;
 const canonical = new URL(Astro.url.pathname, site);
 const ogImage = new URL('/og.png', site);
 const path = Astro.url.pathname;
 
-const nav = [
-  { href: '/what-is-zignos/', label: 'ZIGNOSとは' },
-  { href: '/docs/', label: 'ドキュメント' },
-  { href: '/download/', label: 'ダウンロード' },
-  { href: '/news/', label: 'ニュース' },
-  { href: '/about/', label: 'プロジェクト' },
-];
+// The default locale lives at the root; English pages are under /en/.
+// The 404 page is served for any missing path, so point its alternates home.
+const is404 = path === '/404' || path === '/404/' || path === '/404.html';
+const jaPath = is404 ? '/' : en ? path.replace(/^\/en(?=\/|$)/, '') || '/' : path;
+const enPath = is404 ? '/en/' : en ? path : `/en${path === '/' ? '/' : path}`;
+const abs = (p: string) => new URL(p, site).href;
 
-const isCurrent = (href: string) =>
-  href === '/docs/' ? path.startsWith('/docs') : path.startsWith(href);
+const nav = en
+  ? [
+      { href: '/en/what-is-zignos/', label: 'What is ZIGNOS' },
+      { href: '/en/docs/', label: 'Documentation' },
+      { href: '/en/download/', label: 'Download' },
+      { href: '/en/news/', label: 'News' },
+      { href: '/en/about/', label: 'Project' },
+    ]
+  : [
+      { href: '/what-is-zignos/', label: 'ZIGNOSとは' },
+      { href: '/docs/', label: 'ドキュメント' },
+      { href: '/download/', label: 'ダウンロード' },
+      { href: '/news/', label: 'ニュース' },
+      { href: '/about/', label: 'プロジェクト' },
+    ];
+
+const isCurrent = (href: string) => {
+  const base = href.replace(/\/$/, '');
+  if (base === '/docs' || base === '/en/docs') return path.startsWith(base);
+  return path === href || path.startsWith(href);
+};
+
+const switchHref = en ? jaPath : enPath;
+const home = en ? '/en/' : '/';
 ---
 
 <!doctype html>
-<html lang="ja">
+<html lang={lang}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
+    <link rel="alternate" hreflang="ja" href={abs(jaPath)} />
+    <link rel="alternate" hreflang="en" href={abs(enPath)} />
+    <link rel="alternate" hreflang="x-default" href={abs(jaPath)} />
     <link rel="icon" href="/favicon.png" type="image/png" />
     <meta name="theme-color" content="#0b0b10" />
     <meta property="og:type" content="website" />
@@ -41,6 +68,8 @@ const isCurrent = (href: string) =>
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={ogImage} />
+    <meta property="og:locale" content={en ? 'en_US' : 'ja_JP'} />
+    <meta property="og:locale:alternate" content={en ? 'ja_JP' : 'en_US'} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
@@ -49,11 +78,11 @@ const isCurrent = (href: string) =>
   <body>
     <header class="site-header">
       <div class="wrap">
-        <a class="brand" href="/">
+        <a class="brand" href={home}>
           <img src={logo.src} alt="" width="34" height="22" />
           <span>ZIGNOS</span>
         </a>
-        <nav class="nav" aria-label="メイン">
+        <nav class="nav" aria-label={en ? 'Main' : 'メイン'}>
           {nav.map((item) => (
             <a
               href={item.href}
@@ -62,6 +91,9 @@ const isCurrent = (href: string) =>
               {item.label}
             </a>
           ))}
+          <a href={switchHref} hreflang={en ? 'ja' : 'en'}>
+            {en ? '日本語' : 'English'}
+          </a>
           <a class="github" href="https://github.com/studio-nosa-tech" rel="external">
             GitHub ↗
           </a>
@@ -77,11 +109,23 @@ const isCurrent = (href: string) =>
       <div class="wrap">
         <span>© 2026 ZIGNOS Project · Developed by <a href="https://studio-nosa.live/" rel="external">Studio NØSa.</a></span>
         <span>
-          <a href="/what-is-zignos/">ZIGNOSとは</a> ·
-          <a href="/docs/">ドキュメント</a> ·
-          <a href="/download/">ダウンロード</a> ·
-          <a href="/about/">プロジェクト</a> ·
-          <a href="https://github.com/studio-nosa-tech" rel="external">GitHub</a>
+          {en ? (
+            <>
+              <a href="/en/what-is-zignos/">What is ZIGNOS</a> ·
+              <a href="/en/docs/">Documentation</a> ·
+              <a href="/en/download/">Download</a> ·
+              <a href="/en/about/">Project</a> ·
+              <a href="https://github.com/studio-nosa-tech" rel="external">GitHub</a>
+            </>
+          ) : (
+            <>
+              <a href="/what-is-zignos/">ZIGNOSとは</a> ·
+              <a href="/docs/">ドキュメント</a> ·
+              <a href="/download/">ダウンロード</a> ·
+              <a href="/about/">プロジェクト</a> ·
+              <a href="https://github.com/studio-nosa-tech" rel="external">GitHub</a>
+            </>
+          )}
         </span>
       </div>
     </footer>

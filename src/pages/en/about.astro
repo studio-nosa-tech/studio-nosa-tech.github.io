@@ -1,0 +1,106 @@
+---
+import PageLayout from '../../layouts/PageLayout.astro';
+import release from '../../data/release.json';
+
+const versionOf = (name: string) =>
+  release.stage3.packages.find((p) => p.name === name)?.version ?? '';
+---
+
+<PageLayout
+  lang="en"
+  title="Project — ZIGNOS"
+  description="An overview of the ZIGNOS Project: the source-based Linux distribution and the repositories that make it up."
+>
+  <div class="wrap">
+    <section class="page-hero">
+      <span class="eyebrow">ABOUT</span>
+      <h1>ZIGNOS Project</h1>
+      <p>
+        ZIGNOS is a source-based Linux distribution built from scratch.
+        With the policy that "the basics boot on any device, the details are yours to tune",
+        it provides a minimal base and a set of packages you choose yourself.
+      </p>
+      <div class="buttons" style="margin-top: 1.4rem">
+        <a class="btn primary" href="/en/what-is-zignos/">Read What is ZIGNOS</a>
+      </div>
+    </section>
+
+    <div class="prose">
+      <h2>Basic information</h2>
+      <div class="stats stats-6">
+        <div class="stat"><strong>{release.kernel.version}-r{release.kernel.revision}</strong><span>Linux kernel</span></div>
+        <div class="stat"><strong>glibc {versionOf('glibc')}</strong><span>libc</span></div>
+        <div class="stat"><strong>gcc {versionOf('gcc')}</strong><span>toolchain</span></div>
+        <div class="stat"><strong>OpenRC {versionOf('openrc')}</strong><span>init system</span></div>
+        <div class="stat"><strong>zpkg {release.zpkg.version}</strong><span>package manager (development tree)</span></div>
+        <div class="stat"><strong>x86_64</strong><span>architecture</span></div>
+      </div>
+
+      <h2>Structure</h2>
+      <p>
+        The project consists of five repositories, all public:
+        <strong>zignos</strong> / <strong>zpkg</strong> /
+        <strong>zignos-build</strong> / <strong>zignos-recipes</strong> and
+        this official site (<strong>studio-nosa-tech.github.io</strong>).
+      </p>
+      <div class="grid">
+        <article class="card">
+          <h3>zignos</h3>
+          <p>Project top level. Design documents and roadmap.</p>
+        </article>
+        <article class="card">
+          <h3>zpkg</h3>
+          <p>A source-based package manager written in Go. USE, slots, binpkg, transactions.</p>
+        </article>
+        <article class="card">
+          <h3>zignos-recipes</h3>
+          <p>The recipe tree. Three channels stable / testing / unstable × core / main / desktop.</p>
+        </article>
+        <article class="card">
+          <h3>zignos-build</h3>
+          <p>bootstrap, base.list, image / stage3 creation, QEMU tests.</p>
+        </article>
+        <article class="card">
+          <h3>studio-nosa-tech.github.io</h3>
+          <p>This official site. Built with Astro + Starlight; it reads the release manifest.</p>
+        </article>
+      </div>
+      <p>
+        <strong>KDE Plasma 6 (Wayland)</strong> is in place as the first desktop
+        environment. Plasma and KDE applications are provided on all three channels,
+        stable / testing / unstable, with SDDM / Plasma Login Manager, Spectacle,
+        and kio-extras implemented as well. See
+        <a href="/en/docs/desktop/">Desktop environment</a> for details.
+      </p>
+
+      <h2>About the name</h2>
+      <p>
+        ZIGNOS is a name derived from "<strong>Zenith Innovation for Next-generation Operating Systems</strong>".
+      </p>
+      <p>
+        The tagline is <em>Beyond the Limits.</em>,
+        and the catchphrase is <em>Engineered for Performance. Designed for Independence.</em>.
+      </p>
+
+      <h2>Developer</h2>
+      <p>
+        ZIGNOS is developed and operated by <a href="https://studio-nosa.live/" rel="external">Studio NØSa.</a>
+      </p>
+
+      <h2>Links</h2>
+      <ul>
+        <li><a href="https://studio-nosa.live/" rel="external">Studio NØSa.</a></li>
+        <li><a href="https://github.com/studio-nosa-tech" rel="external">GitHub — studio-nosa-tech</a></li>
+        <li><a href="/en/docs/">Documentation</a></li>
+        <li><a href="/en/news/">News</a></li>
+        <li><a href="/wallpaper.png" download>Wallpaper (1672×941 PNG)</a></li>
+      </ul>
+
+      <h2>License</h2>
+      <p>
+        The text and logo on this site belong to Studio NØSa. Software licenses
+        follow the terms stated in each repository.
+      </p>
+    </div>
+  </div>
+</PageLayout>

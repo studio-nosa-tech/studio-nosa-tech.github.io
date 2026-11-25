@@ -1,0 +1,129 @@
+---
+import PageLayout from '../../../layouts/PageLayout.astro';
+import release from '../../../data/release-2026-11-20-alpha.json';
+
+const available = release.availability === 'available';
+const recipeCount = (c: { core: number; main: number; desktop: number }) =>
+  c.core + c.main + c.desktop;
+const perChannel = Object.entries(release.recipes.channels)
+  .map(([name, c]) => `${name} ${recipeCount(c)}`)
+  .join(' / ');
+---
+
+<PageLayout
+  lang="en"
+  title={`ZIGNOS ${release.release} — ZIGNOS`}
+  description={`Release notes for ZIGNOS ${release.release}. stage3 ${release.stage3.revision}, ${release.stage3.package_count} packages, zpkg ${release.zpkg.version}.`}
+>
+  <div class="wrap">
+    <section class="page-hero">
+      <span class="eyebrow">RELEASE · ALPHA</span>
+      <h1>ZIGNOS {release.release}</h1>
+      <p>{release.build_date}</p>
+    </section>
+
+    <div class="prose">
+      <div class="notice">
+        <strong>The stage3 for this release is {available ? 'available.' : 'not yet available.'}</strong>
+        {' '}Artifact file names, sizes and SHA-256 values are collected in
+        <a href="/en/releases/current/">Current release</a> and
+        <a href="/releases.json">release.json</a>.
+        The current r21 can be obtained from the <a href="/en/download/">Download page</a>.
+      </div>
+
+      <h2>This release</h2>
+      <p>
+        {release.release} is a stage3 that brings together a minimal base including
+        PAM and git, recipe sync for all channels, and fixes for WiFi and
+        SDDM / Plasma Login Manager. The development tree additionally adds
+        Spectacle / kio-extras and the zpkg 0.3.2 update system.
+      </p>
+      <div class="stats">
+        <div class="stat">
+          <strong>{release.stage3.package_count}</strong>
+          <span>stage3 packages</span>
+        </div>
+        <div class="stat">
+          <strong>{release.stage3.size_mib} MiB</strong>
+          <span>stage3 size</span>
+        </div>
+        <div class="stat">
+          <strong>{release.stage3.revision}</strong>
+          <span>stage3 revision</span>
+        </div>
+        <div class="stat">
+          <strong>zpkg {release.zpkg.version}</strong>
+          <span>Package manager</span>
+        </div>
+      </div>
+
+      <h2>Highlights</h2>
+      <ul>
+        <li>
+          <strong>stage3 {release.stage3.revision}</strong> — bundles PAM, git 2.56.1,
+          initscripts r26 (<code>/etc/zpkg/sync.conf</code> and base-accounts),
+          and git sync in zpkg 0.3.1
+        </li>
+        <li>
+          <strong>Recipe sync moved to git</strong> — <code>zpkg sync</code> compares
+          the commit in <code>.zpkg-git</code> with the remote HEAD and shallow-clones
+          only when there are changes. There is no longer any need to create a
+          recipe tarball by hand
+        </li>
+        <li>
+          <strong>SDDM / Plasma Login Manager</strong> — SDDM in all channels,
+          PLM added to Testing / Unstable. Fixed the shared D-Bus policy and the
+          supplementary group leak
+        </li>
+        <li>
+          <strong>WiFi</strong> — resolved the missing firmware / wpa_supplicant found
+          in real-hardware testing of the Intel 8260, with the
+          <code>networkmanager-wifi</code> meta package
+        </li>
+      </ul>
+
+      <h2>stage3</h2>
+      <table>
+        <tbody>
+          <tr><th>File</th><td><code>{release.stage3.filename}</code></td></tr>
+          <tr><th>Size</th><td>{release.stage3.size.toLocaleString('en-US')} bytes ({release.stage3.size_mib} MiB)</td></tr>
+          <tr><th>SHA-256</th><td><code class="hash">{release.stage3.sha256}</code></td></tr>
+          <tr><th>Channel</th><td>{release.channel}</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Recipes and toolchain</h2>
+      <table>
+        <tbody>
+          <tr><th>Recipes</th><td>{release.recipes.total} ({perChannel})</td></tr>
+          <tr><th>Recipes tarball</th><td><code>{release.recipes.filename}</code></td></tr>
+          <tr><th>Linux kernel</th><td>{release.kernel.version}-r{release.kernel.revision}</td></tr>
+          <tr><th>GRUB</th><td>{release.bootloader.version}-r{release.bootloader.revision}</td></tr>
+          <tr><th>Base</th><td>Top level {release.base.top_level} / with dependencies {release.base.closure}</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Upgrade</h2>
+      <p>
+        Systems at stage3 {release.stage3.revision} or later should sync the recipes
+        before upgrading. The development tree offers zpkg 0.3.2 and initscripts r27.
+      </p>
+      <pre><code>zpkg sync
+zpkg channel
+zpkg upgrade -p
+zpkg upgrade</code></pre>
+      <p>
+        Automatic updates from zpkg 0.2.0 are a known unsupported path. Use
+        <code>zpkg upgrade</code> on systems at 0.3.x or later.
+      </p>
+
+      <h2>Links</h2>
+      <ul>
+        <li><a href="/en/releases/current/">Current release</a></li>
+        <li><a href="/en/docs/stage3/">stage3 guide</a></li>
+        <li><a href="/en/docs/channels/">Release channels</a></li>
+        <li><a href="/en/download/">Download</a></li>
+      </ul>
+    </div>
+  </div>
+</PageLayout>

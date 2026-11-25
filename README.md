@@ -31,16 +31,25 @@ astro.config.mjs          site / Starlight(sidebar, logo, locale)
 src/
   assets/logo.png         ヘッダー・ヒーロー用ロゴ(透過)
   assets/wallpaper.webp   キービジュアル / OGP の元画像
-  content/docs/docs/      公開ドキュメント(Starlight)
+  content/docs/docs/      公開ドキュメント(日本語・既定)
+  content/docs/en/docs/   公開ドキュメント(英語・/en/)
   content/i18n/ja.json    Starlight UI の日本語上書き
-  layouts/PageLayout.astro  ランディング等の共通レイアウト
+  layouts/PageLayout.astro  ランディング等の共通レイアウト(lang=ja|en)
   pages/                  /, /what-is-zignos/, /download/, /about/, /news/, 404
+  pages/en/               英語版のマーケティング / ニュースページ
   styles/site.css         ランディング系のデザイン
   styles/starlight.css    ドキュメントのブランド配色
 public/                   favicon.png, og.png, wallpaper.png(壁紙配布用)
 scripts/make-assets.mjs   favicon / OGP の生成
 .github/workflows/deploy.yml  GitHub Pages へのビルド/デプロイ
 ```
+
+## 翻訳
+
+日本語が既定ロケール(`/`)、英語は `/en/`。Docs は
+`src/content/docs/en/docs/` に日本語と同じパスで置き、マーケティングページは
+`src/pages/en/` に置く。用語・リンクの規則は [`TRANSLATING.md`](TRANSLATING.md)
+を参照。未翻訳の Docs ページは Starlight が日本語にフォールバックする。
 
 ## デプロイ(GitHub Pages)
 

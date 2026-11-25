@@ -1,0 +1,161 @@
+---
+import PageLayout from '../../layouts/PageLayout.astro';
+import logo from '../../assets/logo.png';
+import wallpaper from '../../assets/wallpaper.webp';
+import release from '../../data/release.json';
+
+const available = release.availability === 'available';
+const newsSlug = release.release.replace(/\./g, '-');
+---
+
+<PageLayout
+  lang="en"
+  title="ZIGNOS — Beyond the Limits."
+  description="A source-based Linux distribution built from scratch. Minimal base, zpkg, OpenRC, rolling release."
+>
+  <div class="wrap">
+    <section class="hero">
+      <div>
+        <span class="eyebrow">ZIGNOS PROJECT</span>
+        <h1>ZIGNOS</h1>
+        <p class="tagline">Beyond the Limits.</p>
+        <p class="catch">Engineered for Performance. Designed for Independence.</p>
+        <p class="lead">
+          A source-based Linux distribution built from scratch.
+          A minimal base combined with the Go-powered package manager
+          <strong>zpkg</strong> and OpenRC. Install only what you choose.
+        </p>
+        <div class="buttons">
+          <a class="btn primary" href="/en/docs/">Read the documentation</a>
+          <a class="btn muted" href="/en/download/" aria-disabled={!available}>
+            {available ? 'Download stage3' : 'stage3 is coming soon'}
+          </a>
+        </div>
+        <p class="byline">
+          Developed by <a href="https://studio-nosa.live/" rel="external">Studio NØSa.</a>
+        </p>
+      </div>
+      <div class="hero-art">
+        <img src={logo.src} alt="ZIGNOS logo" width="520" height="336" />
+      </div>
+    </section>
+
+    <section class="section" aria-label="Base system size">
+      <div class="stats">
+        <div class="stat"><strong>{release.base.closure}</strong><span>base packages (with dependencies)</span></div>
+        <div class="stat"><strong>{release.base.top_level}</strong><span>base.list top-level</span></div>
+        <div class="stat"><strong>BIOS / UEFI</strong><span>Both firmware types</span></div>
+        <div class="stat"><strong>OpenRC + zpkg</strong><span>init and package management</span></div>
+      </div>
+    </section>
+
+    <figure class="keyvisual">
+      <img
+        src={wallpaper.src}
+        alt="ZIGNOS — Zenith Innovation for Next-generation Operating Systems. Beyond the Limits."
+        width="1672"
+        height="941"
+        loading="lazy"
+      />
+      <figcaption>
+        <span>ZIGNOS — Independent Linux Operating System</span>
+        <a href="/wallpaper.png" download>Download the wallpaper (PNG, 1672×941)</a>
+      </figcaption>
+    </figure>
+
+    <section class="section">
+      <h2>Design</h2>
+      <p class="section-lead">
+        It boots on any machine; you shape the details.
+        <a href="/en/what-is-zignos/">What is ZIGNOS →</a>
+      </p>
+      <div class="grid">
+        <article class="card">
+          <span class="icon">◆</span>
+          <h3>Source-based</h3>
+          <p>
+            Recipes are shell scripts. You decide the build flags and dependencies,
+            and binpkg caching makes rebuilds fast.
+          </p>
+        </article>
+        <article class="card">
+          <span class="icon">◆</span>
+          <h3>Rolling release</h3>
+          <p>
+            The HEAD of each channel (stable / testing / unstable) is the current
+            release. <code>zpkg upgrade</code> shows what changes, and you choose
+            when to follow.
+          </p>
+        </article>
+        <article class="card">
+          <span class="icon">◆</span>
+          <h3>Minimal base</h3>
+          <p>
+            A minimal base. No editor or SSH by default.
+            Install what you need with <code>zpkg install</code>.
+          </p>
+        </article>
+        <article class="card">
+          <span class="icon">◆</span>
+          <h3>BIOS / UEFI</h3>
+          <p>
+            Pick <code>bios</code> or <code>uefi</code> with <code>grub</code>'s
+            USE flags. The initramfs resolves <code>root=UUID=</code>.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="release">
+        <span class="tag">STABLE</span>
+        <div>
+          <h3>ZIGNOS {release.release}</h3>
+          <p>
+            stage3 {release.stage3.revision} · {release.stage3.package_count} packages / {release.stage3.size_mib} MiB · {release.build_date}
+            {available ? '' : ' (coming soon)'}
+          </p>
+        </div>
+        <a class="btn" href={`/en/news/${newsSlug}/`}>Release notes</a>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Getting started</h2>
+      <p class="section-lead">
+        Unpack stage3, chroot into it, and install the kernel and bootloader.
+      </p>
+      <div class="grid">
+        <article class="card">
+          <h3>1. Unpack</h3>
+          <p><code>tar -xpf zignos-stage3-*.tar.xz -C /mnt/zignos</code></p>
+        </article>
+        <article class="card">
+          <h3>2. chroot</h3>
+          <p><code>zignos-enter.sh /mnt/zignos</code></p>
+        </article>
+        <article class="card">
+          <h3>3. Kernel and GRUB</h3>
+          <p><code>zpkg install linux grub</code></p>
+        </article>
+      </div>
+      <p style="margin-top: 1.2rem">
+        <a href="/en/docs/install/">Read the stage3 installation guide →</a>
+      </p>
+    </section>
+
+    <section class="section">
+      <h2>Community</h2>
+      <p class="section-lead">
+        Questions, troubleshooting and requests go to the GitHub Discussions forum.
+        Report bugs in Issues.
+      </p>
+      <div class="buttons">
+        <a class="btn primary" href="https://github.com/studio-nosa-tech/zignos/discussions" rel="external">
+          Open the forum
+        </a>
+        <a class="btn muted" href="/en/docs/community/forum/">How to use the forum</a>
+      </div>
+    </section>
+  </div>
+</PageLayout>

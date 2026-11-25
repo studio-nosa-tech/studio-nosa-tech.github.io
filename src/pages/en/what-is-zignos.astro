@@ -1,0 +1,210 @@
+---
+import PageLayout from '../../layouts/PageLayout.astro';
+import release from '../../data/release.json';
+---
+
+<PageLayout
+  lang="en"
+  title="What is ZIGNOS — ZIGNOS"
+  description="ZIGNOS is a source-based Linux distribution built from scratch. A summary of its philosophy, how it works, the size of the base, and who it is for."
+>
+  <div class="wrap">
+    <section class="page-hero">
+      <span class="eyebrow">ABOUT ZIGNOS</span>
+      <h1>What is ZIGNOS</h1>
+      <p>
+        A source-based Linux distribution built from scratch.
+        Not a finished product to use as-is, but a foundation to assemble with your own hands.
+      </p>
+      <p class="catch">Engineered for Performance. Designed for Independence.</p>
+    </section>
+
+    <div class="prose what">
+      <p class="statement">
+        Rather than choosing an OS that is handed to you,<br />
+        you assemble your own.
+      </p>
+
+      <p>
+        ZIGNOS is a source-based distribution. Starting from a from-scratch
+        build procedure, it builds everything from the toolchain to the base
+        system by hand. It is not a derivative of an existing distribution;
+        it combines its own package manager <strong>zpkg</strong> with
+        <strong>OpenRC</strong> as init.
+      </p>
+
+      <p>
+        The goal is a system you can understand, that contains nothing
+        unnecessary, and that stays under your control for a long time.
+        No editor, no SSH, no DHCP from the start.
+        Only what you need, only as much as you need.
+      </p>
+
+      <h2>Why build from scratch</h2>
+      <p>
+        Distributions have become convenient. In exchange, it has become harder
+        to see what runs inside them and where each dependency comes from.
+        ZIGNOS goes the other way. It keeps the build process as recipes,
+        records everything installed with zpkg, and keeps every choice in your hands.
+      </p>
+
+      <div class="grid two">
+        <article class="card">
+          <span class="icon">◆</span>
+          <h3>Source-based</h3>
+          <p>
+            Recipes are shell scripts. You choose the build flags and dependencies
+            yourself. Built binaries are cached, which makes rebuilds faster.
+          </p>
+        </article>
+        <article class="card">
+          <span class="icon">◆</span>
+          <h3>Minimal base</h3>
+          <p>
+            The smallest possible configuration. The base is {release.base.top_level} packages,
+            or {release.base.closure} with dependencies. Add only what you need from there.
+          </p>
+        </article>
+        <article class="card">
+          <span class="icon">◆</span>
+          <h3>Simple init</h3>
+          <p>
+            init is OpenRC. systemd is not used. Services are opt-in,
+            and you choose what starts.
+          </p>
+        </article>
+        <article class="card">
+          <span class="icon">◆</span>
+          <h3>Rolling release</h3>
+          <p>
+            The HEAD of each channel (stable / testing / unstable) is the current release.
+            <code>zpkg upgrade</code> shows the changes, and you follow them after reviewing.
+          </p>
+        </article>
+      </div>
+
+      <h2>What makes up ZIGNOS</h2>
+      <ul>
+        <li>
+          <strong>zpkg</strong> — A package manager written in Go. It has USE flags, slots,
+          a binpkg cache, transactions, an install journal, Ed25519 signing,
+          and a build sandbox via bubblewrap.
+        </li>
+        <li>
+          <strong>Recipe tree</strong> — Three channels: stable / testing / unstable.
+          core is the base system, main is an optional set of CLI tools,
+          and desktop covers KDE Plasma 6.
+        </li>
+        <li>
+          <strong>stage3</strong> — A minimal, chrootable base without the kernel and
+          bootloader. Unpack it and finish with <code>zpkg install linux grub</code>.
+        </li>
+        <li>
+          <strong>BIOS / UEFI</strong> — Supports both firmware types. GRUB selects
+          <code>bios</code> / <code>uefi</code> with USE flags, and efibootmgr can also be installed on UEFI.
+        </li>
+        <li>
+          <strong>Developer</strong> — Developed and operated by <a href="https://studio-nosa.live/" rel="external">Studio NØSa.</a>
+        </li>
+      </ul>
+
+      <h2>The base in numbers</h2>
+      <div class="stats">
+        <div class="stat"><strong>{release.base.closure}</strong><span>Base packages (with dependencies)</span></div>
+        <div class="stat"><strong>{release.base.top_level}</strong><span>Top level of base.list</span></div>
+        <div class="stat"><strong>{release.recipes.total}</strong><span>Recipes (three channels total)</span></div>
+        <div class="stat"><strong>{release.stage3.package_count}</strong><span>Packages in stage3</span></div>
+      </div>
+      <p>
+        stage3 is about {release.stage3.size_mib} MiB. It does not include the kernel, DHCP, WiFi, SSH, an editor, or man;
+        add what you need with <code>zpkg install</code>.
+      </p>
+
+      <h2>Who it is for, and who it is not</h2>
+      <div class="grid two">
+        <article class="card">
+          <h3>Who it is for</h3>
+          <p>
+            People who like building their environment by hand.
+            People who want to work CLI-first, without unnecessary packages.
+            People who want to choose only what they need and manage it for the long term.
+          </p>
+        </article>
+        <article class="card">
+          <h3>Who it is not for</h3>
+          <p>
+            People who want a GUI right after installation. People who want automatic
+            updates or a huge binary repository. People who require Secure Boot.
+            The first official release was published on 2026.11.24. stage3 does not include a GUI
+            (KDE Plasma 6 can be added from the recipes).
+          </p>
+        </article>
+      </div>
+
+      <h2>Frequently asked questions</h2>
+      <dl class="faq">
+        <dt>How is it different from other source-based distributions?</dt>
+        <dd>
+          ZIGNOS is not based on Gentoo. It does not use Portage / ebuild / Gentoo
+          recipes; it builds everything from the toolchain to the minimal base with
+          its own bootstrap procedure, and manages it with its own package manager
+          zpkg and recipes. The idea of composing a system from a minimal base and
+          recipes is shared, but package management and the build system are
+          independent.
+        </dd>
+        <dt>Is a desktop environment included?</dt>
+        <dd>
+          stage3 is CLI only and does not include a GUI. All channels, however,
+          have KDE Plasma 6 (Wayland) recipes, and it can be added with
+          <code>zpkg install plasma-meta</code>.
+          See <a href="/en/docs/desktop/">Desktop environment</a> for details.
+        </dd>
+        <dt>Is installation difficult?</dt>
+        <dd>
+          It is easier than assembling everything by hand. Unpack stage3, chroot
+          into it, and install the kernel and bootloader with
+          <code>zpkg install linux grub</code>. Installers for BIOS / UEFI are also available.
+        </dd>
+        <dt>Which architectures are supported?</dt>
+        <dd>x86_64 only. It boots on both BIOS and UEFI.</dd>
+        <dt>Does it support Secure Boot?</dt>
+        <dd>
+          No. GRUB and the kernel are unsigned, so disable Secure Boot before use.
+        </dd>
+        <dt>How many packages are there?</dt>
+        <dd>
+          Across the three channels stable / testing / unstable, there are
+          {release.recipes.total} recipes in total as of r21
+          (stable {release.recipes.channels.stable.core + release.recipes.channels.stable.main + release.recipes.channels.stable.desktop} /
+          testing {release.recipes.channels.testing.core + release.recipes.channels.testing.main + release.recipes.channels.testing.desktop} /
+          unstable {release.recipes.channels.unstable.core + release.recipes.channels.unstable.main + release.recipes.channels.unstable.desktop}).
+          The base is {release.base.top_level} packages, or
+          {release.base.closure} with dependencies.
+        </dd>
+      </dl>
+
+      <h2>About the name</h2>
+      <p>
+        ZIGNOS is a name derived from "<strong>Zenith Innovation for Next-generation Operating Systems</strong>".
+      </p>
+      <p>
+        The tagline is <em>Beyond the Limits.</em>,
+        and the catchphrase is <em>Engineered for Performance. Designed for Independence.</em>.
+      </p>
+
+      <h2>Read next</h2>
+      <ul>
+        <li><a href="/en/docs/install/">Installation on real hardware</a> — installing on BIOS / UEFI</li>
+        <li><a href="/en/docs/stage3/">stage3 guide</a> — from unpacking to chroot and kernel installation</li>
+        <li><a href="/en/docs/design-pkg/">zpkg design</a> — recipes, DB, USE, transactions</li>
+        <li><a href="/en/docs/roadmap/">Roadmap</a> — the M0–M51 record and current status</li>
+        <li><a href="/en/about/">Project overview</a> — repository layout and basic information</li>
+      </ul>
+
+      <div class="what-cta">
+        <a class="btn primary" href="/en/docs/">Read the documentation</a>
+        <a class="btn" href="/en/download/">Download</a>
+      </div>
+    </div>
+  </div>
+</PageLayout>

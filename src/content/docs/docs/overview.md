@@ -62,9 +62,9 @@ stage3 と既定のイメージは CLI の最小ベースのままです。デ�
 
 | リポジトリ | 役割 | 公開 |
 |---|---|---|
-| `zignos` | プロジェクト文書とロードマップ | 非公開 |
-| `zpkg` | パッケージマネージャ本体 | 非公開 |
-| `zignos-build` | bootstrap・stage3 / イメージ作成 | 非公開 |
+| `zignos` | プロジェクト文書とロードマップ | 公開 |
+| `zpkg` | パッケージマネージャ本体 | 公開 |
+| `zignos-build` | bootstrap・stage3 / イメージ作成 | 公開 |
 | `zignos-recipes` | stable / testing / unstable のレシピツリー | 公開 |
 | `studio-nosa-tech.github.io` | この公式サイト | 公開 |
 
