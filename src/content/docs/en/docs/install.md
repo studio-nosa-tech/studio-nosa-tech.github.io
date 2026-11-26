@@ -720,6 +720,19 @@ zpkg install networkmanager-wifi
 rc-update add networkmanager default
 ```
 
+> **Known issue in stage3 r21**: the r21 stage3 lacks `bison`, which libnl's
+> configure requires, and the runtime libraries `attr` / `lz4` that `patch`
+> and `zstd` link against. Run the following before installing
+> `networkmanager-wifi`.
+>
+> ```sh
+> zpkg install attr lz4 sqlite bison
+> ```
+>
+> `attr` is needed by `patch`, `lz4` by `zstd`, `sqlite` by Python's
+> `_sqlite3`, and `bison` by libnl's configure. The recipes were fixed on
+> 2026-11-26 (`a78ff6c`), so stage3 r22 and later do not need this.
+
 `networkmanager-wifi` is a meta package that installs **NetworkManager +
 wpa_supplicant + iw + linux-firmware** together. To avoid the mistake of
 forgetting the firmware and having WiFi go unrecognized, use this when you
@@ -898,8 +911,23 @@ ip addr                  # If wired DHCP was installed
 - Time synchronization: `zpkg install chrony && rc-update add chronyd default`
 - System update: `zpkg upgrade` (shows the change list, dependency differences
   and warnings before running)
-- Check the channel: `zpkg channel`. For testing / unstable, fetch the recipe
-  tree with `zpkg sync`, then switch with `zpkg channel testing`
+- Check the channel: `zpkg channel`. **A stage3 contains only the recipes for
+  the channel it was built with.** Always fetch the full recipe tree with
+  `zpkg sync` before switching to testing / unstable. Switching first and then
+  running `zpkg upgrade` stops with
+  `release channel "testing" is not installed`. On the r21 stage3, run
+  `zpkg install attr lz4` first to supply the missing `patch` / `zstd`
+  dependencies.
+
+  ```sh
+  # once, on the r21 stage3
+  zpkg install attr lz4
+
+  zpkg sync
+  zpkg channel testing
+  zpkg upgrade -p
+  zpkg upgrade
+  ```
 
 ### Advanced A: copy from an existing ZIGNOS with `zignos-install`
 
@@ -1029,6 +1057,54 @@ The stage3 root is locked. Enter the chroot and set a password with `passwd`.
 stage3 is a minimal base. Add them with
 `zpkg install vim nano dhcpcd openssh`, for example. Using the network inside
 the chroot requires `/etc/resolv.conf` and NIC configuration.
+
+### `libattr.so.1` / `liblz4.so.1` is not found
+
+A known issue in stage3 r21. `patch` needs `libattr` and `zstd` needs `liblz4`,
+but neither library is in the r21 stage3 (the build host had them, so they
+were not declared as dependencies). Fix it with:
+
+```sh
+zpkg install attr lz4 sqlite
+```
+
+Run this before building `networkmanager-wifi` or running `zpkg upgrade`. The
+recipes are fixed (`a78ff6c`), so stage3 r22 and later do not need it.
+
+### `networkmanager-wifi` stops at libnl
+
+The r21 stage3 does not contain `bison`, and its bundled `libnl` recipe did
+not declare `makedepends` for it. Install bison and retry:
+
+```sh
+zpkg install bison
+zpkg install networkmanager-wifi
+```
+
+### It stops with `release channel "testing" is not installed`
+
+A stage3 contains **only the recipes for its selected channel**. To switch a
+stable stage3 to testing, fetch all channels first with `zpkg sync`.
+
+```sh
+zpkg sync
+zpkg channel testing
+zpkg upgrade -p
+zpkg upgrade
+```
+
+### pkgconf build cannot find `meson-1.12.0.tar.gz`
+
+A known issue in recipe trees before 2026-11-26. The pkgconf build tries to
+extract `meson-1.12.0.tar.gz` from the zpkg cache, but a stage3 does not ship
+that tarball, so it stops with
+`tar: ... Cannot open: No such file or directory`. Update the recipe tree
+with `zpkg sync` (fix `cedc3f2`).
+
+```sh
+zpkg sync
+zpkg upgrade
+```
 
 ### A recipe for a new package is not found (`recipe not found`)
 

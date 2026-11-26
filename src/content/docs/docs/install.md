@@ -701,6 +701,19 @@ zpkg install networkmanager-wifi
 rc-update add networkmanager default
 ```
 
+> **stage3 r21 の既知の不具合**: r21 の stage3 では `libnl` の configure が
+> 要求する `bison` が入っておらず、`patch` と `zstd` のランタイム依存
+> (`attr` / `lz4`)も欠けています。`networkmanager-wifi` を入れる前に
+> 次を実行してください。
+>
+> ```sh
+> zpkg install attr lz4 sqlite bison
+> ```
+>
+> `attr` は `patch`、`lz4` は `zstd`、`sqlite` は Python の `_sqlite3`、
+> `bison` は `libnl` の configure に必要です。レシピ側は 2026-11-26 に
+> 修正済み(`a78ff6c`)なので、r22 以降の stage3 では不要です。
+
 `networkmanager-wifi` は **NetworkManager + wpa_supplicant + iw +
 linux-firmware** をまとめて入れるメタパッケージです。ファームウェアを入れ忘れて
 WiFi が認識されない事故を避けるため、WiFi を使う場合はこちらを使ってください。
@@ -878,8 +891,22 @@ ip addr                  # 有線 DHCP を入れた場合
 - ネットワーク・SSH・エディタ・man は必要に応じて `zpkg install`
 - 時刻同期: `zpkg install chrony && rc-update add chronyd default`
 - システム更新: `zpkg upgrade`(実行前に変更一覧・依存差分・警告を表示)
-- チャンネル確認: `zpkg channel`。testing / unstable は
-  `zpkg sync` でレシピツリーを取り込んでから `zpkg channel testing` で切り替え
+- チャンネル確認: `zpkg channel`。**stage3 には選択したチャンネルのレシピしか
+  入っていません**。testing / unstable は必ず `zpkg sync` でレシピツリーを
+  取り込んでから切り替えます。sync せずに `zpkg channel testing` →
+  `zpkg upgrade` とすると `release channel "testing" is not installed` で
+  止まります(r21 の stage3 では、先に `zpkg install attr lz4` で
+  `patch` / `zstd` の欠落依存を補ってください)。
+
+  ```sh
+  # r21 の stage3 では最初に一度だけ
+  zpkg install attr lz4
+
+  zpkg sync
+  zpkg channel testing
+  zpkg upgrade -p
+  zpkg upgrade
+  ```
 
 ### 上級 A: 既存の ZIGNOS から `zignos-install` でコピー
 
@@ -1002,6 +1029,54 @@ stage3 の root はロックされています。chroot に入って `passwd` �
 
 stage3 は最小ベースです。`zpkg install vim nano dhcpcd openssh` などで追加します。
 chroot 内でネットワークを使うには `/etc/resolv.conf` と NIC の設定が必要です。
+
+### `libattr.so.1` / `liblz4.so.1` が見つからない
+
+stage3 r21 の既知の不具合です。`patch` が `libattr`、`zstd` が `liblz4` を
+必要としますが、r21 の stage3 には入っていません(ビルドホストにあったため
+依存として宣言されていませんでした)。次で解消します。
+
+```sh
+zpkg install attr lz4 sqlite
+```
+
+`networkmanager-wifi` のビルドや `zpkg upgrade` の前に実行してください。
+レシピ側は修正済み(`a78ff6c`)なので、r22 以降の stage3 では不要です。
+
+### `networkmanager-wifi` が libnl で止まる
+
+r21 の stage3 には `bison` が無く、同梱の `libnl` レシピも `makedepends` を
+宣言していませんでした。`bison` を入れてから再実行します。
+
+```sh
+zpkg install bison
+zpkg install networkmanager-wifi
+```
+
+### `release channel "testing" is not installed` で止まる
+
+stage3 には **選択したチャンネルのレシピだけ**が入っています。stable の
+stage3 で testing に切り替えるときは、先に `zpkg sync` で全チャンネルの
+レシピツリーを取り込みます。
+
+```sh
+zpkg sync
+zpkg channel testing
+zpkg upgrade -p
+zpkg upgrade
+```
+
+### pkgconf のビルドで `meson-1.12.0.tar.gz` が見つからない
+
+2026-11-26 より前のレシピツリーの既知の不具合です。pkgconf のビルドが
+stage3 に無い `meson-1.12.0.tar.gz` をキャッシュから展開しようとして
+`tar: ... Cannot open: No such file or directory` で止まります。
+`zpkg sync` で修正版ツリー(`cedc3f2`)に更新してください。
+
+```sh
+zpkg sync
+zpkg upgrade
+```
 
 ### 新しいパッケージのレシピが見つからない(`recipe not found`)
 
