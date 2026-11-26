@@ -79,15 +79,18 @@ Live セッションの TUI インストーラーが、実行中のシステム�
 
 ```sh
 sha256sum zignos-live-desktop-20261125.iso
-# cdefa3d135bd9be56d3388a18f6ee1da0c9e642b2c54f9bf63702bd79049f755
+# 7876ca70d0308634d3bc10c9d749bffd5f3b77d01d14a89c9328a53d6f31835f
 ```
 
 ### USB に書き込む
 
-> **注意(2026.11.25 alpha)**: この ISO は現在 **CD/DVD 用**です。MBR/GPT を持たない
-> ため、USB に `dd` しても BIOS / UEFI から起動できません。USB で試す場合は
-> Ventoy などの ISO ブートローダーを使うか、CD/DVD・VM の CD-ROM で起動してください。
-> ハイブリッド ISO(USB 直書き対応)は準備中です。
+```sh
+# Linux / macOS(デバイス名は lsblk で確認。例: /dev/sdX)
+sudo dd if=zignos-live-desktop-20261125.iso of=/dev/sdX bs=4M status=progress conv=fsync
+```
+
+Windows では Rufus(DD モード)、balenaEtcher、Ventoy などで書き込みます。
+この ISO は BIOS / UEFI の両方で USB から起動できます。
 
 ### 起動する
 

@@ -81,15 +81,18 @@ Get the ISO and SHA-256 from the [download page](/en/download/#live).
 
 ```sh
 sha256sum zignos-live-desktop-20261125.iso
-# cdefa3d135bd9be56d3388a18f6ee1da0c9e642b2c54f9bf63702bd79049f755
+# 7876ca70d0308634d3bc10c9d749bffd5f3b77d01d14a89c9328a53d6f31835f
 ```
 
 ### Write it to USB
 
-> **Note (2026.11.25 alpha)**: this ISO is currently **CD/DVD only**. It has no
-> MBR/GPT, so writing it to a USB drive with `dd` will not boot on BIOS or UEFI.
-> To try it from USB, use an ISO bootloader such as Ventoy, or boot it from a
-> CD/DVD or a VM's CD-ROM. A hybrid ISO (direct USB write) is in preparation.
+```sh
+# Linux / macOS (find the device with lsblk; e.g. /dev/sdX)
+sudo dd if=zignos-live-desktop-20261125.iso of=/dev/sdX bs=4M status=progress conv=fsync
+```
+
+On Windows use Rufus (DD mode), balenaEtcher or Ventoy.
+This ISO boots from USB on both BIOS and UEFI.
 
 ### Boot
 
