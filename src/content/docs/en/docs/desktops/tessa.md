@@ -77,13 +77,29 @@ window rules, layout details, IPC, themes and extensions.
 - [Tessa website (English)](https://keychrom.github.io/)
 - [Tessa website (Japanese)](https://keychrom.github.io/ja/)
 
+## X11 applications and screen sharing
+
+Tessa starts X11 applications through `xwayland-satellite`, available from the
+official ZIGNOS repository.
+
+```sh
+zpkg install xwayland-satellite
+```
+
+Tessa finds `xwayland-satellite` in PATH automatically; `TESSA_XWAYLAND_BIN`
+can point to an absolute path.
+
+Screen sharing is provided by `xdg-desktop-portal-wlr`.
+
+```sh
+zpkg install xdg-desktop-portal-wlr
+```
+
+The Tessa session registers `WAYLAND_DISPLAY` in the D-Bus activation
+environment after startup, so the portal can connect to Tessa. `tessa.portal`
+is selected for `XDG_CURRENT_DESKTOP=Tessa`.
+
 ## Notes
 
-- **X11 applications**: `xwayland-satellite` is not yet in the official ZIGNOS
-  recipes. Tessa cannot start X11 applications and logs
-  `xwayland: 'xwayland-satellite' not found`
-- **Screen sharing**: `tessa.portal` is installed, but the
-  `xdg-desktop-portal-wlr` backend is not in the recipes yet, so screen
-  sharing is currently unavailable
 - Without a terminal installed, Tessa's launcher cannot start terminal
   applications. Install `konsole` or another terminal and set `terminal`

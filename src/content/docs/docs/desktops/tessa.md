@@ -77,13 +77,29 @@ cp /usr/share/tessa/panel.example ~/.config/tessa/panel.conf
 - [Tessa 公式サイト(日本語)](https://keychrom.github.io/ja/)
 - [Tessa 公式サイト(English)](https://keychrom.github.io/)
 
+## X11 アプリと画面共有
+
+Tessa は X11 アプリを `xwayland-satellite` 経由で起動します。ZIGNOS の公式
+リポジトリから追加できます。
+
+```sh
+zpkg install xwayland-satellite
+```
+
+Tessa は PATH 上の `xwayland-satellite` を自動で見つけて起動します。
+`TESSA_XWAYLAND_BIN` で絶対パスを指定することもできます。
+
+画面共有は `xdg-desktop-portal-wlr` が提供します。
+
+```sh
+zpkg install xdg-desktop-portal-wlr
+```
+
+Tessa のセッションは起動後に `WAYLAND_DISPLAY` を D-Bus アクティベーション
+環境へ登録するため、ポータルから Tessa に接続できます。`tessa.portal` は
+`XDG_CURRENT_DESKTOP=Tessa` で選択されます。
+
 ## 注意点
 
-- **X11 アプリ**: `xwayland-satellite` は ZIGNOS の公式レシピにはまだ含まれて
-  いません。Tessa は X11 アプリを起動できず、ログに
-  `xwayland: 'xwayland-satellite' not found` と表示します
-- **画面共有**: `tessa.portal` は同梱されますが、バックエンドの
-  `xdg-desktop-portal-wlr` はまだレシピにありません。画面共有は現時点では
-  利用できません
 - 端末が無い場合、Tessa のランチャーはターミナルを起動できません。
   `konsole` などを入れて `terminal` を設定してください
