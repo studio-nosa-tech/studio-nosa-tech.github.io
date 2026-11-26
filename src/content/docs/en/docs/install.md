@@ -485,6 +485,7 @@ Updating right after the chroot keeps the later `linux` / `grub` / Wi-Fi
 installs from stopping on stale dependencies.
 
 ```sh
+mkdir -p /usr/lib/modprobe.d   # missing in the r21 stage3
 zpkg sync        # refresh the recipe tree (required on first use)
 zpkg upgrade -p  # review the changes
 zpkg upgrade     # run
@@ -494,6 +495,10 @@ zpkg upgrade     # run
   On the r21 stage3 this adds the `attr` dependency of `patch`, `lz4` of
   `zstd` and `sqlite` of `python3`; `zpkg upgrade` installs them before
   building.
+- The r21 stage3 is missing the empty `/usr/lib/modprobe.d` directory, so the
+  final integrity check stops with `kmod: usr/lib/modprobe.d: missing`.
+  Create it with the `mkdir` above, or let the kmod update (the `34.3-r1`
+  post_install) create it.
 - Rebuilding many packages can take 10-30 minutes. Review `-p` first.
 - **Once 5.2 is done, the `zpkg install attr lz4 sqlite bison` workaround for
   Wi-Fi on r21 is no longer needed.**

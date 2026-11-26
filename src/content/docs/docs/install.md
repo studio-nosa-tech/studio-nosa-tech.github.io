@@ -472,6 +472,7 @@ stage3 のレシピとパッケージはビルド時点のスナップショッ�
 止まりません。
 
 ```sh
+mkdir -p /usr/lib/modprobe.d   # r21 の既知の欠落(空ディレクトリ)
 zpkg sync        # レシピツリーを最新化(初回は必須)
 zpkg upgrade -p  # 変更一覧を確認
 zpkg upgrade     # 実行
@@ -480,6 +481,9 @@ zpkg upgrade     # 実行
 - `zpkg sync` は `/usr/share/zignos/recipes` を GitHub の最新ツリーに置き換えます。
   stage3 r21 ではこの更新で `patch` の `attr`、`zstd` の `lz4`、`python3` の
   `sqlite` 依存が入り、`zpkg upgrade` がビルド前に自動導入します
+- r21 の stage3 は空の `/usr/lib/modprobe.d` が欠けており、upgrade の最後の
+  整合性チェックで `kmod: usr/lib/modprobe.d: missing` になります。上の
+  `mkdir` で先に作るか、kmod の更新(`34.3-r1` の post_install)で解消します
 - 再ビルドするパッケージが多いと 10〜30 分かかります。`-p` の一覧を確認してから
   実行してください
 - **この 5.2 を先に済ませれば、r21 の Wi-Fi 導入で必要だった
