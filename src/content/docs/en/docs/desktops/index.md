@@ -3,8 +3,10 @@ title: Desktop
 description: The ZIGNOS desktop environment. The role and installation of KDE Plasma 6 (Wayland).
 ---
 
-The ZIGNOS desktop environment is **KDE Plasma 6 (Wayland)**. stage3 is a
-minimal CLI base, so the desktop is added optionally from recipes in `desktop/`.
+The standard ZIGNOS desktop is **KDE Plasma 6 (Wayland)**. The tiling
+**Tessa** compositor (Zig + wlroots) is also available as an official package.
+stage3 is a minimal CLI base, so the desktop is added optionally from recipes
+in `desktop/`.
 
 ## Policy
 
@@ -15,6 +17,8 @@ minimal CLI base, so the desktop is added optionally from recipes in `desktop/`.
 - Login is SDDM (all channels), or Plasma Login Manager (Testing / Unstable)
 - Japanese display uses Noto CJK / Noto Emoji and IPAex fonts; Japanese input uses fcitx5 + mozc
 - Supports Flatpak and xdg-desktop-portal (KDE backend)
+- The tiling **Tessa** compositor (Zig + wlroots + scenefx) is also official;
+  install it with `zpkg install tessa`
 
 ## Installation
 
@@ -75,6 +79,8 @@ Detailed steps including the environment variables (`/etc/environment`) are in
 - [Wayland and Xwayland](/en/docs/desktops/wayland/) — session, X11 apps, GLX
 - [Japanese input (fcitx5 + Mozc)](/en/docs/desktops/japanese/) — installation, environment variables, Mozc configuration
 - [Flatpak](/en/docs/desktops/flatpak/) — Flathub, portal integration, troubleshooting
+- [Tessa](/en/docs/desktops/tessa/) — installation, starting from SDDM, initial configuration and links to the Tessa website
 - [Desktop environment (details)](/en/docs/desktop/) — channel layout and implementation status
 
-No desktop environment other than KDE Plasma is officially provided at this time.
+KDE Plasma 6 is the standard, and the tiling Tessa compositor is also provided
+as an official package.

@@ -96,6 +96,7 @@ export default defineConfig({
                 { label: 'Wayland と Xwayland', translations: { en: 'Wayland and Xwayland' }, slug: 'docs/desktops/wayland' },
                 { label: '日本語入力 (fcitx5 + Mozc)', translations: { en: 'Japanese input (fcitx5 + Mozc)' }, slug: 'docs/desktops/japanese' },
                 { label: 'Flatpak', slug: 'docs/desktops/flatpak' },
+                { label: 'Tessa', slug: 'docs/desktops/tessa' },
                 { label: 'デスクトップ環境(詳細)', translations: { en: 'Desktop environment (details)' }, slug: 'docs/desktop' },
               ],
             },

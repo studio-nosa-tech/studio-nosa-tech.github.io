@@ -3,7 +3,8 @@ title: デスクトップ
 description: ZIGNOS のデスクトップ環境。KDE Plasma 6 (Wayland) の位置づけと導入方法。
 ---
 
-ZIGNOS のデスクトップ環境は **KDE Plasma 6 (Wayland)** です。stage3 は CLI の
+ZIGNOS の標準デスクトップは **KDE Plasma 6 (Wayland)** です。タイル型の
+**Tessa**(Zig + wlroots)も公式パッケージとして利用できます。stage3 は CLI の
 最小ベースなので、デスクトップは `desktop/` のレシピから任意で追加します。
 
 ## 方針
@@ -15,6 +16,7 @@ ZIGNOS のデスクトップ環境は **KDE Plasma 6 (Wayland)** です。stage3
 - ログインは SDDM(全チャンネル)、または Plasma Login Manager(Testing / Unstable)
 - 日本語表示は Noto CJK / Noto Emoji と IPAex フォント、日本語入力は fcitx5 + mozc
 - Flatpak と xdg-desktop-portal (KDE バックエンド) に対応
+- タイル型の **Tessa**(Zig + wlroots + scenefx)も公式に提供。`zpkg install tessa` で導入
 
 ## 導入
 
@@ -76,6 +78,7 @@ fcitx5-configtool
 - [Wayland と Xwayland](/docs/desktops/wayland/) — セッション、X11 アプリ、GLX
 - [日本語入力 (fcitx5 + Mozc)](/docs/desktops/japanese/) — 導入、環境変数、Mozc の設定
 - [Flatpak](/docs/desktops/flatpak/) — Flathub、ポータル連携、トラブルシューティング
+- [Tessa](/docs/desktops/tessa/) — 導入、SDDM からの起動、初期設定、Tessa 公式サイトへのリンク
 - [デスクトップ環境(詳細)](/docs/desktop/) — チャンネル構成と実装状況
 
-現時点で KDE Plasma 以外のデスクトップ環境は公式には提供していません。
+KDE Plasma 6 を標準とし、タイル型の Tessa も公式パッケージとして提供しています。
