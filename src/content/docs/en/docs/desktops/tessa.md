@@ -9,6 +9,9 @@ repository. It combines the panel, launcher, workspaces, tiling layouts and
 window effects (rounded corners, blur and shadows via scenefx) in one
 repository, so Waybar and Rofi are not required.
 
+Both Tessa and ZIGNOS are developed by
+[Studio NØSa.](https://studio-nosa.live/).
+
 ## Installation
 
 ```sh

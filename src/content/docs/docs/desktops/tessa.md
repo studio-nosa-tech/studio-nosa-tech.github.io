@@ -9,6 +9,9 @@ description: ZIGNOS で Tessa を導入し、SDDM から起動するための手
 ウィンドウの角丸・ブラー・影(scenefx)をひとつに含み、Waybar や Rofi は
 必要ありません。
 
+Tessa と ZIGNOS は、どちらも [Studio NØSa.](https://studio-nosa.live/) が
+開発しています。
+
 ## 導入
 
 ```sh
