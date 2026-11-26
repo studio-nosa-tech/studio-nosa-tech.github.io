@@ -439,6 +439,54 @@ chroot に入ったら、まず root のパスワードを設定します(stage3
 passwd
 ```
 
+### 5.1 `/etc/zpkg/make.conf` を設定する
+
+chroot 直後にビルド設定を決めます。stage3 の make.conf は `CHANNEL=stable`
+だけなので、エディタの代わりに `cat` で上書きします。
+
+```sh
+cat > /etc/zpkg/make.conf <<EOF
+# ビルドチャンネル: stable(既定) / testing / unstable
+CHANNEL=stable
+# 最適化。通常はこのままでよい
+CFLAGS="-O2 -pipe"
+# 並列ビルド。CPU コア数に合わせる
+MAKEOPTS="-j$(nproc)"
+EOF
+
+zpkg channel
+```
+
+- `CHANNEL` は stable(長期安定)/ testing(最新安定)/ unstable(挑戦的)。
+  基本は stable のまま。testing / unstable に上げる場合は **先に `zpkg sync`**
+  して全チャンネルのレシピを取り込んでから `zpkg channel testing` で切り替えます
+  (stage3 にはビルド時の1チャンネルしか入っていないため)
+- `CFLAGS` は `-O2 -pipe` を推奨。`-march=native` などは自己責任で
+- `MAKEOPTS` は `-j$(nproc)`。メモリが少ない機体では `-j2` などに下げる
+- GPU を使う場合の `VIDEO_CARDS` は 10 章で `zpkg video-cards` を使って設定します
+
+### 5.2 ベースを `zpkg upgrade` で最新化する
+
+stage3 のレシピとパッケージはビルド時点のスナップショットです。chroot 直後に
+最新化しておくと、この後の `linux` / `grub` / Wi-Fi スタックの導入が古い依存で
+止まりません。
+
+```sh
+zpkg sync        # レシピツリーを最新化(初回は必須)
+zpkg upgrade -p  # 変更一覧を確認
+zpkg upgrade     # 実行
+```
+
+- `zpkg sync` は `/usr/share/zignos/recipes` を GitHub の最新ツリーに置き換えます。
+  stage3 r21 ではこの更新で `patch` の `attr`、`zstd` の `lz4`、`python3` の
+  `sqlite` 依存が入り、`zpkg upgrade` がビルド前に自動導入します
+- 再ビルドするパッケージが多いと 10〜30 分かかります。`-p` の一覧を確認してから
+  実行してください
+- **この 5.2 を先に済ませれば、r21 の Wi-Fi 導入で必要だった
+  `zpkg install attr lz4 sqlite bison` は不要です**
+- testing / unstable に切り替える場合は、`zpkg sync` → `zpkg channel testing` →
+  `zpkg upgrade` の順にします(5.1 の注意参照)
+
 ---
 
 ## 6. ベースの初期設定
@@ -703,7 +751,8 @@ rc-update add networkmanager default
 
 > **stage3 r21 の既知の不具合**: r21 の stage3 では `libnl` の configure が
 > 要求する `bison` が入っておらず、`patch` と `zstd` のランタイム依存
-> (`attr` / `lz4`)も欠けています。`networkmanager-wifi` を入れる前に
+> (`attr` / `lz4`)も欠けています。**5.2 の `zpkg sync && zpkg upgrade` を
+> 済ませていれば不要です**。まだの場合、`networkmanager-wifi` を入れる前に
 > 次を実行してください。
 >
 > ```sh
@@ -1034,7 +1083,8 @@ chroot 内でネットワークを使うには `/etc/resolv.conf` と NIC の設
 
 stage3 r21 の既知の不具合です。`patch` が `libattr`、`zstd` が `liblz4` を
 必要としますが、r21 の stage3 には入っていません(ビルドホストにあったため
-依存として宣言されていませんでした)。次で解消します。
+依存として宣言されていませんでした)。**5.2 の `zpkg sync && zpkg upgrade` を
+実行していれば解消しています**。まだの場合、次で個別に解消できます。
 
 ```sh
 zpkg install attr lz4 sqlite
@@ -1046,7 +1096,9 @@ zpkg install attr lz4 sqlite
 ### `networkmanager-wifi` が libnl で止まる
 
 r21 の stage3 には `bison` が無く、同梱の `libnl` レシピも `makedepends` を
-宣言していませんでした。`bison` を入れてから再実行します。
+宣言していませんでした。**5.2 を先に実行していれば、修正済みレシピの
+`libnl` が bison を自動導入します**。まだの場合、`bison` を入れてから
+再実行します。
 
 ```sh
 zpkg install bison

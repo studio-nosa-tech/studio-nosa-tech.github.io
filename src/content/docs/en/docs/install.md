@@ -450,6 +450,56 @@ Once inside the chroot, set the root password first (it is locked in stage3).
 passwd
 ```
 
+### 5.1 Configure `/etc/zpkg/make.conf`
+
+Decide the build settings right after entering the chroot. The stage3
+make.conf contains only `CHANNEL=stable`, and there is no editor, so overwrite
+it with `cat`.
+
+```sh
+cat > /etc/zpkg/make.conf <<EOF
+# Build channel: stable (default) / testing / unstable
+CHANNEL=stable
+# Optimization; keep this for normal use
+CFLAGS="-O2 -pipe"
+# Parallel builds; match the CPU core count
+MAKEOPTS="-j$(nproc)"
+EOF
+
+zpkg channel
+```
+
+- `CHANNEL` is stable (long-term) / testing (latest stable) / unstable
+  (challenging). Keep stable by default. To move to testing / unstable, run
+  `zpkg sync` **first** to fetch all channels, then switch with
+  `zpkg channel testing` (a stage3 ships only the channel it was built with).
+- `CFLAGS`: `-O2 -pipe` is recommended. `-march=native` etc. are at your own
+  risk.
+- `MAKEOPTS`: `-j$(nproc)`. Lower it (`-j2`) on machines with little RAM.
+- `VIDEO_CARDS` for the GPU is set in chapter 10 with `zpkg video-cards`.
+
+### 5.2 Update the base with `zpkg upgrade`
+
+The recipes and packages in a stage3 are a snapshot from its build time.
+Updating right after the chroot keeps the later `linux` / `grub` / Wi-Fi
+installs from stopping on stale dependencies.
+
+```sh
+zpkg sync        # refresh the recipe tree (required on first use)
+zpkg upgrade -p  # review the changes
+zpkg upgrade     # run
+```
+
+- `zpkg sync` replaces `/usr/share/zignos/recipes` with the latest GitHub tree.
+  On the r21 stage3 this adds the `attr` dependency of `patch`, `lz4` of
+  `zstd` and `sqlite` of `python3`; `zpkg upgrade` installs them before
+  building.
+- Rebuilding many packages can take 10-30 minutes. Review `-p` first.
+- **Once 5.2 is done, the `zpkg install attr lz4 sqlite bison` workaround for
+  Wi-Fi on r21 is no longer needed.**
+- To switch to testing / unstable, run `zpkg sync` → `zpkg channel testing` →
+  `zpkg upgrade` (see 5.1).
+
 ---
 
 ## 6. Initial base configuration
@@ -722,8 +772,9 @@ rc-update add networkmanager default
 
 > **Known issue in stage3 r21**: the r21 stage3 lacks `bison`, which libnl's
 > configure requires, and the runtime libraries `attr` / `lz4` that `patch`
-> and `zstd` link against. Run the following before installing
-> `networkmanager-wifi`.
+> and `zstd` link against. **This is unnecessary if you completed 5.2
+> (`zpkg sync && zpkg upgrade`).** Otherwise, run the following before
+> installing `networkmanager-wifi`.
 >
 > ```sh
 > zpkg install attr lz4 sqlite bison
@@ -1062,7 +1113,8 @@ the chroot requires `/etc/resolv.conf` and NIC configuration.
 
 A known issue in stage3 r21. `patch` needs `libattr` and `zstd` needs `liblz4`,
 but neither library is in the r21 stage3 (the build host had them, so they
-were not declared as dependencies). Fix it with:
+were not declared as dependencies). **This is already resolved if you ran
+5.2 (`zpkg sync && zpkg upgrade`).** Otherwise, fix it individually with:
 
 ```sh
 zpkg install attr lz4 sqlite
@@ -1074,7 +1126,8 @@ recipes are fixed (`a78ff6c`), so stage3 r22 and later do not need it.
 ### `networkmanager-wifi` stops at libnl
 
 The r21 stage3 does not contain `bison`, and its bundled `libnl` recipe did
-not declare `makedepends` for it. Install bison and retry:
+not declare `makedepends` for it. **If you ran 5.2, the fixed libnl recipe
+pulls bison automatically.** Otherwise, install bison and retry:
 
 ```sh
 zpkg install bison
