@@ -131,7 +131,7 @@ Total: 3 upgrades, 1 new dependency, 1 rebuild, 3 orphans
 - **Dependency diffs** — `+added` / `-removed` / `~constraint changed`
 - **Warnings** — the recipe's `upgrade_warning`, major version changes of key packages,
   new conflicts, slot changes, channel changes
-- **Orphan packages** — slot 0 packages that were in the previous dependency
+- **Orphan packages** — packages (per slot) that were in the previous dependency
   closure (the closure traced from Meta.Depends at install time) and are no longer
   needed by the new closure. They are kept by default. Unrelated packages not in
   world are not targeted
@@ -182,8 +182,8 @@ and exits non-zero.
 
 By default they are only listed. With `--prune`, only orphan packages that no
 other remaining package depends on are removed. Packages that are depended on are
-shown as `kept: required by ...` and left in place. Packages with multiple slots
-are excluded.
+shown as `kept: required by ...` and left in place. Orphans are detected per slot,
+so another slot of the same name does not prevent pruning an unused slot.
 
 ## Operating rules (between channels)
 
@@ -205,5 +205,5 @@ are excluded.
   tarball with all channels, but there is no command to add or update just one
   channel
 - Signing is per whole tree. The stable subtree bundled in stage3 remains unsigned
-- Orphan detection covers only slot 0 and only packages included in the previous
+- Orphan detection is per slot and covers only packages included in the previous
   dependency closure

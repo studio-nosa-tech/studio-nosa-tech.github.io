@@ -84,7 +84,7 @@ state, see "Status" at /en/about/.
 | M50 | Spectacle / kio-extras | Done (2026-11-21 stable 6.4.5, Testing/Unstable 6.8.3, kio-extras all channels) | GUI operation check on a real GPU |
 | M51 | zpkg self-update and automatic new-dependency install | Done (2026-11-21 zpkg 0.3.2 / initscripts r27) | - |
 
-Next candidates: **the rest of M48 (visual check of the greeter on a real GPU)** / the rest of M47 (Unstable verification on a real GPU, Qt 6.12 / Plasma 6.9 migration, Mesa main) / distribution ISO and UEFI / real hardware GPU and WiFi / CI integration for the release manifest / storage (LUKS/LVM/XFS/Btrfs) / operating an official signing key and publishing the binpkg repository / minimal-dependency build root / fully pinned build root / resource limits / SAT solver (a complete solution including multiple versions and slots).
+Next candidates: **the rest of M48 (visual check of the greeter on a real GPU)** / the rest of M47 (Unstable verification on a real GPU, Qt 6.12 / Plasma 6.9 migration, Mesa main) / distribution ISO and UEFI / real hardware GPU and WiFi / CI integration for the release manifest / storage (LUKS/LVM/XFS/Btrfs) / operating an official signing key and publishing the binpkg repository / minimal-dependency build root / fully pinned build root / resource limits.
 
 ## M25: stage3 tarball (2026-11-17 completed)
 
@@ -557,7 +557,8 @@ package count grows.
   (networkmanager / sshfs) and rejection of `zpkg remove glib` in a chroot
 - [x] **zpkg r8 / stage3 regenerated** — installed the new zpkg into the build environment and regenerated stage3
   at 53 packages / 976 MiB. Confirmed bundled zpkg 0.1.0-r8 and recipes r8
-- [ ] **SAT solver** — future work. Candidate selection is already isolated in `internal/resolve`
+- [x] **SAT solver** — M52 (2026-11-27, zpkg 0.4.0) implemented CDCL SAT and
+  simultaneous resolution of multiple versions and slots
 
 ## M35: zpkg sync — recipe tree synchronization (2026-11-19 verification)
 
@@ -1130,8 +1131,8 @@ The foundation is LFS 13.1-systemd (GCC 16.2.0 / Glibc 2.44 / Binutils 2.47 / Li
 Staged expansion on the same Go codebase. USE flags, world, upgrade and transactions are
 already implemented as v0.9 (M9–M12):
 
-- slots (multiple versions of the same name coexisting) — implemented in M20. Solving multiple versions simultaneously is not supported
-- SAT solver — currently deterministic backtracking (M36). A complete solution including multiple versions and slots is future work
+- slots (multiple versions of the same name coexisting) — implemented in M20. M52 can now solve multiple versions and slots simultaneously with SAT
+- SAT solver — CDCL SAT implemented in M52 (zpkg 0.4.0). It handles multiple versions/slots, provides, conflicts and replacement of installed packages together
 - Publishing signed repositories and key distribution (the mechanism is implemented in M37)
 - world rebuild — implemented as `upgrade --newuse` in M17
 - Minimal-dependency build root — M38 covers filesystem/process/network isolation.

@@ -81,7 +81,7 @@ M2 以降の各節は**実走行の記録**(実走行で判明した修正を含
 | M50 | Spectacle / kio-extras | 完了(2026-11-21 stable 6.4.5・Testing/Unstable 6.8.3、kio-extras 全チャンネル) | GUI 操作の実 GPU 確認 |
 | M51 | zpkg の自己更新と新規依存の自動導入 | 完了(2026-11-21 zpkg 0.3.2 / initscripts r27) | - |
 
-次の候補: **M48 の残り(実 GPU での greeter 目視)** / M47 の残り(実 GPU での Unstable 検証・Qt 6.12 / Plasma 6.9 移行・Mesa main) / 配布用 ISO・UEFI / 実機 GPU・WiFi / リリースマニフェストの CI 連携 / ストレージ系(LUKS/LVM/XFS/Btrfs) / 公式署名鍵の運用と binpkg リポジトリの公開 / 最小依存ビルドルート / 完全な固定ビルドルート / resource limit / SAT solver(複数バージョン・スロットを含む完全解)。
+次の候補: **M48 の残り(実 GPU での greeter 目視)** / M47 の残り(実 GPU での Unstable 検証・Qt 6.12 / Plasma 6.9 移行・Mesa main) / 配布用 ISO・UEFI / 実機 GPU・WiFi / リリースマニフェストの CI 連携 / ストレージ系(LUKS/LVM/XFS/Btrfs) / 公式署名鍵の運用と binpkg リポジトリの公開 / 最小依存ビルドルート / 完全な固定ビルドルート / resource limit。
 
 ## M25: stage3 tarball(2026-11-17 完走)
 
@@ -525,7 +525,8 @@ binpkg リポジトリの index とレシピツリーに Ed25519 署名を付け
   (networkmanager / sshfs)、`zpkg remove glib` の拒否を確認
 - [x] **zpkg r8 / stage3 再生成** — 新しい zpkg をビルド環境へインストールし、stage3 を
   53 パッケージ / 976 MiB で再生成。同梱 zpkg 0.1.0-r8 とレシピ r8 を確認
-- [ ] **SAT solver** — 将来課題。候補選択は `internal/resolve` に分離済み
+- [x] **SAT solver** — M52(2026-11-27、zpkg 0.4.0)で CDCL SAT と複数バージョン/
+  スロットの同時解決を実装
 
 ## M35: zpkg sync — レシピツリーの同期(2026-11-19 検証)
 
@@ -1103,8 +1104,10 @@ v0 のコマンド: `zpkg build|install|remove|list|search|depends`
 同一 Go コードベースで段階拡張。USE フラグ・world・upgrade・トランザクションは
 v0.9 として実装済み(M9–M12):
 
-- slots(同名複数バージョン共存)— M20 で実装済み。複数バージョンを同時に解く機能は未対応
-- SAT solver — 現在は決定的バックトラック(M36)。複数バージョン・スロットを含む完全解は将来課題
+- slots(同名複数バージョン共存)— M20 で実装済み。M52 で SAT により
+  複数バージョン・スロットを同時に解けるようになった
+- SAT solver — CDCL SAT を M52(zpkg 0.4.0)で実装。複数バージョン・スロット、
+  provides、conflicts、インストール済みパッケージの置換を同時に扱う
 - 署名付きリポジトリの公開・鍵配布(仕組みは M37 で実装済み)
 - world rebuild — `upgrade --newuse` として M17 で実装済み
 - 最小依存ビルドルート — M38 はファイルシステム/プロセス/ネットワーク隔離まで。

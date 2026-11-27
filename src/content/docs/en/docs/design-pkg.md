@@ -3,7 +3,7 @@ title: zpkg design
 description: The design of zpkg. Recipe format, DB schema 2, USE flags, transactions, binpkgs.
 ---
 
-Status: v0.3.3 design (updated together with the implementation. DB schema 2, world/upgrade, USE
+Status: v0.4.0 design (updated together with the implementation. DB schema 2, world/upgrade, USE
 flags, hooks, transactions, dependency atom resolution, recipe sync and reproducible build
 are implemented — see the sections below)
 
@@ -16,18 +16,16 @@ are implemented — see the sections below)
 - Start as a simple implementation of a few hundred to about 1500 lines. Evolve it toward a full package manager over the long term
 - **Written in Go**: runs as a single static binary, even inside a chroot. Future USE flag and solver extensions use the same codebase
 
-## Not there yet (as of v0.3.3)
+## Not there yet (as of v0.4.0)
 
 - Distribution and operation of a public binary repository (the signing mechanism and `keys/` output are implemented)
-
-- A full SAT solver. Resolution is currently deterministic backtracking (see "Dependency resolution" below), and a complete solution considering multiple versions and slots at the same time is not implemented
 
 ## Overview
 
 ```
 Recipe repository (ZPKG_REPOS, first match wins)
-   ↓ recipe.Load
-Dependency resolution (internal/depspec + internal/resolve, backtracking + topological sort)
+   ↓ recipe.ScanRepos
+Dependency resolution (internal/depspec + internal/resolve + internal/sat, CDCL SAT + topological sort)
    ↓
 fetch → checksum verification → extract (internal/source)
    ↓
@@ -72,6 +70,7 @@ Execution environment:
 | Variable | Description |
 |---|---|
 | `ZPKG_NAME` | Package name |
+| `ZPKG_SLOT` | Slot (`0` for slot 0) |
 | `ZPKG_VERSION` | Version |
 | `ZPKG_ROOT` | Target root |
 | `ZPKG_CACHE` | Source cache directory (usable for referencing additional sources) |
@@ -137,7 +136,7 @@ DBs stay compatible.
 | File | Meaning | Default |
 |---|---|---|
 | `revision` | Recipe revision number (`-rN`) | 0 |
-| `slot` | Coexisting slot (for future multiple versions) | `0` |
+| `slot` | Coexisting slot. Can also be set by the `<name>@<slot>/` directory name | `0` |
 | `provides` | Provided virtual names (one per line, `virtual/foo[-ver]`) | none |
 | `conflicts` | Packages that must not be installed together (atoms allowed) | none |
 | `makedepends` | Dependencies needed only at build time (one per line, atoms allowed) | none |
@@ -147,14 +146,30 @@ DBs stay compatible.
 
 `depends` are runtime dependencies. Both `depends` + `makedepends` are used for build order.
 
-## Dependency resolution (v0.2.0+ backtracking)
+### Multiple versions and slots
+
+```
+<repo>/<name>/...                         # slot 0 (legacy; a slot file can override it)
+<repo>/<name>@<slot>/...                  # slot fixed by the directory name
+<repo>/<name>/versions/<variant>/...      # multiple versions in one slot
+<repo>/<name>@<slot>/versions/<variant>/...
+```
+
+Each variant is a normal recipe. `versions/` is used only when there is no
+top-level `version` file. Only one version of a slot can be installed at a time,
+so coexisting versions use different slots. `@` is reserved in package names;
+dependencies and targets can pin a slot (`foo@14`, `>=foo@14-2.0`).
+
+## Dependency resolution (CDCL SAT)
 
 `depends` / `makedepends` / `provides` / `conflicts` accept package atoms.
 
 | Example | Meaning |
 |---|---|
-| `foo` | `foo` at any version |
+| `foo` | `foo` at any version in any slot |
+| `foo@14` | `foo` in slot 14 (slot 0 is plain `foo`) |
 | `>=foo-1.2` / `<foo-2.0` / `=foo-1.2-r3` | Version constraint (`>`, `<=`, `!=` also allowed) |
+| `>=foo@14-1.2` | 1.2 or newer in slot 14 |
 | `ssl?openssl` | `openssl` only when `ssl` is enabled |
 | `!ssl?gnutls` | `gnutls` only when `ssl` is disabled |
 | `foo[ssl]` / `foo[-ssl]` | The dependency must have `ssl` enabled / disabled |
@@ -164,18 +179,29 @@ DBs stay compatible.
 - Version constraints are written with an operator. `foo-1.2` is treated as a package name
   (because some packages have `-` and digits in their names)
 - `provides` is `virtual/mailer` or `virtual/mailer-1.2`. When the version is omitted,
-  the providing package's version is used
-- Resolution uses `internal/depspec` (atom parsing) and `internal/resolve` (deterministic backtracking):
-  - Try the direct recipe and `provides` candidates in the order "installed → direct name → name order"
-  - Exclude candidates that do not satisfy version / USE constraints and candidates that conflict
-  - On a dead end, backtrack to another provider / candidate. The selection result is in topological order with dependencies first
-  - Installing `virtual/foo` picks a provider and records the provider in world
+  the providing package's version is used. provides entries cannot carry a slot
+- Resolution uses `internal/depspec` (atom parsing) and `internal/resolve` (CDCL SAT,
+  `internal/sat`):
+  - All recipe candidates (multiple versions/slots) and installed packages whose
+    recipe disappeared are encoded into one candidate universe
+  - target / depends / makedepends / conflicts / provides / conditional deps /
+    USE constraints / slots become constraints. At most one version per
+    `name@slot`; different slots can coexist
+  - install/depends prefer the installed version, upgrade/check prefer the newest.
+    Only slots with several candidates get a lexicographic extra solve
+  - A conflict with an installed package is resolved by replacing that slot's
+    candidate when a replacement exists
+  - Unsatisfiable targets are minimized to an unsat core and reported. A
+    dependency cycle blocks the cycle's candidate set and asks for another solution
+  - The selection result is in topological order with dependencies first.
+    Installing `virtual/foo` picks a provider and records the provider in world
 - `conflicts` is checked against both selected and installed packages
 - Reverse dependencies: `zpkg depends -r <pkg>` matches against `depends` / `builddepends` in the
   installed DB, including provides. `zpkg remove` stops when reverse dependencies exist, and `-f` forces it
-- Limitations: one version per recipe name (multiple versions/slots are outside resolution).
-  **No SAT solver is implemented**; candidate selection is isolated in `internal/resolve` so it can be replaced later
-- Already installed packages are skipped from build/install (`-f` forces)
+- `zpkg remove pkg@slot` removes only that slot; without a slot it removes every slot
+- An installed package is skipped only when the selected version and its dependency/
+  provides/conflicts metadata are unchanged. Dependencies may be updated to satisfy
+  version constraints (`-f` forces a rebuild)
 - **`-f` does not ignore the binpkg cache**: if a binpkg exists with the same channel,
   same recipe digest and same version+revision+effective USE, it is used. If the recipe
   content changes, the digest mismatches and the cache misses, so it is rebuilt from
@@ -276,8 +302,8 @@ See [Reproducible builds](/en/docs/reproducibility/) for details.
   different slot is a conflict error** (so files of another slot are not broken by
   mistake). Only packages designed so paths do not overlap between slots (such as
   v1/v2 soname separation) can coexist
-- `remove` deletes **all slots** of that name. `upgrade` updates only the recipe's slot
-  and leaves other slots alone
+- `remove pkg@slot` deletes only that slot; a plain name deletes **all slots**.
+  `upgrade` updates only the recipe's slot and leaves other slots alone
 - `zpkg list` / `info` / `world` show non-zero slots as `name@slot` (slot 0 keeps the
   plain name)
 - Use cases: coexisting sonames of the same library, keeping an older toolchain, and so on
@@ -414,15 +440,15 @@ the `ZPKG_CHANNEL` environment variable, `--channel`.
 
 See [Release channels](/en/docs/channels/) for details.
 
-## Commands (v0.3.3)
+## Commands (v0.4.0)
 
 | Command | Description |
 |---|---|
 | `build [-f] [--no-sandbox] [--clean] [--repro-check] <pkg>...` | fetch → verify → destroot (does not install). `--clean` deletes the work dir; `--repro-check` builds twice and compares manifests |
 | `install [-f] [-p] [--asdeps] [--no-sandbox] [--clean] [--repro-check] <pkg>...` | build/install. `-p` is pretend; `--asdeps` does not add to world. `--clean` / `--repro-check` build from source without using the cache |
 | `upgrade [-p] [-y] [--newuse] [--prune] [--allow-downgrade] [--channel <ch>] [--verify] [pkg...]` | moves world (or the given pkgs) to the selected channel's versions. Shows the change list, dependency differences and warnings, installs new dependencies first, then installs upgrades after all builds succeed. `--newuse` rebuilds on USE changes; `--prune` removes orphaned dependencies; `--allow-downgrade` permits downgrades; `--verify` checks the sha256 of every file |
-| `remove [-f] <pkg>...` | remove + drop from world. Stops if reverse dependencies exist (`-f` forces) |
-| `info <pkg>...` | installed metadata and available recipes |
+| `remove [-f] <pkg[@slot]>...` | remove; `pkg@slot` removes one slot, `pkg` removes all slots, and drop from world. Stops if reverse dependencies exist (`-f` forces) |
+| `info <pkg[@slot]>...` | installed metadata and all available versions/slots |
 | `owner <path>...` | owning package of a path |
 | `world` | explicitly installed list |
 | `use [flag\|-flag]...` | show/edit global USE (`-flag` disables) |
@@ -441,7 +467,7 @@ See [Release channels](/en/docs/channels/) for details.
 | `log [-p] <pkg>...` | show the build log (`-p` path only) |
 | `list` / `search <term>` | installed list / recipe search (provides are searched too) |
 
-binpkg cache names are `<name>-<version>[-rN][-<opts8>].pkg.tar.gz`. A change in revision or effective options produces a different file.
+binpkg cache names are `<name[@slot]>-<version>[-rN][-<opts8>].pkg.tar.gz`. A change in revision or effective options produces a different file.
 
 ### Output (phase display)
 
@@ -513,7 +539,7 @@ Placing `post_install` / `post_remove` (optional, bash) in the recipe directory 
 right after install / right after remove. The environment passed:
 
 ```
-ZPKG_NAME ZPKG_VERSION ZPKG_ROOT ZPKG_USE
+ZPKG_NAME ZPKG_SLOT ZPKG_VERSION ZPKG_ROOT ZPKG_USE
 ```
 
 How they run:

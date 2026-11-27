@@ -3,7 +3,7 @@ title: zpkg 設計
 description: zpkg の設計。レシピ形式、DB schema 2、USE フラグ、トランザクション、binpkg。
 ---
 
-ステータス: v0.3.3 設計(実装と合わせて更新する。DB schema 2・world/upgrade・USE
+ステータス: v0.4.0 設計(実装と合わせて更新する。DB schema 2・world/upgrade・USE
 フラグ・フック・トランザクション・依存アトム解決・レシピ同期・reproducible build
 は実装済み — 後述の各節参照)
 
@@ -16,19 +16,16 @@ description: zpkg の設計。レシピ形式、DB schema 2、USE フラグ、�
 - 最初は数百行〜1500 行程度のシンプルな実装。長期的に本格的なパッケージマネージャ相当へ進化させる
 - **Go で書く**: 単一静的バイナリとして chroot 内でも動かせる。将来の USE フラグ・ソルバー拡張も同じコードベースで行う
 
-## まだ無いもの(v0.3.3 時点)
+## まだ無いもの(v0.4.0 時点)
 
 - 公開バイナリリポジトリの配布・運用(署名の仕組みと `keys/` 出力は実装済み)
-
-- 本格的な SAT ソルバー。現在は決定的なバックトラック解決(下記「依存解決」)で、
-  複数バージョン・スロットを同時に考慮する完全解は未実装
 
 ## 全体像
 
 ```
 レシピリポジトリ(ZPKG_REPOS, 先頭一致で検索)
-   ↓ recipe.Load
-依存解決(internal/depspec + internal/resolve, バックトラック + トポロジカルソート)
+   ↓ recipe.ScanRepos
+依存解決(internal/depspec + internal/resolve + internal/sat, CDCL SAT + トポロジカルソート)
    ↓
 fetch → checksum 検証 → extract(internal/source)
    ↓
@@ -73,6 +70,7 @@ recipes/<channel>/core/<pkg>/
 | 変数 | 内容 |
 |---|---|
 | `ZPKG_NAME` | パッケージ名 |
+| `ZPKG_SLOT` | スロット(slot 0 は `0`) |
 | `ZPKG_VERSION` | バージョン |
 | `ZPKG_ROOT` | ターゲットルート |
 | `ZPKG_CACHE` | ソースキャッシュディレクトリ(追加ソースの参照に使える) |
@@ -137,7 +135,7 @@ linux-firmware に実在する空白入りファイル名がきっかけ(M22)。
 | ファイル | 意味 | 既定 |
 |---|---|---|
 | `revision` | レシピ改訂番号(`-rN`) | 0 |
-| `slot` | 共存スロット(将来の複数バージョン用) | `0` |
+| `slot` | 共存スロット。`<name>@<slot>/` ディレクトリ名でも指定できる | `0` |
 | `provides` | 提供する virtual 名(1行1個、`virtual/foo[-ver]`) | なし |
 | `conflicts` | 同時に入れてはいけないパッケージ(アトム可) | なし |
 | `makedepends` | ビルド時のみ必要な依存(1行1個、アトム可) | なし |
@@ -147,14 +145,30 @@ linux-firmware に実在する空白入りファイル名がきっかけ(M22)。
 
 `depends` は実行時依存。ビルド順序には `depends` + `makedepends` の両方を使う。
 
-## 依存解決(v0.2.0+ バックトラック)
+### 複数バージョン・スロット
+
+```
+<repo>/<name>/...                         # slot 0(従来)。slot ファイルで変更可
+<repo>/<name>@<slot>/...                  # ディレクトリ名で slot を固定
+<repo>/<name>/versions/<variant>/...      # 同一 slot の複数バージョン
+<repo>/<name>@<slot>/versions/<variant>/...
+```
+
+各 variant は通常のレシピ。`versions/` は直下に `version` が無い場合だけ使う。
+1 slot に同時にインストールできるのは 1 バージョンなので、複数バージョンを
+同時に使う場合は slot を分ける。`@` はパッケージ名で予約され、依存と target は
+`foo@14` / `>=foo@14-2.0` のように slot を指定できる。
+
+## 依存解決(CDCL SAT)
 
 `depends` / `makedepends` / `provides` / `conflicts` にはパッケージアトムを書ける。
 
 | 例 | 意味 |
 |---|---|
-| `foo` | 任意バージョンの `foo` |
+| `foo` | 任意バージョン・任意 slot の `foo` |
+| `foo@14` | slot 14 の `foo`(slot 0 は裸の `foo`) |
 | `>=foo-1.2` / `<foo-2.0` / `=foo-1.2-r3` | バージョン制約(`>`, `<=`, `!=` も可) |
+| `>=foo@14-1.2` | slot 14 の 1.2 以上 |
 | `ssl?openssl` | `ssl` が有効なときだけ `openssl` |
 | `!ssl?gnutls` | `ssl` が無効なときだけ `gnutls` |
 | `foo[ssl]` / `foo[-ssl]` | 依存先の `ssl` が有効 / 無効であること |
@@ -164,18 +178,29 @@ linux-firmware に実在する空白入りファイル名がきっかけ(M22)。
 - バージョン制約は演算子付きで書く。`foo-1.2` はパッケージ名として扱う(名前に
   `-` と数字を含むパッケージがあるため)
 - `provides` は `virtual/mailer` または `virtual/mailer-1.2`。バージョン省略時は
-  提供側パッケージのバージョンを使う
-- 解決は `internal/depspec`(アトムのパース)と `internal/resolve`(決定的バックトラック):
-  - 直接レシピと `provides` の候補を「インストール済み → 直接名 → 名前順」で試す
-  - バージョン / USE 制約を満たさない候補と、conflict する候補を除外する
-  - 行き詰まったら別の provider / 候補へ戻る。選択結果は依存が先のトポロジカル順
-  - `virtual/foo` を install すると provider を選び、world には provider を記録する
+  提供側パッケージのバージョンを使う。provides は slot を持てない
+- 解決は `internal/depspec`(アトムのパース)と `internal/resolve`(CDCL SAT、
+  `internal/sat`):
+  - 全レシピ候補(複数バージョン/スロット)と、レシピが消えたインストール済み
+    パッケージを同じ候補宇宙で扱う
+  - target / depends / makedepends / conflicts / provides / 条件依存 / USE 制約 /
+    slot を制約として符号化する。同じ `name@slot` は高々 1 バージョン、
+    異なる slot は共存できる
+  - install/depends はインストール済み版を優先し、upgrade/check は最新版を優先する。
+    複数候補がある slot だけ lexicographic に追加求解する
+  - インストール済みパッケージとの conflict は、その slot の別候補への置換で
+    解消できるなら置換する
+  - 解けない場合は target の unsat core を最小化し、満たせない依存や conflict を
+    表示する。依存の循環は循環候補を禁止して別解を探す
+  - 選択結果は依存が先のトポロジカル順。`virtual/foo` を install すると
+    provider を選び、world には provider を記録する
 - `conflicts` は選択済みパッケージとインストール済みパッケージの両方に対して検査する
 - 逆依存: `zpkg depends -r <pkg>` がインストール済み DB の `depends` / `builddepends` を
   provides も含めて照合する。`zpkg remove` は逆依存があると停止し、`-f` で強制できる
-- 制限: レシピは名前ごとに 1 バージョン(複数バージョン/スロットは解決対象外)。
-  **SAT solver は未実装**で、候補選択は将来差し替えられるよう `internal/resolve` に分離している
-- 既にインストール済みのパッケージは build/install の対象からスキップ(`-f` で強制)
+- `zpkg remove pkg@slot` はその slot だけ削除する。slot を書かない場合は全 slot
+- インストール済みパッケージは、選択版と同じ version かつ同じ依存/provides/
+  conflicts メタデータならスキップする。バージョン制約を満たすため依存を更新する
+  ことがある(`-f` は対象を強制再ビルド)
 - **`-f` は binpkg キャッシュを無視しない**: 同一チャンネル・同一レシピ digest・
   同一 version+revision+実効 USE の binpkg があればそれを使う。レシピ内容が
   変われば digest 不一致でキャッシュミスになり、ソースから再ビルドされる。
@@ -274,8 +299,8 @@ chroot するため、stage3 のディレクトリ chroot でもサンドボッ�
 - 同一 name+slot のインストールは upgrade(置換)。**別スロットとのファイル重複は
   競合エラー**(誤って他スロットのファイルを壊さない)。スロット間でパスが
   重複しない設計のパッケージ(v1/v2 の soname 分離など)のみ共存できる
-- `remove` はその名前の**全スロット**を削除。`upgrade` はレシピのスロットだけを
-  更新し、他スロットは温存される
+- `remove` は `pkg@slot` でその slot だけ、素の名前で**全スロット**を削除する。
+  `upgrade` はレシピのスロットだけを更新し、他スロットは温存される
 - `zpkg list` / `info` / `world` は非 0 スロットを `name@slot` で表示(slot 0 は
   従来どおり素の名前)
 - ユースケース: 同一ライブラリの soname 違いの共存、ツールチェーンの旧版保持など
@@ -412,15 +437,15 @@ zpkg 0.3.3 では、レシピツリーは `stable` / `testing` / `unstable` の3
 
 詳細は [リリースチャンネル](/docs/channels/) を参照。
 
-## コマンド(v0.3.3)
+## コマンド(v0.4.0)
 
 | コマンド | 内容 |
 |---|---|
 | `build [-f] [--no-sandbox] [--clean] [--repro-check] <pkg>...` | fetch → 検証 → destroot まで(インストールしない)。`--clean` は work を削除、`--repro-check` は 2 回ビルドして manifest 比較 |
 | `install [-f] [-p] [--asdeps] [--no-sandbox] [--clean] [--repro-check] <pkg>...` | build/install。`-p` は pretend、`--asdeps` は world に追加しない。`--clean` / `--repro-check` はキャッシュを使わずソースビルド |
 | `upgrade [-p] [-y] [--newuse] [--prune] [--allow-downgrade] [--channel <ch>] [--verify] [pkg...]` | world(または指定 pkg)を選択チャンネルの版へ。変更一覧・依存差分・警告を表示し、新規依存を先にインストールしてから、全ビルド成功後にアップグレードをインストール。`--newuse` は USE 変更時の再ビルド、`--prune` は孤立依存の削除、`--allow-downgrade` はダウングレード許可、`--verify` は全ファイルの sha256 検証 |
-| `remove [-f] <pkg>...` | 削除 + world から除去。逆依存があると停止(`-f` で強制) |
-| `info <pkg>...` | インストール済みメタデータと利用可能レシピ |
+| `remove [-f] <pkg[@slot]>...` | `pkg@slot` はその slot だけ、`pkg` は全 slot を削除 + world から除去。逆依存があると停止(`-f` で強制) |
+| `info <pkg[@slot]>...` | インストール済みメタデータと利用可能な全バージョン/スロット |
 | `owner <path>...` | パスの所有パッケージ |
 | `world` | 明示インストール一覧 |
 | `use [flag|-flag]...` | グローバル USE の表示・編集(`-flag` で無効化) |
@@ -439,7 +464,7 @@ zpkg 0.3.3 では、レシピツリーは `stable` / `testing` / `unstable` の3
 | `log [-p] <pkg>...` | ビルドログの表示(`-p` はパスだけ) |
 | `list` / `search <term>` | 導入済み一覧 / レシピ検索(provides も検索対象) |
 
-binpkg のキャッシュ名は `<name>-<version>[-rN][-<opts8>].pkg.tar.gz`。revision や実効オプションが変わると別ファイルになる。
+binpkg のキャッシュ名は `<name[@slot]>-<version>[-rN][-<opts8>].pkg.tar.gz`。revision や実効オプションが変わると別ファイルになる。
 
 ### 出力(フェーズ表示)
 
@@ -512,7 +537,7 @@ install / remove は**ジャーナル付きトランザクション**として�
 インストール直後 / 削除直後に実行される。渡される環境:
 
 ```
-ZPKG_NAME ZPKG_VERSION ZPKG_ROOT ZPKG_USE
+ZPKG_NAME ZPKG_SLOT ZPKG_VERSION ZPKG_ROOT ZPKG_USE
 ```
 
 実行方法:
