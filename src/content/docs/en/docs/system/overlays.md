@@ -91,8 +91,8 @@ sudo zpkg overlay add experimental https://example.com/overlay.tar.xz \
 | `--no-sync` | write the configuration without fetching the tree |
 
 `zpkg overlay remove <name> --keep-tree` removes only the configuration and
-keeps the synced tree. `zpkg overlay sync` compares the remote git commit and
-does nothing when the tree is already current.
+keeps the synced tree. For git overlays, `zpkg overlay sync` compares the remote
+commit and does nothing when the tree is already current.
 
 ## Signing
 

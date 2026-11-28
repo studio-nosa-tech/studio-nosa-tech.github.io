@@ -89,8 +89,8 @@ sudo zpkg overlay add experimental https://example.com/overlay.tar.xz \
 | `--no-sync` | 設定だけを書き、ツリーは取得しない |
 
 `zpkg overlay remove <name> --keep-tree` は設定だけを消し、取得済みツリーを
-残します。`zpkg overlay sync` は git のリモート commit を比較し、変わって
-いなければ何もしません。
+残します。git のオーバーレイでは、`zpkg overlay sync` がリモート commit を
+比較し、変わっていなければ何もしません。
 
 ## 署名
 
