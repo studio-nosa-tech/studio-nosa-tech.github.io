@@ -67,3 +67,18 @@ same version and USE flags is reused. `ZPKG_NO_BINPKG=1` disables the cache.
 Recipes are in `/usr/share/zignos/recipes/<channel>/{core,main,desktop}/`.
 `zpkg sync` updates them to the latest tree. See
 [zpkg design](/en/docs/design-pkg/) for how to write recipes.
+
+## Overlays (ZIGNOS MENU)
+
+Packages that are not in the official tree are available from the official
+**ZIGNOS MENU** overlay.
+
+```sh
+sudo zpkg overlay add zignos-menu
+zpkg overlay list
+zpkg search <term>
+```
+
+Overlays are searched before the official tree, and `zpkg search` labels them
+as `zignos-menu/apps`. See [ZIGNOS MENU (overlays)](/en/docs/system/overlays/)
+for updating and removing, adding your own overlay, priority and signing.

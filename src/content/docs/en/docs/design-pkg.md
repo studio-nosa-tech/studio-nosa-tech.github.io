@@ -3,9 +3,9 @@ title: zpkg design
 description: The design of zpkg. Recipe format, DB schema 2, USE flags, transactions, binpkgs.
 ---
 
-Status: v0.4.0 design (updated together with the implementation. DB schema 2, world/upgrade, USE
-flags, hooks, transactions, dependency atom resolution, recipe sync and reproducible build
-are implemented — see the sections below)
+Status: v0.5.0 design (updated together with the implementation. DB schema 2, world/upgrade, USE
+flags, hooks, transactions, dependency atom resolution, recipe sync, overlays and reproducible
+build are implemented — see the sections below)
 
 > The actual configuration files (`use.conf` / `package.use` / `make.conf` / `binrepo.conf` /
 > `sync.conf`) and environment variables are collected in [zpkg configuration](/en/docs/zpkg-config/).
@@ -16,14 +16,14 @@ are implemented — see the sections below)
 - Start as a simple implementation of a few hundred to about 1500 lines. Evolve it toward a full package manager over the long term
 - **Written in Go**: runs as a single static binary, even inside a chroot. Future USE flag and solver extensions use the same codebase
 
-## Not there yet (as of v0.4.0)
+## Not there yet (as of v0.5.0)
 
 - Distribution and operation of a public binary repository (the signing mechanism and `keys/` output are implemented)
 
 ## Overview
 
 ```
-Recipe repository (ZPKG_REPOS, first match wins)
+Recipe repository (active overlays → official ZPKG_REPOS, first match wins)
    ↓ recipe.ScanRepos
 Dependency resolution (internal/depspec + internal/resolve + internal/sat, CDCL SAT + topological sort)
    ↓
@@ -440,7 +440,7 @@ the `ZPKG_CHANNEL` environment variable, `--channel`.
 
 See [Release channels](/en/docs/channels/) for details.
 
-## Commands (v0.4.0)
+## Commands (v0.5.0)
 
 | Command | Description |
 |---|---|
@@ -457,6 +457,8 @@ See [Release channels](/en/docs/channels/) for details.
 | `recover` | repair an interrupted transaction (install rolls back, remove completes) |
 | `mkindex [--key <private>] [--generation N] [--expires ...] [dir]` | generate `index.json` for a binpkg repository. Signs with `--key` and also outputs `keys/<keyid>.pub` |
 | `sync [--from <src>] [--dest <dir>] [--git] [--branch <name>] [-n] [--allow-unsigned]` | atomically replace the recipe tree from a stage3/recipe tarball, directory, URL or git repository. For git, compares the commit in `.zpkg-git` with the remote HEAD and shallow-clones only when it changed. Verifies `recipes.manifest` |
+| `overlay add <name> [url] [--branch B] [--priority N] [--allow-unsigned] [--no-sync]` | register and sync an extra recipe repository; `zignos-menu` has a built-in URL |
+| `overlay list` / `sync [name]` / `remove <name> [--keep-tree]` | list, update and remove overlays; removal keeps installed packages |
 | `key generate --private <path> [--public <path>]` | generate an Ed25519 key pair (private key 0600) |
 | `key import <pubkey>...` / `key list` / `key remove <keyid>` | manage keys in trusted.d |
 | `sign --key <private> <file>...` / `verify <file>...` | create/verify detached signatures |
@@ -563,9 +565,33 @@ zignos-recipes/
 └── <channel>/<category>/<pkg>/{version, sources, checksums, depends, build}
 ```
 
-zpkg uses the category directories specified in `ZPKG_REPOS`. Multiple repositories (overlays, e.g. personal forks) are naturally supported by specifying several in `ZPKG_REPOS` (first takes precedence).
+zpkg uses the category directories specified in `ZPKG_REPOS`; with several directories, the first one wins.
 
-On an installed system the **recipe tree is bundled at `/usr/share/zignos/recipes/<channel>/{core,main,desktop}`**, and when `ZPKG_REPOS` is unset it automatically searches the three categories matching `CHANNEL=` (default stable) in `/etc/zpkg/make.conf` (equivalent to a conventional package tree layout). The flat `recipes/{core,main,desktop}` from M39 and earlier is accepted as stable. `zpkg search` / `zpkg install <pkg>` therefore work as is on built images. Setting `ZPKG_REPOS` explicitly overrides this (source trees during development, overlays, etc.).
+On an installed system the **recipe tree is bundled at `/usr/share/zignos/recipes/<channel>/{core,main,desktop}`**, and when `ZPKG_REPOS` is unset it automatically searches the three categories matching `CHANNEL=` (default stable) in `/etc/zpkg/make.conf` (equivalent to a conventional package tree layout). The flat `recipes/{core,main,desktop}` from M39 and earlier is accepted as stable. `zpkg search` / `zpkg install <pkg>` therefore work as is on built images. Setting `ZPKG_REPOS` explicitly overrides this (source trees during development, etc.).
+
+### Overlays (ZIGNOS MENU)
+
+In addition to several `ZPKG_REPOS` entries, `zpkg overlay` manages extra recipe
+repositories. The official **ZIGNOS MENU** (`zignos-menu`) has its URL built in.
+
+- Configuration lives in `/etc/zpkg/overlays.d/<name>.conf` (`URL` / `BRANCH` /
+  `PRIORITY` / `ALLOW_UNSIGNED` / `ENABLED`) and the tree in
+  `$ZPKG_ROOT/var/lib/zpkg/overlays/<name>`
+- Active overlays are searched before the official tree. A larger `PRIORITY`
+  wins (default 10). For a package key (`name@slot`) the first repository wins
+  and all of its versions become candidates
+- The tree's `overlay.conf` declares `CATEGORIES=` (category directories) and
+  `CHANNELS=` (release channels; empty means all)
+- `recipes.manifest` signature verification and generation rollback rejection
+  work as for the official tree, recorded per overlay as `overlay:<name>` in
+  `.security.json`
+- Installed records and provenance keep the overlay name, and `search` / `info`
+  label it as `zignos-menu/apps`
+- Removing an overlay keeps installed packages; keys without a recipe stay
+  available as installed-only candidates and `upgrade` warns about them
+
+See [ZIGNOS MENU (overlays)](/en/docs/system/overlays/) for usage and how to
+add packages.
 
 ## bootstrap chain (M2)
 

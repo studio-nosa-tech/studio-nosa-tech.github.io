@@ -100,6 +100,22 @@ all channels, so a single sync verifies every channel. stage3 bundles only the
 stable subtree, which has no manifest of its own and is therefore still
 treated as unsigned.
 
+### Overlays
+
+`zpkg overlay add` and `zpkg overlay sync` run the same `recipes.manifest`
+verification on the fetched tree. Trusted keys, expiry, generation and the
+sha256 of every file behave exactly as for the official tree.
+
+Only the rollback record is kept per overlay: `$ZPKG_DB/.security.json` stores
+the last accepted generation and SHA-256 under `overlay:<name>`, so generations
+from one overlay never mix with another.
+
+An unsigned overlay is accepted only with `--allow-unsigned` (for the official
+ZIGNOS MENU, `overlay add zignos-menu` sets it automatically). A signature
+that is present but invalid is rejected even with that setting. Overlay
+authors can create a manifest and signature in the official format with
+`zpkg sign-recipes`.
+
 ## Client-side verification
 
 ```sh
@@ -152,6 +168,10 @@ exception explicitly.
 ```sh
 zpkg sync --from zignos-recipes-....tar.xz --allow-unsigned
 ```
+
+The official ZIGNOS MENU overlay is unsigned as well. `zpkg overlay add
+zignos-menu` recognises the official name and records `ALLOW_UNSIGNED=1`, so
+no extra option is needed.
 
 Once the official key is generated and published, operation will move to
 trusting it with `zpkg key import` and running without `--allow-unsigned`.

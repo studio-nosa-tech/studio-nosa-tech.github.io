@@ -7,6 +7,12 @@ A recipe is a directory at
 `zignos-recipes/<channel>/{core,main,desktop}/<package>/`. The package name is
 the directory name; the channel and category come from the path.
 
+Packages that do not belong in the official tree can live in the official
+[ZIGNOS MENU](https://github.com/studio-nosa-tech/zignos-menu) overlay under
+`apps/`, `games/` or `tools/`. The format is identical, and the overlay is
+installed with `zpkg overlay add zignos-menu`. See
+[ZIGNOS MENU (overlays)](/en/docs/system/overlays/) for details.
+
 ## Files
 
 | File | Required | Contents |

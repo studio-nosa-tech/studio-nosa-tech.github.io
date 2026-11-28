@@ -3,9 +3,9 @@ title: zpkg 設計
 description: zpkg の設計。レシピ形式、DB schema 2、USE フラグ、トランザクション、binpkg。
 ---
 
-ステータス: v0.4.0 設計(実装と合わせて更新する。DB schema 2・world/upgrade・USE
-フラグ・フック・トランザクション・依存アトム解決・レシピ同期・reproducible build
-は実装済み — 後述の各節参照)
+ステータス: v0.5.0 設計(実装と合わせて更新する。DB schema 2・world/upgrade・USE
+フラグ・フック・トランザクション・依存アトム解決・レシピ同期・オーバーレイ・
+reproducible build は実装済み — 後述の各節参照)
 
 > 実際の設定ファイル(`use.conf` / `package.use` / `make.conf` / `binrepo.conf` /
 > `sync.conf`)と環境変数は [zpkg 設定](/docs/zpkg-config/) にまとめています。
@@ -16,14 +16,14 @@ description: zpkg の設計。レシピ形式、DB schema 2、USE フラグ、�
 - 最初は数百行〜1500 行程度のシンプルな実装。長期的に本格的なパッケージマネージャ相当へ進化させる
 - **Go で書く**: 単一静的バイナリとして chroot 内でも動かせる。将来の USE フラグ・ソルバー拡張も同じコードベースで行う
 
-## まだ無いもの(v0.4.0 時点)
+## まだ無いもの(v0.5.0 時点)
 
 - 公開バイナリリポジトリの配布・運用(署名の仕組みと `keys/` 出力は実装済み)
 
 ## 全体像
 
 ```
-レシピリポジトリ(ZPKG_REPOS, 先頭一致で検索)
+レシピリポジトリ(有効なオーバーレイ → 公式 ZPKG_REPOS、先頭一致で検索)
    ↓ recipe.ScanRepos
 依存解決(internal/depspec + internal/resolve + internal/sat, CDCL SAT + トポロジカルソート)
    ↓
@@ -409,7 +409,7 @@ binrepo/
 
 ## リリースチャンネルと upgrade(M40 / M51)
 
-zpkg 0.3.3 では、レシピツリーは `stable` / `testing` / `unstable` の3チャンネルを
+zpkg 0.5.0 では、レシピツリーは `stable` / `testing` / `unstable` の3チャンネルを
 持つ。選択は `/etc/zpkg/make.conf` の `CHANNEL=`(既定 stable)、
 `ZPKG_CHANNEL` 環境変数、`--channel` の順で上書きできる。
 
@@ -437,7 +437,7 @@ zpkg 0.3.3 では、レシピツリーは `stable` / `testing` / `unstable` の3
 
 詳細は [リリースチャンネル](/docs/channels/) を参照。
 
-## コマンド(v0.4.0)
+## コマンド(v0.5.0)
 
 | コマンド | 内容 |
 |---|---|
@@ -454,6 +454,8 @@ zpkg 0.3.3 では、レシピツリーは `stable` / `testing` / `unstable` の3
 | `recover` | 中断されたトランザクションの修復(install はロールバック、remove は完了) |
 | `mkindex [--key <private>] [--generation N] [--expires ...] [dir]` | binpkg リポジトリ用の `index.json` を生成。`--key` で署名し `keys/<keyid>.pub` も出力 |
 | `sync [--from <src>] [--dest <dir>] [--git] [--branch <name>] [-n] [--allow-unsigned]` | レシピツリーを stage3/レシピ tarball・ディレクトリ・URL・git リポジトリから原子的に置換。git では `.zpkg-git` の commit とリモート HEAD を比較し、変更時だけ shallow clone。`recipes.manifest` を検証 |
+| `overlay add <name> [url] [--branch B] [--priority N] [--allow-unsigned] [--no-sync]` | 追加レシピリポジトリを登録して同期。`zignos-menu` は URL 組み込み |
+| `overlay list` / `sync [name]` / `remove <name> [--keep-tree]` | オーバーレイの一覧・更新・削除。削除しても導入済みパッケージは残る |
 | `key generate --private <path> [--public <path>]` | Ed25519 鍵ペアを生成(秘密鍵 0600) |
 | `key import <pubkey>...` / `key list` / `key remove <keyid>` | trusted.d の鍵管理 |
 | `sign --key <private> <file>...` / `verify <file>...` | detached 署名の生成・検証 |
@@ -560,9 +562,33 @@ zignos-recipes/
 └── <channel>/<category>/<pkg>/{version, sources, checksums, depends, build}
 ```
 
-zpkg はカテゴリディレクトリを `ZPKG_REPOS` に指定して使う。複数リポジトリ(overlay、例: 個人用フォーク)は `ZPKG_REPOS` の複数指定で自然にサポート(先頭優先)。
+zpkg はカテゴリディレクトリを `ZPKG_REPOS` に指定して使う。複数のディレクトリを
+指定した場合は先頭優先。
 
-インストール済みシステムでは **レシピツリーを `/usr/share/zignos/recipes/<channel>/{core,main,desktop}` に同梱**し、`ZPKG_REPOS` 未設定時は `/etc/zpkg/make.conf` の `CHANNEL=`(既定 stable)に対応する3カテゴリを自動で検索する(一般的なパッケージツリーの配置に相当)。M39 以前のフラットな `recipes/{core,main,desktop}` は stable として受理する。したがってビルド済みイメージでも `zpkg search` / `zpkg install <pkg>` がそのまま動く。`ZPKG_REPOS` を明示すれば上書きできる(開発時のソースツリー、overlay など)。
+インストール済みシステムでは **レシピツリーを `/usr/share/zignos/recipes/<channel>/{core,main,desktop}` に同梱**し、`ZPKG_REPOS` 未設定時は `/etc/zpkg/make.conf` の `CHANNEL=`(既定 stable)に対応する3カテゴリを自動で検索する(一般的なパッケージツリーの配置に相当)。M39 以前のフラットな `recipes/{core,main,desktop}` は stable として受理する。したがってビルド済みイメージでも `zpkg search` / `zpkg install <pkg>` がそのまま動く。`ZPKG_REPOS` を明示すれば上書きできる(開発時のソースツリーなど)。
+
+### オーバーレイ(ZIGNOS MENU)
+
+`ZPKG_REPOS` の複数指定に加えて、`zpkg overlay` で追加のレシピリポジトリを
+管理できる。公式の **ZIGNOS MENU** (`zignos-menu`) は URL が組み込み。
+
+- 登録は `/etc/zpkg/overlays.d/<name>.conf`(`URL` / `BRANCH` / `PRIORITY` /
+  `ALLOW_UNSIGNED` / `ENABLED`)、ツリーは
+  `$ZPKG_ROOT/var/lib/zpkg/overlays/<name>`
+- 有効なオーバーレイは公式ツリーより先に検索する。`PRIORITY` は大きいほど
+  優先(既定 10)。同じパッケージキー(`name@slot`)は最初のリポジトリが勝ち、
+  そのリポジトリの全バージョンが候補になる
+- ツリー側の `overlay.conf` が `CATEGORIES=`(カテゴリディレクトリ)と
+  `CHANNELS=`(対象チャンネル、空欄 = 全チャンネル)を宣言する
+- `recipes.manifest` の署名検証と generation のロールバック拒否は公式ツリーと
+  同じ。オーバーレイごとに `.security.json` の `overlay:<name>` で記録する
+- インストール済みレコードと provenance にオーバーレイ名を残し、`search` /
+  `info` は `zignos-menu/apps` のように表示する
+- オーバーレイを削除してもインストール済みパッケージは残り、レシピの無い
+  キーは installed-only 候補として依存解決に参加する(`upgrade` は警告を出す)
+
+使い方とパッケージの追加方法は
+[ZIGNOS MENU (オーバーレイ)](/docs/system/overlays/) を参照。
 
 ## bootstrap チェーン(M2)
 

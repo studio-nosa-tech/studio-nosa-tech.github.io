@@ -68,6 +68,7 @@ steps in [Desktop environment](/en/docs/desktop/).
 | `zpkg` | The package manager | Yes |
 | `zignos-build` | bootstrap, stage3 and image builds | Yes |
 | `zignos-recipes` | Recipe trees for stable / testing / unstable | Yes |
+| `zignos-menu` | Official ZIGNOS MENU overlay (additional packages) | Yes |
 | `studio-nosa-tech.github.io` | This official site | Yes |
 
 ## Next

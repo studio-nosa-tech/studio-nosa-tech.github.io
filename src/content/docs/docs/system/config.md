@@ -14,6 +14,7 @@ description: ZIGNOS のシステム設定と zpkg の設定ファイル一覧。
 | `package.use` | パッケージ単位の USE フラグ |
 | `binrepo.conf` | binpkg リポジトリ |
 | `sync.conf` | レシピツリーの同期元(git / tarball / URL) |
+| `overlays.d/<name>.conf` | 追加レシピリポジトリ(オーバーレイ)の設定 |
 | `security.conf` | 信頼済み鍵と署名の設定 |
 | `sandbox.conf` | bubblewrap ビルド隔離のモード |
 | `build.conf` | 再現可能ビルド・ログ・キャッシュ保持の設定 |
@@ -37,6 +38,7 @@ description: ZIGNOS のシステム設定と zpkg の設定ファイル一覧。
 | 場所 | 内容 |
 |---|---|
 | `/var/lib/zpkg/` | インストール済み DB、world、manifest、provenance、SBOM |
+| `/var/lib/zpkg/overlays/<name>/` | 同期済みのオーバーレイツリー |
 | `/var/cache/zpkg/` | ソース、binpkg、ビルドログ |
 | `/usr/share/zignos/recipes/` | 同梱レシピツリー |
 

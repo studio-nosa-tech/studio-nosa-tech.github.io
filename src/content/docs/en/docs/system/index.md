@@ -32,6 +32,7 @@ zpkg upgrade                  # Update
 
 - [Configuration file locations](/en/docs/system/config/)
 - [Package management](/en/docs/system/packages/)
+- [ZIGNOS MENU (overlays)](/en/docs/system/overlays/)
 - [Channels and upgrades](/en/docs/system/channels/)
 - [Services (OpenRC)](/en/docs/system/services/)
 - [Desktop (KDE)](/en/docs/system/desktop/)

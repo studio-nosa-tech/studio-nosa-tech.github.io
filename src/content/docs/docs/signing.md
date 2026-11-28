@@ -95,6 +95,22 @@ zpkg sign-recipes --key ~/zignos-signing.key \
 だけを同梱するため、そのサブツリー単体には manifest がなく、現行どおり
 未署名として扱われます。
 
+### オーバーレイ
+
+`zpkg overlay add` / `zpkg overlay sync` も、取得したツリーに対して同じ
+`recipes.manifest` の検証を行います。信頼済み鍵、期限、generation、
+全ファイルの sha256 の扱いは公式ツリーと同じです。
+
+ロールバック対策の記録だけはオーバーレイ単位で分かれます。
+`$ZPKG_DB/.security.json` の `overlay:<name>` に最後に受理した generation と
+SHA-256 を保存するため、あるオーバーレイの世代と別のオーバーレイの世代が
+混ざることはありません。
+
+署名の無いオーバーレイは `--allow-unsigned`(公式 ZIGNOS MENU は
+`overlay add zignos-menu` が自動で設定)でのみ受け入れます。署名が存在して
+壊れている場合は、この設定でも拒否します。オーバーレイ作者は
+`zpkg sign-recipes` で公式ツリーと同じ形式の manifest と署名を生成できます。
+
 ## クライアント側の検証
 
 ```sh
@@ -145,6 +161,9 @@ ALLOW_EXPIRED=0
 ```sh
 zpkg sync --from zignos-recipes-....tar.xz --allow-unsigned
 ```
+
+公式オーバーレイ ZIGNOS MENU も未署名です。`zpkg overlay add zignos-menu` は
+公式名を認識して `ALLOW_UNSIGNED=1` を記録するため、追加の指定は不要です。
 
 公式鍵の生成・公開後は、`zpkg key import` で信頼してから `--allow-unsigned`
 なしで運用する形に移行します。鍵の生成は `zpkg key generate` で行えます。

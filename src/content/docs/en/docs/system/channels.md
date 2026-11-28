@@ -35,6 +35,11 @@ zpkg upgrade              # Run
 If downgrades are involved, `--allow-downgrade` is required. Do not use
 `--yes` to skip the confirmation prompt except for non-interactive runs.
 
+An overlay can limit itself to specific channels with `CHANNELS=` in
+`overlay.conf`. It is not searched on other channels, and `upgrade` warns about
+installed packages from that overlay. See
+[ZIGNOS MENU (overlays)](/en/docs/system/overlays/) for details.
+
 ## Upgrade safety
 
 `zpkg upgrade` proceeds in this order.

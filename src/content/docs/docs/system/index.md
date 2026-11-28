@@ -31,6 +31,7 @@ zpkg upgrade                  # 更新
 
 - [設定ファイルの場所](/docs/system/config/)
 - [パッケージの管理](/docs/system/packages/)
+- [ZIGNOS MENU (オーバーレイ)](/docs/system/overlays/)
 - [チャンネルとアップグレード](/docs/system/channels/)
 - [サービス (OpenRC)](/docs/system/services/)
 - [デスクトップ (KDE)](/docs/system/desktop/)

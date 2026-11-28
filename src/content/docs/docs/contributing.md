@@ -11,6 +11,7 @@ ZIGNOS は [Studio NØSa.](https://studio-nosa.live/) が開発しています�
 | リポジトリ | 内容 | 公開 |
 |---|---|---|
 | [zignos-recipes](https://github.com/studio-nosa-tech/zignos-recipes) | stable / testing / unstable のレシピ | 公開 |
+| [zignos-menu](https://github.com/studio-nosa-tech/zignos-menu) | 公式オーバーレイ ZIGNOS MENU(追加アプリ・ゲーム・ツール) | 公開 |
 | [studio-nosa-tech.github.io](https://github.com/studio-nosa-tech/studio-nosa-tech.github.io) | この公式サイト | 公開 |
 | `zignos` | 設計文書とロードマップ | 公開 |
 | `zpkg` | パッケージマネージャ本体 | 公開 |
@@ -28,6 +29,11 @@ ZIGNOS は [Studio NØSa.](https://studio-nosa.live/) が開発しています�
 
 ビルドと依存解決の詳細は [zpkg 設計](/docs/design-pkg/)、
 レシピツリーの同期は [zpkg 設定](/docs/zpkg-config/) を参照してください。
+
+公式ツリーに入れないパッケージは
+[zignos-menu](https://github.com/studio-nosa-tech/zignos-menu) の
+`apps/` / `games/` / `tools/` に追加します。オーバーレイの仕組みは
+[ZIGNOS MENU (オーバーレイ)](/docs/system/overlays/) を参照してください。
 
 ## バグを報告する
 

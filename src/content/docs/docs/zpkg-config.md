@@ -29,6 +29,7 @@ description: ZIGNOS のパッケージマネージャ zpkg の設定ファイル
 | `make.conf` | チャンネルとビルドフラグ | `CHANNEL=stable|testing|unstable` / `CFLAGS=...` / `MAKEOPTS=...` |
 | `binrepo.conf` | binpkg リポジトリ | `BINREPO=<URL またはパス>` |
 | `sync.conf` | レシピ同期の既定ソース | `RECIPEURL=` / `RECIPEGIT=` / `RECIPEBRANCH=` / `RECIPEALLOWUNSIGNED=` |
+| `overlays.d/` | 追加レシピリポジトリ | `<name>.conf` に `URL=` / `BRANCH=` / `PRIORITY=` / `ALLOW_UNSIGNED=` / `ENABLED=` |
 | `security.conf` | 署名検証ポリシー | `TRUSTED_KEYS=...` / `ALLOW_UNSIGNED=0|1` / `ALLOW_EXPIRED=0|1` |
 | `sandbox.conf` | ビルドサンドボックス | `SANDBOX=auto|require|off` / `BUILD_NET=0|1` / `BWRAP=...` |
 | `build.conf` | 再現性・記録・ビルドキャッシュ | `SOURCE_DATE_EPOCH=<unix>` / `BUILD_LOG=0|1` / `SBOM=0|1` / `KEEP_WORKDIR=0|1` / `BUILD_BINPKG=0|1` / `KEEP_SOURCES=0|1` |
@@ -190,6 +191,32 @@ SSH 鍵が必要です。`sync` はレシピツリーを置き換えるだけで
 ないツリーは既定で拒否されます。開発用の未署名ツリーだけ `--allow-unsigned`
 (または `ZPKG_ALLOW_UNSIGNED=1`)を使えます。署名が存在して壊れている場合は
 `--allow-unsigned` でも拒否されます。
+
+## オーバーレイ(`overlays.d/`)
+
+`zpkg overlay add` が `/etc/zpkg/overlays.d/<name>.conf` を書きます。手で編集して
+`zpkg overlay sync <name>` で反映することもできます。
+
+```sh
+# /etc/zpkg/overlays.d/zignos-menu.conf
+URL=https://github.com/studio-nosa-tech/zignos-menu.git
+BRANCH=main
+PRIORITY=10
+ALLOW_UNSIGNED=1
+ENABLED=1
+```
+
+| キー | 意味 |
+|---|---|
+| `URL` | git URL / tarball URL / ディレクトリ |
+| `BRANCH` | git のブランチ(既定 `main`) |
+| `PRIORITY` | 大きいほど優先(既定 10) |
+| `ALLOW_UNSIGNED` | このオーバーレイの未署名ツリーを許可する |
+| `ENABLED` | `0` で無効化(設定とツリーは残る) |
+
+ツリーは `$ZPKG_ROOT/var/lib/zpkg/overlays/<name>` に同期されます。ツリー側の
+`overlay.conf` の `CATEGORIES=` / `CHANNELS=` も参照されます。使い方は
+[ZIGNOS MENU (オーバーレイ)](/docs/system/overlays/) を参照してください。
 
 ## 署名と信頼済み鍵(`security.conf`)
 

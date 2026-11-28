@@ -66,3 +66,18 @@ zpkg upgrade
 レシピは `/usr/share/zignos/recipes/<channel>/{core,main,desktop}/` にあります。
 `zpkg sync` で最新ツリーへ更新できます。レシピの書き方は
 [zpkg 設計](/docs/design-pkg/) を参照してください。
+
+## オーバーレイ (ZIGNOS MENU)
+
+公式ツリーにないパッケージは、公式オーバーレイ **ZIGNOS MENU** から導入できます。
+
+```sh
+sudo zpkg overlay add zignos-menu
+zpkg overlay list
+zpkg search <term>
+```
+
+オーバーレイは公式ツリーより先に検索され、`zpkg search` では
+`zignos-menu/apps` のように表示されます。更新・削除、独自オーバーレイの
+追加、優先度と署名は
+[ZIGNOS MENU (オーバーレイ)](/docs/system/overlays/) を参照してください。

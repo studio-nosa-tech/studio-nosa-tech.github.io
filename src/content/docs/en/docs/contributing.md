@@ -11,6 +11,7 @@ The published recipes and the official site can be reviewed and improved on GitH
 | Repository | Contents | Public |
 |---|---|---|
 | [zignos-recipes](https://github.com/studio-nosa-tech/zignos-recipes) | Recipes for stable / testing / unstable | Public |
+| [zignos-menu](https://github.com/studio-nosa-tech/zignos-menu) | Official ZIGNOS MENU overlay (extra apps, games, tools) | Public |
 | [studio-nosa-tech.github.io](https://github.com/studio-nosa-tech/studio-nosa-tech.github.io) | This official site | Public |
 | `zignos` | Design documents and roadmap | Public |
 | `zpkg` | The package manager itself | Public |
@@ -28,6 +29,10 @@ Recipes are in `zignos-recipes/<channel>/{core,main,desktop}/<package>/`.
 
 For details on builds and dependency resolution, see [zpkg design](/en/docs/design-pkg/);
 for syncing the recipe tree, see [zpkg configuration](/en/docs/zpkg-config/).
+
+Packages that do not belong in the official tree go under `apps/`, `games/` or
+`tools/` in [zignos-menu](https://github.com/studio-nosa-tech/zignos-menu). See
+[ZIGNOS MENU (overlays)](/en/docs/system/overlays/) for how overlays work.
 
 ## Reporting a bug
 

@@ -29,6 +29,7 @@ Every file is optional; when a file is absent, the defaults are used.
 | `make.conf` | Channel and build flags | `CHANNEL=stable|testing|unstable` / `CFLAGS=...` / `MAKEOPTS=...` |
 | `binrepo.conf` | binpkg repository | `BINREPO=<URL or path>` |
 | `sync.conf` | Default source for recipe sync | `RECIPEURL=` / `RECIPEGIT=` / `RECIPEBRANCH=` / `RECIPEALLOWUNSIGNED=` |
+| `overlays.d/` | Extra recipe repositories | `<name>.conf` with `URL=` / `BRANCH=` / `PRIORITY=` / `ALLOW_UNSIGNED=` / `ENABLED=` |
 | `security.conf` | Signature verification policy | `TRUSTED_KEYS=...` / `ALLOW_UNSIGNED=0|1` / `ALLOW_EXPIRED=0|1` |
 | `sandbox.conf` | Build sandbox | `SANDBOX=auto|require|off` / `BUILD_NET=0|1` / `BWRAP=...` |
 | `build.conf` | Reproducibility, records, build cache | `SOURCE_DATE_EPOCH=<unix>` / `BUILD_LOG=0|1` / `SBOM=0|1` / `KEEP_WORKDIR=0|1` / `BUILD_BINPKG=0|1` / `KEEP_SOURCES=0|1` |
@@ -195,6 +196,32 @@ not update installed packages. Run `zpkg upgrade` afterwards if needed.
 trees are rejected by default. `--allow-unsigned` (or
 `ZPKG_ALLOW_UNSIGNED=1`) is only for unsigned development trees. If a
 signature exists but is broken, it is rejected even with `--allow-unsigned`.
+
+## Overlays (`overlays.d/`)
+
+`zpkg overlay add` writes `/etc/zpkg/overlays.d/<name>.conf`. You can also edit
+it by hand and apply it with `zpkg overlay sync <name>`.
+
+```sh
+# /etc/zpkg/overlays.d/zignos-menu.conf
+URL=https://github.com/studio-nosa-tech/zignos-menu.git
+BRANCH=main
+PRIORITY=10
+ALLOW_UNSIGNED=1
+ENABLED=1
+```
+
+| Key | Meaning |
+|---|---|
+| `URL` | git URL, tarball URL or directory |
+| `BRANCH` | git branch (default `main`) |
+| `PRIORITY` | larger wins (default 10) |
+| `ALLOW_UNSIGNED` | accept an unsigned tree for this overlay |
+| `ENABLED` | `0` disables it (configuration and tree stay) |
+
+The tree is synced to `$ZPKG_ROOT/var/lib/zpkg/overlays/<name>`. The tree's own
+`overlay.conf` supplies `CATEGORIES=` / `CHANNELS=`. See
+[ZIGNOS MENU (overlays)](/en/docs/system/overlays/) for usage.
 
 ## Signing and trusted keys (`security.conf`)
 

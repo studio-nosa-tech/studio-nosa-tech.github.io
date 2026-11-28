@@ -83,6 +83,7 @@ export default defineConfig({
                 { label: 'システム管理', translations: { en: 'System administration' }, slug: 'docs/system' },
                 { label: '設定ファイルの場所', translations: { en: 'Configuration files' }, slug: 'docs/system/config' },
                 { label: 'パッケージの管理', translations: { en: 'Package management' }, slug: 'docs/system/packages' },
+                { label: 'ZIGNOS MENU (オーバーレイ)', translations: { en: 'ZIGNOS MENU (overlays)' }, slug: 'docs/system/overlays' },
                 { label: 'チャンネルとアップグレード', translations: { en: 'Channels and upgrades' }, slug: 'docs/system/channels' },
                 { label: 'サービス (OpenRC)', translations: { en: 'Services (OpenRC)' }, slug: 'docs/system/services' },
               ],

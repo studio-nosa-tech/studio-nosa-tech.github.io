@@ -14,6 +14,7 @@ Everything is in `/etc/zpkg/`.
 | `package.use` | Per-package USE flags |
 | `binrepo.conf` | binpkg repositories |
 | `sync.conf` | Recipe tree sync source (git / tarball / URL) |
+| `overlays.d/<name>.conf` | Extra recipe repository (overlay) configuration |
 | `security.conf` | Trusted keys and signature settings |
 | `sandbox.conf` | bubblewrap build sandbox mode |
 | `build.conf` | Reproducible build, log and cache retention settings |
@@ -37,6 +38,7 @@ Trusted public keys go in `/etc/zpkg/trusted.d/`.
 | Location | Contents |
 |---|---|
 | `/var/lib/zpkg/` | Installed database, world, manifest, provenance, SBOM |
+| `/var/lib/zpkg/overlays/<name>/` | Synced overlay trees |
 | `/var/cache/zpkg/` | Sources, binpkgs, build logs |
 | `/usr/share/zignos/recipes/` | Bundled recipe tree |
 

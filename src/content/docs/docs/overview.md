@@ -66,6 +66,7 @@ stage3 と既定のイメージは CLI の最小ベースのままです。デ�
 | `zpkg` | パッケージマネージャ本体 | 公開 |
 | `zignos-build` | bootstrap・stage3 / イメージ作成 | 公開 |
 | `zignos-recipes` | stable / testing / unstable のレシピツリー | 公開 |
+| `zignos-menu` | 公式オーバーレイ ZIGNOS MENU(追加パッケージ) | 公開 |
 | `studio-nosa-tech.github.io` | この公式サイト | 公開 |
 
 ## 次に読む

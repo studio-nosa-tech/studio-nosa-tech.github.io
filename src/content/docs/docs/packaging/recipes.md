@@ -7,6 +7,12 @@ description: zpkg レシピのファイル構成、メタデータ、依存、�
 ディレクトリです。パッケージ名はディレクトリ名、チャンネルとカテゴリはパスから
 決まります。
 
+公式ツリーに入れないパッケージは、公式オーバーレイ
+[ZIGNOS MENU](https://github.com/studio-nosa-tech/zignos-menu) の
+`apps/` / `games/` / `tools/` に置けます。レシピの形式は同じで、
+`zpkg overlay add zignos-menu` で導入できます。詳しくは
+[ZIGNOS MENU (オーバーレイ)](/docs/system/overlays/) を参照してください。
+
 ## ファイル一覧
 
 | ファイル | 必須 | 内容 |
